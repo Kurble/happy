@@ -1,0 +1,8 @@
+x64
+x86
+ipch
+Debug
+Release
+CompiledShaders
+*.sdf
+*.ini
