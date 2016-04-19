@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "DeferredRenderer.h"
+#include "Sphere.h"
 
 //----------------------------------------------------------------------
 // G-Buffer shaders
@@ -12,8 +13,10 @@
 //----------------------------------------------------------------------
 // Rendering shaders
 #include "CompiledShaders\ScreenQuadVS.h"
+#include "CompiledShaders\SphereVS.h"
 #include "CompiledShaders\DeferredDirectionalOcclusion.h"
 #include "CompiledShaders\EnvironmentalLighting.h"
+#include "CompiledShaders\PointLighting.h"
 //----------------------------------------------------------------------
 
 namespace happy
@@ -32,6 +35,14 @@ namespace happy
 	struct CBufferObject
 	{
 		Mat4 world;
+	};
+
+	struct CBufferPointLight
+	{
+		Vec4 position;
+		Vec4 color;
+		float scale;
+		float falloff;
 	};
 
 	DeferredRenderer::DeferredRenderer(const RenderingContext* pRenderContext)
@@ -111,6 +122,17 @@ namespace happy
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBObject));
 		}
 
+		// Per pointlight CB
+		{
+			D3D11_BUFFER_DESC bufferDesc;
+			bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+			bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			bufferDesc.MiscFlags = 0;
+			bufferDesc.ByteWidth = (UINT)((sizeof(CBufferPointLight) + 15) / 16) * 16;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBPointLighting));
+		}
+
 		// G-Buffer shaders
 		CreateVertexShader<VertexPositionTexcoord>(m_pVSPositionTexcoord, m_pILPositionTexcoord, g_shVertexPositionTexcoord);
 		CreateVertexShader<VertexPositionNormalTexcoord>(m_pVSPositionNormalTexcoord, m_pILPositionNormalTexcoord, g_shVertexPositionNormalTexcoord);
@@ -119,8 +141,10 @@ namespace happy
 		
 		// Rendering shaders
 		CreateVertexShader<VertexPositionTexcoord>(m_pVSScreenQuad, m_pILScreenQuad, g_shScreenQuadVS);
+		CreateVertexShader<VertexPositionTexcoord>(m_pVSPointLighting, m_pILPointLighting, g_shSphereVS);
 		CreatePixelShader(m_pPSDSSDO, g_shDeferredDirectionalOcclusion);
 		CreatePixelShader(m_pPSGlobalLighting, g_shEnvironmentalLighting);
+		CreatePixelShader(m_pPSPointLighting, g_shPointLighting);
 
 		// Noise texture
 		{
@@ -167,13 +191,16 @@ namespace happy
 			D3D11_BLEND_DESC desc;
 			ZeroMemory(&desc, sizeof(desc));
 			desc.RenderTarget[0].BlendEnable = true;
-			desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_COLOR;
-			desc.RenderTarget[0].DestBlend = D3D11_BLEND_DEST_COLOR;
+			desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+			desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
 			desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
 			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
 			desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-			desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+			desc.RenderTarget[0].RenderTargetWriteMask = 
+				D3D11_COLOR_WRITE_ENABLE_RED |
+				D3D11_COLOR_WRITE_ENABLE_GREEN | 
+				D3D11_COLOR_WRITE_ENABLE_BLUE;
 			desc.IndependentBlendEnable = false;
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBlendState(&desc, &m_pRenderBlendState));
 		}
@@ -201,6 +228,36 @@ namespace happy
 			data.pSysMem = (void*)quad;
 
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&desc, &data, &m_pScreenQuadBuffer));
+		}
+
+		// Sphere vtx buffer
+		{
+			D3D11_BUFFER_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.ByteWidth = sizeof(g_SphereVertices);
+			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+			desc.Usage = D3D11_USAGE_IMMUTABLE;
+
+			D3D11_SUBRESOURCE_DATA data;
+			ZeroMemory(&data, sizeof(data));
+			data.pSysMem = (void*)g_SphereVertices;
+
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&desc, &data, &m_pSphereVBuffer));
+		}
+
+		// Sphere idx buffer
+		{
+			D3D11_BUFFER_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.ByteWidth = sizeof(g_SphereIndices);
+			desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+			desc.Usage = D3D11_USAGE_IMMUTABLE;
+
+			D3D11_SUBRESOURCE_DATA data;
+			ZeroMemory(&data, sizeof(data));
+			data.pSysMem = (void*)g_SphereIndices;
+
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&desc, &data, &m_pSphereIBuffer));
 		}
 	}
 
@@ -362,7 +419,7 @@ namespace happy
 			objectCB.world = elem.second;
 			D3D11_MAPPED_SUBRESOURCE msr;
 			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferScene) + 15) / 16) * 16);
+			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
 			context.Unmap(m_pCBObject.Get(), 0);
 
 			UINT stride = sizeof(VertexPositionTexcoord);
@@ -391,7 +448,7 @@ namespace happy
 			objectCB.world = elem.second;
 			D3D11_MAPPED_SUBRESOURCE msr;
 			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferScene) + 15) / 16) * 16);
+			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
 			context.Unmap(m_pCBObject.Get(), 0);
 
 			UINT stride = sizeof(VertexPositionNormalTexcoord);
@@ -420,7 +477,7 @@ namespace happy
 			objectCB.world = elem.second;
 			D3D11_MAPPED_SUBRESOURCE msr;
 			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferScene) + 15) / 16) * 16);
+			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
 			context.Unmap(m_pCBObject.Get(), 0);
 
 			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoord);
@@ -443,6 +500,7 @@ namespace happy
 	void DeferredRenderer::renderGBufferToBackBuffer() const
 	{
 		float clearColor[] = { 0, 0, 0, 0 };
+		ID3D11ShaderResourceView* srvs[] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
 		context.OMSetDepthStencilState(m_pRenderDepthState.Get(), 0);
@@ -450,11 +508,18 @@ namespace happy
 
 		ID3D11SamplerState* samplers[] = { m_pScreenSampler.Get(), m_pGSampler.Get() };
 
+		ID3D11Buffer* constBuffers[] =
+		{
+			m_pCBScene.Get(),
+			m_pCBPointLighting.Get()
+		};
+
 		context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		context.IASetInputLayout(m_pILScreenQuad.Get());
 		context.VSSetShader(m_pVSScreenQuad.Get(), nullptr, 0);
+		context.VSSetConstantBuffers(0, 2, constBuffers);
 		context.PSSetSamplers(0, 2, samplers);
-		context.PSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+		context.PSSetConstantBuffers(0, 2, constBuffers);
 		UINT stride = sizeof(VertexPositionTexcoord);
 		UINT offset = 0;
 		context.IASetVertexBuffers(0, 1, m_pScreenQuadBuffer.GetAddressOf(), &stride, &offset);
@@ -464,28 +529,57 @@ namespace happy
 		{
 			context.OMSetRenderTargets(1, m_pGBufferTarget[2].GetAddressOf(), nullptr);
 			context.PSSetShader(m_pPSDSSDO.Get(), nullptr, 0);
-			ID3D11ShaderResourceView* srvs[] = { m_pGBufferView[0].Get(), m_pGBufferView[1].Get(), nullptr, m_pGBufferView[3].Get(), m_pNoiseTexture.Get(), nullptr };
-			context.PSSetShaderResources(0, 5, srvs);
+
+			srvs[0] = m_pGBufferView[0].Get();
+			srvs[1] = m_pGBufferView[1].Get();
+			srvs[3] = m_pGBufferView[3].Get();
+			srvs[4] = m_pNoiseTexture.Get();
+			context.PSSetShaderResources(0, 6, srvs);
 
 			context.Draw(6, 0);
 		}
 
 		//--------------------------------------------------------------------
-		// Render environmental lighting
+		// Render lighting
 		{
 			ID3D11RenderTargetView* rtvs[] = { m_pRenderContext->getBackBuffer() };
 			context.OMSetRenderTargets(1, rtvs, nullptr);
 			context.OMSetBlendState(m_pRenderBlendState.Get(), nullptr, 0xffffffff);
-			context.PSSetShader(m_pPSGlobalLighting.Get(), nullptr, 0);
-			ID3D11ShaderResourceView* srvs[] = { m_pGBufferView[0].Get(), m_pGBufferView[1].Get(), m_pGBufferView[2].Get(), m_pGBufferView[3].Get(), nullptr, nullptr };
-			context.PSSetShaderResources(0, 4, srvs);
-			context.PSSetShaderResources(4, 1, m_Environment.getLightingSRV());
-			context.PSSetShaderResources(5, 1, m_Environment.getEnvironmentSRV());
+			srvs[2] = m_pGBufferView[2].Get();
+			srvs[4] = m_Environment.getLightingSRV();
+			srvs[5] = m_Environment.getEnvironmentSRV();
+			context.PSSetShaderResources(0, 6, srvs);
 
+			// Render environmental lighting
+			context.PSSetShader(m_pPSGlobalLighting.Get(), nullptr, 0);
 			context.Draw(6, 0);
 
-			for (int i = 0; i < 4; ++i) srvs[i] = nullptr;
-			context.PSSetShaderResources(0, 6, srvs);
+			// Render point lights
+			context.VSSetShader(m_pVSPointLighting.Get(), nullptr, 0);
+			context.IASetInputLayout(m_pILPointLighting.Get());
+			context.IASetVertexBuffers(0, 1, m_pSphereVBuffer.GetAddressOf(), &stride, &offset);
+			context.IASetIndexBuffer(m_pSphereIBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+			context.PSSetShader(m_pPSPointLighting.Get(), nullptr, 0);
+
+			for (auto &light : m_PointLights)
+			{
+				CBufferPointLight cbuf;
+				cbuf.position = Vec4(light.m_Position.x, light.m_Position.y, light.m_Position.z, 0.0f);
+				cbuf.color    = Vec4(light.m_Color.x, light.m_Color.y, light.m_Color.z, 0.0f);
+				cbuf.scale    = light.m_Radius;
+				cbuf.falloff  = light.m_FaloffExponent;
+
+				D3D11_MAPPED_SUBRESOURCE msr;
+				THROW_ON_FAIL(context.Map(m_pCBPointLighting.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+				memcpy(msr.pData, (void*)&cbuf, ((sizeof(CBufferPointLight) + 15) / 16) * 16);
+				context.Unmap(m_pCBPointLighting.Get(), 0);
+
+				context.DrawIndexed(sizeof(g_SphereIndices) / sizeof(uint16_t), 0, 0);
+			}
 		}
+
+		// Reset SRVs since we need them as output next frame
+		for (int i = 0; i < 4; ++i) srvs[i] = nullptr;
+		context.PSSetShaderResources(0, 6, srvs);
 	}
 }

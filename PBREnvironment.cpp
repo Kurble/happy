@@ -26,14 +26,14 @@ namespace happy
 		return m_CubemapArrayLength;
 	}
 
-	ID3D11ShaderResourceView* const* PBREnvironment::getLightingSRV() const
+	ID3D11ShaderResourceView* PBREnvironment::getLightingSRV() const
 	{
-		return m_ConvolutedMaps.GetAddressOf();
+		return m_ConvolutedMaps.Get();
 	}
 
-	ID3D11ShaderResourceView* const* PBREnvironment::getEnvironmentSRV() const
+	ID3D11ShaderResourceView* PBREnvironment::getEnvironmentSRV() const
 	{
-		return m_EnvironmentMap.GetAddressOf();
+		return m_EnvironmentMap.Get();
 	}
 
 	void PBREnvironment::convolute(RenderingContext* pRenderContext, float width, unsigned int steps)

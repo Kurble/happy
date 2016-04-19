@@ -47,6 +47,9 @@
     </ClInclude>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="happy.h" />
+    <ClInclude Include="Sphere.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
@@ -74,6 +77,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="VertexPositionTexcoord.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="PointLighting.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="SphereVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

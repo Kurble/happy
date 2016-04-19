@@ -24,7 +24,7 @@ float4 main(VSOut input) : SV_TARGET
 	float4 occlusion       = g_OcclusionBuffer.Sample(g_ScreenSampler, input.tex) * 2 - 1;
 	float  depth           = g_DepthBuffer.Sample(g_ScreenSampler, input.tex);
 
-	// Calculate view normalm
+	// Calculate view normal
 	float3 screenNormal = float3(
 		(input.tex.x - .5) * 2 * (width / height),
 		(input.tex.y - .5) * -2,

@@ -85,14 +85,20 @@ namespace happy
 		// Screen rendering
 		ComPtr<ID3D11DepthStencilState>   m_pRenderDepthState;
 		ComPtr<ID3D11BlendState>          m_pRenderBlendState;
-		ComPtr<ID3D11VertexShader>        m_pVSScreenQuad;
-		ComPtr<ID3D11PixelShader>         m_pPSDSSDO;
-		ComPtr<ID3D11ShaderResourceView>  m_pNoiseTexture;
-		ComPtr<ID3D11PixelShader>         m_pPSGlobalLighting;
-		ComPtr<ID3D11PixelShader>         m_pPSPointLighting;
-		ComPtr<ID3D11InputLayout>         m_pILScreenQuad;
-		ComPtr<ID3D11Buffer>              m_pScreenQuadBuffer;
 		ComPtr<ID3D11SamplerState>        m_pScreenSampler;
+		ComPtr<ID3D11Buffer>              m_pScreenQuadBuffer;
+		ComPtr<ID3D11ShaderResourceView>  m_pNoiseTexture;
+		ComPtr<ID3D11VertexShader>        m_pVSScreenQuad;
+		ComPtr<ID3D11InputLayout>         m_pILScreenQuad;
+		ComPtr<ID3D11PixelShader>         m_pPSGlobalLighting;
+		ComPtr<ID3D11PixelShader>         m_pPSDSSDO;
+		ComPtr<ID3D11Buffer>              m_pSphereVBuffer;
+		ComPtr<ID3D11Buffer>              m_pSphereIBuffer;
+		ComPtr<ID3D11VertexShader>        m_pVSPointLighting;
+		ComPtr<ID3D11InputLayout>         m_pILPointLighting;
+		ComPtr<ID3D11PixelShader>         m_pPSPointLighting;
+		ComPtr<ID3D11Buffer>              m_pCBPointLighting;
+
 
 		//--------------------------------------------------------------------
 		// State
