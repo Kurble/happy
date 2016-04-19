@@ -34,10 +34,10 @@ float4 getsample(float3x3 side, float3 eyedir, float3 base_ray)
 {
 	float3 ray = mul(base_ray, side);
 
-	float lambert = max(0.0, pow(dot(ray, eyedir), g_Exponent));
+	float lambert = max(0.0, pow(abs(dot(ray, eyedir)), g_Exponent));
 
 	float4 hdr = g_Source.Sample(g_TextureSampler, ray);
-	float3 col = hdr.rgb *(pow(hdr.a, 1.1) * 1);
+	float3 col = hdr.rgb *(pow(abs(hdr.a), 1.1) * 1);
 
 	return float4(col*lambert, lambert);
 }
@@ -62,5 +62,5 @@ float4 main(VSOut input) : SV_Target
 		}
 	}
 	result /= result.w;
-	return float4(pow(result.rgb, 1.0 / 2.2), 1.0);
+	return float4(pow(abs(result.rgb), 1.0 / 2.2), 1.0);
 }

@@ -98,7 +98,7 @@ namespace happy
 				while (!line.eof())
 				{
 					char vertex[128];
-					line >> vertex;
+					line.getline(vertex, 128, ' ');
 
 					int v = 0;
 					int vt = 0;
@@ -108,12 +108,15 @@ namespace happy
 					sscanf_s(vertex, "%d//%d", &v, &vn);
 					sscanf_s(vertex, "%d/%d/%d", &v, &vt, &vn);
 
-					vertices.emplace_back();
-					if (v)  vertices.back().pos      = positions[v - 1];
-					if (vt) vertices.back().texcoord = texcoords[vt - 1];
-					if (vn) vertices.back().normal   = normals[vn - 1];
+					if (v)
+					{
+						vertices.emplace_back();
+						if (v)  vertices.back().pos = positions[v - 1];
+						if (vt) vertices.back().texcoord = texcoords[vt - 1];
+						if (vn) vertices.back().normal = normals[vn - 1];
 
-					count++;
+						count++;
+					}
 				}
 
 

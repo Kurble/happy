@@ -17,7 +17,7 @@ namespace happy
 		void clear();
 		
 		void pushRenderMesh(RenderMesh &mesh, Mat4 &transform);
-		void pushLight(Vec3 position, Vec4 color);
+		void pushLight(Vec3 position, Vec3 color, float radius, float falloff);
 
 		void setEnvironment(PBREnvironment &environment);
 		void setCamera(Mat4 view, Mat4 projection);
@@ -42,6 +42,14 @@ namespace happy
 			size_t length = Length;
 			THROW_ON_FAIL(m_pRenderContext->getDevice()->CreatePixelShader(shaderByteCode, length, nullptr, &ps));
 		}
+
+		struct PointLight
+		{
+			Vec3 m_Position;
+			Vec3 m_Color;
+			float m_Radius;
+			float m_FaloffExponent;
+		};
 
 		ComPtr<ID3D11RasterizerState>     m_pRasterState;
 
@@ -95,6 +103,6 @@ namespace happy
 		RenderList                        m_GeometryPositionTexcoord;
 		RenderList                        m_GeometryPositionNormalTexcoord;
 		RenderList                        m_GeometryPositionNormalTangentBinormalTexcoord;									   
-		vector<pair<Vec3, Vec4>>          m_PointLights;
+		vector<PointLight>                m_PointLights;
 	};
 }

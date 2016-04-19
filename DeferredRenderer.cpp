@@ -285,9 +285,10 @@ namespace happy
 		}
 	}
 
-	void DeferredRenderer::pushLight(Vec3 position, Vec4 color)
+	void DeferredRenderer::pushLight(Vec3 position, Vec3 color, float radius, float falloff)
 	{
-		m_PointLights.emplace_back(position, color);
+		PointLight pl = { position, color, radius, falloff };
+		m_PointLights.emplace_back(pl);
 	}
 
 	void DeferredRenderer::setEnvironment(PBREnvironment &environment)

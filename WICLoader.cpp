@@ -236,7 +236,7 @@ namespace happy
 	}
 
 	//---------------------------------------------------------------------------------
-	static tuple<UINT, UINT, DXGI_FORMAT, vector<uint8_t>> CreateTextureDataFromWIC(_In_ ID3D11Device* d3dDevice, _In_ IWICBitmapFrameDecode *frame)
+	static void CreateTextureDataFromWIC(_In_ ID3D11Device* d3dDevice, _In_ IWICBitmapFrameDecode *frame, tuple<UINT, UINT, DXGI_FORMAT, uint8_t*> &data)
 	{
 		UINT width, height;
 		THROW_ON_FAIL(frame->GetSize(&width, &height));
@@ -347,8 +347,7 @@ namespace happy
 		size_t rowPitch = (twidth * bpp + 7) / 8;
 		size_t imageSize = rowPitch * theight;
 
-		vector<uint8_t> temp;
-		temp.resize(imageSize, 0);
+		std::get<3>(data) = new uint8_t[imageSize];
 
 		// Load image data
 		if (memcmp(&convertGUID, &pixelFormat, sizeof(GUID)) == 0
@@ -356,7 +355,7 @@ namespace happy
 			&& theight == height)
 		{
 			// No format conversion or resize needed
-			THROW_ON_FAIL(frame->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), temp.data()));
+			THROW_ON_FAIL(frame->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), std::get<3>(data)));
 		}
 		else if (twidth != width || theight != height)
 		{
@@ -375,7 +374,7 @@ namespace happy
 			if (memcmp(&convertGUID, &pfScaler, sizeof(GUID)) == 0)
 			{
 				// No format conversion needed
-				THROW_ON_FAIL(scaler->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), temp.data()));
+				THROW_ON_FAIL(scaler->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), std::get<3>(data)));
 			}
 			else
 			{
@@ -384,7 +383,7 @@ namespace happy
 				
 				THROW_ON_FAIL(FC->Initialize(scaler.Get(), convertGUID, WICBitmapDitherTypeErrorDiffusion, 0, 0, WICBitmapPaletteTypeCustom));
 				
-				THROW_ON_FAIL(FC->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), temp.data()));
+				THROW_ON_FAIL(FC->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), std::get<3>(data)));
 			}
 		}
 		else
@@ -399,11 +398,13 @@ namespace happy
 			
 			THROW_ON_FAIL(FC->Initialize(frame, convertGUID, WICBitmapDitherTypeErrorDiffusion, 0, 0, WICBitmapPaletteTypeCustom));
 			
-			THROW_ON_FAIL(FC->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), temp.data()));
+			THROW_ON_FAIL(FC->CopyPixels(0, static_cast<UINT>(rowPitch), static_cast<UINT>(imageSize), std::get<3>(data)));
 		}
 
 		// See if format is supported for auto-gen mipmaps (varies by feature level)
-		return  make_tuple(twidth, theight, format, temp);
+		std::get<0>(data) = twidth;
+		std::get<1>(data) = theight;
+		std::get<2>(data) = format;
 	}
 
 	//---------------------------------------------------------------------------------
@@ -759,6 +760,8 @@ namespace happy
 
 	ComPtr<ID3D11ShaderResourceView> loadCubemapWICFolder(RenderingContext *pRenderContext, std::string folder, std::string format)
 	{
+		OutputDebugStringA("Load cubemap\n");
+
 		std::string files[] =
 		{
 			folder + "\\posx." + format,
@@ -771,32 +774,30 @@ namespace happy
 		return loadCubemapWIC(pRenderContext, files);
 	}
 
-	ComPtr<ID3D11ShaderResourceView> loadCubemapWIC(RenderingContext *pRenderContext, std::string _fileName[6])
+	ComPtr<ID3D11ShaderResourceView> loadCubemapWIC(RenderingContext *pRenderContext, std::string fileName[6])
 	{
 		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 		IWICImagingFactory* pWIC = _GetWIC();
 
-		auto loadFace = [&](std::wstring filename)
+		auto loadFace = [&](std::wstring filename, tuple<UINT, UINT, DXGI_FORMAT, uint8_t*>& data)
 		{
 			ScopedObject<IWICBitmapDecoder> decoder;
 			THROW_ON_FAIL(pWIC->CreateDecoderFromFilename(filename.c_str(), 0, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder));
 			ScopedObject<IWICBitmapFrameDecode> frame;
 			THROW_ON_FAIL(decoder->GetFrame(0, &frame));
-			return CreateTextureDataFromWIC(pRenderContext->getDevice(), frame.Get());
+			
+			CreateTextureDataFromWIC(pRenderContext->getDevice(), frame.Get(), data);
 		};
 		
-		tuple<UINT,UINT,DXGI_FORMAT,vector<uint8_t>> faces[] = 
+		tuple<UINT, UINT, DXGI_FORMAT, uint8_t*> faces[6];
+		for (int i = 0; i < 6; ++i)
+			loadFace(converter.from_bytes(fileName[i]), faces[i]);
+			
+		ComPtr<ID3D11ShaderResourceView> pView;
+		
 		{
-			loadFace(converter.from_bytes(_fileName[0])),
-			loadFace(converter.from_bytes(_fileName[1])),
-			loadFace(converter.from_bytes(_fileName[2])),
-			loadFace(converter.from_bytes(_fileName[3])),
-			loadFace(converter.from_bytes(_fileName[4])),
-			loadFace(converter.from_bytes(_fileName[5]))
-		};
+			ID3D11Texture2D* pCubemap;
 
-		ComPtr<ID3D11Texture2D> pCubemap;
-		{
 			D3D11_TEXTURE2D_DESC desc;
 			desc.Width = std::get<0>(faces[0]);
 			desc.Height = std::get<1>(faces[0]);
@@ -814,22 +815,25 @@ namespace happy
 			D3D11_SUBRESOURCE_DATA data[6];
 			for (unsigned int i = 0; i < 6; ++i)
 			{
-				data[i].pSysMem = (void*)std::get<3>(faces[i]).data();
+				data[i].pSysMem = (void*)std::get<3>(faces[i]);
 				data[i].SysMemPitch = std::get<0>(faces[i]) * 4;
 				data[i].SysMemSlicePitch = 0;
 			}
 
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateTexture2D(&desc, data, &pCubemap));
-		}
 
-		ComPtr<ID3D11ShaderResourceView> pView;
-		{
-			D3D11_SHADER_RESOURCE_VIEW_DESC desc;
-			desc.Format = std::get<2>(faces[0]);
-			desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-			desc.TextureCube.MipLevels = 1;
-			desc.TextureCube.MostDetailedMip = 0;
-			THROW_ON_FAIL(pRenderContext->getDevice()->CreateShaderResourceView(pCubemap.Get(), &desc, &pView));
+			for (unsigned int i = 0; i < 6; ++i)
+			{
+				delete[] std::get<3>(faces[i]);
+			}
+		
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvdesc;
+			srvdesc.Format = std::get<2>(faces[0]);
+			srvdesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+			srvdesc.TextureCube.MipLevels = 1;
+			srvdesc.TextureCube.MostDetailedMip = 0;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateShaderResourceView(pCubemap, &srvdesc, &pView));
+			pCubemap->Release();
 		}
 		return pView;
 	}
