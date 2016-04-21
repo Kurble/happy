@@ -23,8 +23,6 @@ VSOut main(VSIn input)
 {
 	VSOut output;
 
-
-
 	output.position  = float4((input.position.xyz * lightSize) + lightPosition, 1);
 	output.position  = mul(view, output.position);
 	output.position  = mul(projection, output.position);

@@ -44,6 +44,8 @@ namespace happy
 		ID3D11ShaderResourceView* getNormalMetallicMap() const;
 
 	private:
+		friend class Resources;
+
 		VertexType m_VertexType;
 		ComPtr<ID3D11Buffer> m_pVtx;
 		ComPtr<ID3D11Buffer> m_pIdx;

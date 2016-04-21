@@ -261,6 +261,11 @@ namespace happy
 		}
 	}
 
+	const RenderingContext* DeferredRenderer::getContext() const
+	{
+		return m_pRenderContext;
+	}
+
 	void DeferredRenderer::resize(unsigned int width, unsigned int height)
 	{
 		ID3D11Device& device = *m_pRenderContext->getDevice();
@@ -326,7 +331,7 @@ namespace happy
 		m_PointLights.clear();
 	}
 
-	void DeferredRenderer::pushRenderMesh(RenderMesh &mesh, Mat4 &transform)
+	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform)
 	{
 		switch (mesh.getVertexType())
 		{
@@ -342,18 +347,18 @@ namespace happy
 		}
 	}
 
-	void DeferredRenderer::pushLight(Vec3 position, Vec3 color, float radius, float falloff)
+	void DeferredRenderer::pushLight(const Vec3 &position, const Vec3 &color, float radius, float falloff)
 	{
 		PointLight pl = { position, color, radius, falloff };
 		m_PointLights.emplace_back(pl);
 	}
 
-	void DeferredRenderer::setEnvironment(PBREnvironment &environment)
+	void DeferredRenderer::setEnvironment(const PBREnvironment &environment)
 	{
 		m_Environment = environment;
 	}
 
-	void DeferredRenderer::setCamera(Mat4 view, Mat4 projection)
+	void DeferredRenderer::setCamera(const Mat4 &view, const Mat4 &projection)
 	{
 		m_View = view;
 		m_Projection = projection;

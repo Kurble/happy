@@ -19,5 +19,6 @@ using namespace std;
 
 #include <wrl\client.h>
 using Microsoft::WRL::ComPtr;
+using Microsoft::WRL::WeakRef;
 
 #define THROW_ON_FAIL(x) {HRESULT hr = x; if (FAILED(hr)) { OutputDebugString(_com_error(hr).ErrorMessage()); throw std::exception("D3D11 Error. See debug log.");}}

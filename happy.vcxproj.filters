@@ -50,6 +50,9 @@
     <ClInclude Include="Sphere.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="Resources.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
@@ -112,6 +115,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="WICLoader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Resources.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

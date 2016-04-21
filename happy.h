@@ -6,4 +6,4 @@
 #include "PBREnvironment.h"
 #include "RenderMesh.h"
 #include "DeferredRenderer.h"
-#include "AssetLoaders.h"
+#include "Resources.h"

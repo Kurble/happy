@@ -13,14 +13,16 @@ namespace happy
 	public:
 		DeferredRenderer(const RenderingContext* pRenderContext);
 
+		const RenderingContext* getContext() const;
+
 		void resize(unsigned int width, unsigned int height);
 		void clear();
 		
-		void pushRenderMesh(RenderMesh &mesh, Mat4 &transform);
-		void pushLight(Vec3 position, Vec3 color, float radius, float falloff);
+		void pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform);
+		void pushLight(const Vec3 &position, const Vec3 &color, const float radius, const float falloff);
 
-		void setEnvironment(PBREnvironment &environment);
-		void setCamera(Mat4 view, Mat4 projection);
+		void setEnvironment(const PBREnvironment &environment);
+		void setCamera(const Mat4 &view, const Mat4 &projection);
 
 		void render() const;
 
