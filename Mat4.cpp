@@ -429,7 +429,6 @@ Vec3 Mat4::unproject(Vec3 _v, float* viewport) {
 	v.x = v.x * 2.0f - 1.0f;
 	v.y = v.y * 2.0f - 1.0f;
 	v.z = v.z * 2.0f - 1.0f;
-	v.y *= -1;
 
 	Vec4 o = i * v;
 	float factor = 1.0f / o.w;
