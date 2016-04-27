@@ -54,7 +54,7 @@ namespace happy
 					fin.ignore(512, '\n');
 
 					vt.y = 1.0f - vt.y;
-					texcoords.push_back(vt*5);
+					texcoords.push_back(vt);
 					break;
 				}
 
