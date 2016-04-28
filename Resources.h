@@ -19,6 +19,8 @@ namespace happy
 
 		ComPtr<ID3D11ShaderResourceView> getTexture(std::string filePath);
 
+		std::string getFilePath(std::string localPath);
+
 	private:
 		RenderingContext *m_pRenderContext;
 		string m_BasePath;

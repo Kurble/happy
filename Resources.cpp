@@ -98,4 +98,9 @@ namespace happy
 
 		return getCubemap(files);
 	}
+
+	std::string Resources::getFilePath(std::string localPath)
+	{
+		return m_BasePath + localPath;
+	}
 }
