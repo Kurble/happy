@@ -63,7 +63,7 @@ struct Vec2
 			);
 	}
 
-	float dot(Vec2 &o) {
+	float dot(const Vec2 &o) {
 		return x*o.x + y*o.y;
 	}
 
