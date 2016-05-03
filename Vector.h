@@ -51,11 +51,11 @@ struct Vec2
 		return x < other.x;
 	}
 
-	float mag() {
+	float mag() const {
 		return sqrtf(x*x + y*y);
 	}
 
-	Vec2 normalized() {
+	Vec2 normalized() const {
 		float f = 1.0f / mag();
 		return Vec2(
 			x * f,
@@ -63,7 +63,7 @@ struct Vec2
 			);
 	}
 
-	float dot(const Vec2 &o) {
+	float dot(const Vec2 &o) const {
 		return x*o.x + y*o.y;
 	}
 
