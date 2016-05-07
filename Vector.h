@@ -67,6 +67,10 @@ struct Vec2
 		return x*o.x + y*o.y;
 	}
 
+	float cross(const Vec2 &b) const {
+		return x*b.y - y*b.x;
+	}
+
 	float x;
 	float y;
 };
