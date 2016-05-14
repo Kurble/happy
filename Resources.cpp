@@ -38,6 +38,31 @@ namespace happy
 		return result;
 	}
 
+	RenderMesh Resources::getSkin(string skinPath, string albedoRoughness, string normalMetallic)
+	{
+		RenderMesh result;
+		bool found = false;
+
+		for (auto it = m_CachedRenderMeshes.begin(); it != m_CachedRenderMeshes.end(); ++it)
+		{
+			auto &cached = *it;
+			if (cached.first == skinPath)
+			{
+				result = cached.second;
+				found = true;
+			}
+		}
+
+		if (!found)
+		{
+			result = loadSkinFromFile(m_pRenderContext, m_BasePath + skinPath, "", "");
+			m_CachedRenderMeshes.emplace_back(skinPath, result);
+		}
+		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.length() ? getTexture(albedoRoughness) : nullptr);
+		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.length() ? getTexture(normalMetallic) : nullptr);
+		return result;
+	}
+
 	ComPtr<ID3D11ShaderResourceView> Resources::getTexture(string filePath)
 	{
 		ComPtr<ID3D11ShaderResourceView> result;

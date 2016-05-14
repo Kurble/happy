@@ -7,6 +7,7 @@
 #include "CompiledShaders\VertexPositionTexcoord.h"
 #include "CompiledShaders\VertexPositionNormalTexcoord.h"
 #include "CompiledShaders\VertexPositionNormalTangentBinormalTexcoord.h"
+#include "CompiledShaders\VertexPositionNormalTangentBinormalTexcoordIndicesWeights.h"
 #include "CompiledShaders\GeometryPS.h"
 //----------------------------------------------------------------------
 
@@ -137,6 +138,7 @@ namespace happy
 		CreateVertexShader<VertexPositionTexcoord>(m_pVSPositionTexcoord, m_pILPositionTexcoord, g_shVertexPositionTexcoord);
 		CreateVertexShader<VertexPositionNormalTexcoord>(m_pVSPositionNormalTexcoord, m_pILPositionNormalTexcoord, g_shVertexPositionNormalTexcoord);
 		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoord>(m_pVSPositionNormalTangentBinormalTexcoord, m_pILPositionNormalTangentBinormalTexcoord, g_shVertexPositionNormalTangentBinormalTexcoord);
+		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoordIndicesWeights>(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights, m_pILPositionNormalTangentBinormalTexcoordIndicesWeights, g_shVertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 		CreatePixelShader(m_pPSGeometry, g_shGeometryPS);
 		
 		// Rendering shaders
@@ -327,6 +329,7 @@ namespace happy
 		m_GeometryPositionTexcoord.clear();
 		m_GeometryPositionNormalTexcoord.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoord.clear();
+		m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.clear();
 
 		m_PointLights.clear();
 	}
@@ -343,6 +346,9 @@ namespace happy
 			break;
 		case VertexType::VertexPositionNormalTangentBinormalTexcoord:
 			m_GeometryPositionNormalTangentBinormalTexcoord.emplace_back(mesh, transform);
+			break;
+		case VertexType::VertexPositionNormalTangentBinormalTexcoordIndicesWeights:
+			m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.emplace_back(mesh, transform);
 			break;
 		}
 	}
@@ -486,6 +492,35 @@ namespace happy
 			context.Unmap(m_pCBObject.Get(), 0);
 
 			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoord);
+			UINT offset = 0;
+			ID3D11Buffer* buffer = elem.first.getVtxBuffer();
+
+			ID3D11ShaderResourceView* textures[] =
+			{
+				elem.first.getAlbedoRoughnessMap(),
+				elem.first.getNormalMetallicMap()
+			};
+
+			context.PSSetShaderResources(0, 2, textures);
+			context.IASetIndexBuffer(elem.first.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
+			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+			context.DrawIndexed((UINT)elem.first.getIndexCount(), 0, 0);
+		}
+
+		//-------------------------------------------------------------
+		// Render VertexPositionNormalTangentBinormalTexcoordIndicesWeights elements
+		context.IASetInputLayout(m_pILPositionNormalTangentBinormalTexcoordIndicesWeights.Get());
+		context.VSSetShader(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights.Get(), nullptr, 0);
+		context.VSSetConstantBuffers(0, 2, constBuffers);
+		for (const auto &elem : m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights)
+		{
+			objectCB.world = elem.second;
+			D3D11_MAPPED_SUBRESOURCE msr;
+			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
+			context.Unmap(m_pCBObject.Get(), 0);
+
+			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 			UINT offset = 0;
 			ID3D11Buffer* buffer = elem.first.getVtxBuffer();
 

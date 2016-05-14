@@ -8,6 +8,8 @@ namespace happy
 	
 	RenderMesh loadRenderMeshFromObj(RenderingContext *pRenderContext, std::string objPath, std::string albedoRoughnessPath, std::string normalMetallicPath);
 
+	RenderMesh loadSkinFromFile(RenderingContext *pRenderContext, std::string skinPath, std::string albedoRoughnessPath, std::string normalMetallicPath);
+
 	ComPtr<ID3D11ShaderResourceView> loadCubemapWIC(RenderingContext *pRenderContext, std::string filePath[6]);
 
 	ComPtr<ID3D11ShaderResourceView> loadCubemapWICFolder(RenderingContext *pRenderContext, std::string folderPath, std::string format);

@@ -206,6 +206,12 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
+    <FxCompile Include="VertexPositionNormalTangentBinormalTexcoordIndicesWeights.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="VertexPositionNormalTexcoord.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
@@ -228,6 +234,7 @@
     <ClCompile Include="RenderingContext.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
     <ClCompile Include="Resources.cpp" />
+    <ClCompile Include="SkinLoader.cpp" />
     <ClCompile Include="VertexTypes.cpp" />
     <ClCompile Include="WICLoader.cpp" />
   </ItemGroup>

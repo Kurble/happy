@@ -88,6 +88,9 @@
     <FxCompile Include="SphereVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="VertexPositionNormalTangentBinormalTexcoordIndicesWeights.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeferredRenderer.cpp">
@@ -118,6 +121,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Resources.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinLoader.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

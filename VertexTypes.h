@@ -12,6 +12,7 @@ namespace happy
 		VertexPositionTexcoord,
 		VertexPositionNormalTexcoord,
 		VertexPositionNormalTangentBinormalTexcoord,
+		VertexPositionNormalTangentBinormalTexcoordIndicesWeights,
 	};
 
 	typedef uint16_t Index16;
@@ -49,5 +50,20 @@ namespace happy
 		static const D3D11_INPUT_ELEMENT_DESC Elements[5];
 		static const UINT ElementCount = 5;
 		static const VertexType Type = VertexType::VertexPositionNormalTangentBinormalTexcoord;
+	};
+
+	struct VertexPositionNormalTangentBinormalTexcoordIndicesWeights
+	{
+		Vec4 pos;
+		Vec3 normal;
+		Vec3 tangent;
+		Vec3 binormal;
+		Vec2 texcoord;
+		Index16 indices[4];
+		Vec4 weights;
+
+		static const D3D11_INPUT_ELEMENT_DESC Elements[7];
+		static const UINT ElementCount = 7;
+		static const VertexType Type = VertexType::VertexPositionNormalTangentBinormalTexcoordIndicesWeights;
 	};
 }

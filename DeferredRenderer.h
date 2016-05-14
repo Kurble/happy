@@ -60,9 +60,11 @@ namespace happy
 		ComPtr<ID3D11InputLayout>         m_pILPositionTexcoord;
 		ComPtr<ID3D11InputLayout>         m_pILPositionNormalTexcoord;
 		ComPtr<ID3D11InputLayout>         m_pILPositionNormalTangentBinormalTexcoord;
+		ComPtr<ID3D11InputLayout>         m_pILPositionNormalTangentBinormalTexcoordIndicesWeights;
 		ComPtr<ID3D11VertexShader>        m_pVSPositionTexcoord;
 		ComPtr<ID3D11VertexShader>        m_pVSPositionNormalTexcoord;
 		ComPtr<ID3D11VertexShader>        m_pVSPositionNormalTangentBinormalTexcoord;
+		ComPtr<ID3D11VertexShader>        m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights;
 		ComPtr<ID3D11PixelShader>         m_pPSGeometry;
 		ComPtr<ID3D11SamplerState>        m_pGSampler;
 		ComPtr<ID3D11Buffer>              m_pCBScene;
@@ -110,7 +112,8 @@ namespace happy
 		PBREnvironment                    m_Environment;
 		RenderList                        m_GeometryPositionTexcoord;
 		RenderList                        m_GeometryPositionNormalTexcoord;
-		RenderList                        m_GeometryPositionNormalTangentBinormalTexcoord;									   
+		RenderList                        m_GeometryPositionNormalTangentBinormalTexcoord;
+		RenderList                        m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
 		vector<PointLight>                m_PointLights;
 	};
 }
