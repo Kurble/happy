@@ -89,6 +89,7 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 	{
 		happy::VertexPositionNormalTangentBinormalTexcoordIndicesWeights v;
 		v.pos = toVec4(mesh->GetControlPointAt(cp));
+		v.pos.w = 1.0f;
 		v.normal = Vec3(0, 0, 0);
 		v.tangent = Vec3(0, 0, 0);
 		v.binormal = Vec3(0, 0, 0);
@@ -183,8 +184,8 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 		for (unsigned tri = 1; tri < vertices - 1; ++tri)
 		{
 			meshIndices.push_back(firstIdx);
-			meshIndices.push_back(firstIdx + tri);
 			meshIndices.push_back(firstIdx + tri + 1);
+			meshIndices.push_back(firstIdx + tri);
 		}
 	}
 
