@@ -2,6 +2,7 @@
 
 #include "RenderingContext.h"
 #include "RenderMesh.h"
+#include "Skins.h"
 #include "PBREnvironment.h"
 
 namespace happy
@@ -19,6 +20,7 @@ namespace happy
 		void clear();
 		
 		void pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform);
+		void pushSkinRenderItem(const SkinRenderItem &skin);
 		void pushLight(const Vec3 &position, const Vec3 &color, const float radius, const float falloff);
 
 		void setEnvironment(const PBREnvironment &environment);
@@ -113,7 +115,7 @@ namespace happy
 		RenderList                        m_GeometryPositionTexcoord;
 		RenderList                        m_GeometryPositionNormalTexcoord;
 		RenderList                        m_GeometryPositionNormalTangentBinormalTexcoord;
-		RenderList                        m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
+		vector<SkinRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
 		vector<PointLight>                m_PointLights;
 	};
 }

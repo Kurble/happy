@@ -53,6 +53,9 @@
     <ClInclude Include="Resources.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="Skins.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
@@ -124,6 +127,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="SkinLoader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Skins.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

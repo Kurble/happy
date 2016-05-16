@@ -36,6 +36,9 @@ namespace happy
 	struct CBufferObject
 	{
 		Mat4 world;
+		float blendAnim;
+		float blendAnim1;
+		float blendFrame;
 	};
 
 	struct CBufferPointLight
@@ -334,6 +337,11 @@ namespace happy
 		m_PointLights.clear();
 	}
 
+	void DeferredRenderer::pushSkinRenderItem(const SkinRenderItem &skin)
+	{
+		m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.push_back(skin);
+	}
+
 	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform)
 	{
 		switch (mesh.getVertexType())
@@ -346,9 +354,6 @@ namespace happy
 			break;
 		case VertexType::VertexPositionNormalTangentBinormalTexcoord:
 			m_GeometryPositionNormalTangentBinormalTexcoord.emplace_back(mesh, transform);
-			break;
-		case VertexType::VertexPositionNormalTangentBinormalTexcoordIndicesWeights:
-			m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.emplace_back(mesh, transform);
 			break;
 		}
 	}
@@ -514,7 +519,9 @@ namespace happy
 		context.VSSetConstantBuffers(0, 2, constBuffers);
 		for (const auto &elem : m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights)
 		{
-			objectCB.world = elem.second;
+			objectCB.world = elem.m_World;
+			objectCB.blendAnim = elem.m_BlendAnimation;
+			objectCB.blendFrame = elem.m_BlendFrame;
 			D3D11_MAPPED_SUBRESOURCE msr;
 			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
 			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
@@ -522,18 +529,24 @@ namespace happy
 
 			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 			UINT offset = 0;
-			ID3D11Buffer* buffer = elem.first.getVtxBuffer();
+			ID3D11Buffer* buffer = elem.m_Skin.getVtxBuffer();
 
 			ID3D11ShaderResourceView* textures[] =
 			{
-				elem.first.getAlbedoRoughnessMap(),
-				elem.first.getNormalMetallicMap()
+				elem.m_Skin.getAlbedoRoughnessMap(),
+				elem.m_Skin.getNormalMetallicMap()
 			};
 
+			ID3D11Buffer* buffers[] = 
+			{
+				elem.m_Skin.getBindPoseBuffer()
+			};
+
+			context.VSSetConstantBuffers(2, 1, buffers);
 			context.PSSetShaderResources(0, 2, textures);
-			context.IASetIndexBuffer(elem.first.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
+			context.IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
 			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
-			context.DrawIndexed((UINT)elem.first.getIndexCount(), 0, 0);
+			context.DrawIndexed((UINT)elem.m_Skin.getIndexCount(), 0, 0);
 		}
 	}
 

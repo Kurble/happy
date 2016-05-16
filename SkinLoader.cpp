@@ -10,9 +10,19 @@ namespace happy
 		return val;
 	}
 
-	RenderMesh loadSkinFromFile(RenderingContext *pRenderContext, std::string skinPath, std::string albedoMetallicPath, std::string normalRougnessPath)
+	RenderSkin loadSkinFromFile(RenderingContext *pRenderContext, std::string skinPath, std::string albedoMetallicPath, std::string normalRougnessPath)
 	{
 		std::ifstream fin(skinPath.c_str(), std::ios::in | std::ios::binary);
+
+		uint32_t boneCount = read<uint32_t>(fin);
+		vector<Mat4> bindPose;
+		bindPose.reserve(boneCount);
+		for (unsigned b = 0; b < boneCount; ++b)
+		{
+			Mat4 bind = read<Mat4>(fin);
+			bind.inverse();
+			bindPose.push_back(bind);
+		}
 
 		uint32_t vertexCount = read<uint32_t>(fin);
 		vector<VertexPositionNormalTangentBinormalTexcoordIndicesWeights> vertices;
@@ -41,12 +51,15 @@ namespace happy
 			indices.push_back(read<Index16>(fin));
 		}
 
-		RenderMesh mesh;
+		RenderSkin mesh;
 		mesh.setGeometry<VertexPositionNormalTangentBinormalTexcoordIndicesWeights, Index16>(
 			pRenderContext,
 			vertices.data(), vertices.size(),
 			indices.data(), indices.size()
 		);
+		mesh.setBindPose(
+			pRenderContext,
+			bindPose);
 		if (albedoMetallicPath.length()) mesh.setAlbedoRoughnessMap(pRenderContext, loadTextureWIC(pRenderContext, albedoMetallicPath));
 		if (normalRougnessPath.length()) mesh.setNormalMetallicMap(pRenderContext, loadTextureWIC(pRenderContext, normalRougnessPath));
 		return mesh;

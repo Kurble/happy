@@ -145,6 +145,7 @@
     <ClInclude Include="RendererCommon.h" />
     <ClInclude Include="RenderingContext.h" />
     <ClInclude Include="RenderMesh.h" />
+    <ClInclude Include="Skins.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="stdafx.h" />
@@ -233,6 +234,7 @@
     <ClCompile Include="PBREnvironment.cpp" />
     <ClCompile Include="RenderingContext.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
+    <ClCompile Include="Skins.cpp" />
     <ClCompile Include="Resources.cpp" />
     <ClCompile Include="SkinLoader.cpp" />
     <ClCompile Include="VertexTypes.cpp" />

@@ -38,12 +38,12 @@ namespace happy
 		return result;
 	}
 
-	RenderMesh Resources::getSkin(string skinPath, string albedoRoughness, string normalMetallic)
+	RenderSkin Resources::getSkin(string skinPath, string albedoRoughness, string normalMetallic)
 	{
-		RenderMesh result;
+		RenderSkin result;
 		bool found = false;
 
-		for (auto it = m_CachedRenderMeshes.begin(); it != m_CachedRenderMeshes.end(); ++it)
+		for (auto it = m_CachedRenderSkins.begin(); it != m_CachedRenderSkins.end(); ++it)
 		{
 			auto &cached = *it;
 			if (cached.first == skinPath)
@@ -56,7 +56,7 @@ namespace happy
 		if (!found)
 		{
 			result = loadSkinFromFile(m_pRenderContext, m_BasePath + skinPath, "", "");
-			m_CachedRenderMeshes.emplace_back(skinPath, result);
+			m_CachedRenderSkins.emplace_back(skinPath, result);
 		}
 		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.length() ? getTexture(albedoRoughness) : nullptr);
 		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.length() ? getTexture(normalMetallic) : nullptr);

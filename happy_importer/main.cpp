@@ -9,7 +9,7 @@
 
 using namespace std;
 
-int importer(string fbxPath, string skinOutPath, string skelOutPath, string animOutPath);
+int importer(string fbxPath, string skinOutPath, string animOutPath);
 
 static Vec4 toVec4(const FbxVector4 &fbx)
 {
@@ -28,7 +28,7 @@ static Vec2 toVec2(const FbxVector2 &fbx)
 
 int main(int argc, char** argv)
 {
-	importer("SwordmasterTest.FBX", "test.skin", "test.skel", "test.anim");
+	importer("SwordmasterTest.FBX", "test.skin", "test.anim");
 
 	if (argc >= 3)
 	{
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		cout << "usage: happy_importer <input> [-s <skin output>] [-k <skel output>] [-a <anim output>]" << endl;
+		cout << "usage: happy_importer <input> [-s <skin output>] [-a <anim output>]" << endl;
 		return 0;
 	}
 }
@@ -102,11 +102,15 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 		uniqueVertices.push_back(v);
 	}
 
+	ofstream fout(skinOut.c_str(), ios::out | ios::binary);
+
 	FbxSkin *skin = (FbxSkin*)mesh->GetDeformer(0, FbxDeformer::eSkin);
 	if (skin)
 	{
-		int boneCount = skin->GetClusterCount();
-		for (int boneIndex = 0; boneIndex < boneCount; ++boneIndex)
+		uint32_t boneCount = (unsigned)skin->GetClusterCount();
+		fout.write((const char*)&boneCount, sizeof(uint32_t));
+
+		for (unsigned boneIndex = 0; boneIndex < boneCount; ++boneIndex)
 		{
 			if (boneIndex >= ((happy::Index16) - 1))
 			{
@@ -115,6 +119,16 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 			}
 
 			FbxCluster *cluster = skin->GetCluster(boneIndex);
+
+			{
+				FbxAMatrix bindPoseMatrix;
+				cluster->GetTransformLinkMatrix(bindPoseMatrix);
+				Mat4 m;
+				for (int i = 0; i < 16; ++i) m.m[i] = (float)((double*)bindPoseMatrix)[i];
+
+				fout.write((const char*)m.m, sizeof(float) * 16);
+			}
+			
 
 			int    *boneVertexIndices = cluster->GetControlPointIndices();
 			double *boneVertexWeights = cluster->GetControlPointWeights();
@@ -141,6 +155,11 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 				}
 			}
 		}
+	}
+	else
+	{
+		uint32_t nope = 0;
+		fout.write((const char*)&nope, sizeof(uint32_t));
 	}
 
 	vector<happy::VertexPositionNormalTangentBinormalTexcoordIndicesWeights> meshVertices;
@@ -189,8 +208,6 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 		}
 	}
 
-	ofstream fout(skinOut.c_str(), ios::out | ios::binary);
-
 	uint32_t exportVertexCount = (uint32_t)meshVertices.size();
 	uint32_t exportIndexCount = (uint32_t)meshIndices.size();
 
@@ -217,17 +234,42 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 	fout.close();
 }
 
-void loadSkel(FbxMesh *mesh, string &skelOut)
+void loadAnim(FbxScene *scene, FbxMesh *mesh, string &animOut)
 {
-	//
+	FbxAnimEvaluator *animEvaluator = scene->GetAnimationEvaluator();
+	FbxTime time;
+	
+	time.SetFrame(0);
+
+	FbxSkin *skin = (FbxSkin*)mesh->GetDeformer(0, FbxDeformer::eSkin);
+	if (skin)
+	{
+		ofstream fout(animOut, ios::out | ios::binary);
+
+		uint32_t boneCount = (unsigned)skin->GetClusterCount();
+		fout.write((const char*)&boneCount, sizeof(uint32_t));
+
+		for (unsigned boneIndex = 0; boneIndex < boneCount; ++boneIndex)
+		{
+			if (boneIndex >= ((happy::Index16) - 1))
+			{
+				cout << "Warning: too many bones! Skipping..." << endl;
+				break;
+			}
+
+			FbxCluster *cluster = skin->GetCluster(boneIndex);
+			FbxNode    *bone = cluster->GetLink();
+
+			FbxAMatrix mat = bone->EvaluateGlobalTransform(time);
+			Mat4 m;
+			for (int i = 0; i < 16; ++i) m.m[i] = ((double*)mat)[i];
+
+			fout.write((const char*)&m.m, sizeof(Mat4));
+		}
+	}
 }
 
-void loadAnim(FbxNode *anim, string &animOut)
-{
-	//
-}
-
-void loadNode(FbxNode *fbxNode, string &skinOut, string &skelOut, string &animOut)
+void loadNode(FbxScene *scene, FbxNode *fbxNode, string &skinOut, string &animOut)
 {
 	int numAttributes = fbxNode->GetNodeAttributeCount();
 	for (int i = 0; i < numAttributes; i++)
@@ -241,9 +283,7 @@ void loadNode(FbxNode *fbxNode, string &skinOut, string &skelOut, string &animOu
 		{
 			if (skinOut.length() > 0) loadSkin((FbxMesh*)nodeAttributeFbx, skinOut);
 
-			if (skelOut.length() > 0) loadSkel((FbxMesh*)nodeAttributeFbx, skelOut);
-
-			if (animOut.length() > 0) loadAnim(fbxNode, animOut);
+			if (animOut.length() > 0) loadAnim(scene, (FbxMesh*)nodeAttributeFbx, animOut);
 			break;
 		}
 		}
@@ -253,11 +293,11 @@ void loadNode(FbxNode *fbxNode, string &skinOut, string &skelOut, string &animOu
 	int numChildren = fbxNode->GetChildCount();
 	for (int i = 0; i < numChildren; i++)
 	{
-		loadNode(fbxNode->GetChild(i), skinOut, skelOut, animOut);
+		loadNode(scene, fbxNode->GetChild(i), skinOut, animOut);
 	}
 }
 
-int importer(string fbxPath, string skinOut, string skelOut, string animOut)
+int importer(string fbxPath, string skinOut,string animOut)
 {
 	FbxManager    *sdk = FbxManager::Create();
 	FbxIOSettings *ios = FbxIOSettings::Create(sdk, "");
@@ -280,6 +320,6 @@ int importer(string fbxPath, string skinOut, string skelOut, string animOut)
 		imp->Destroy();
 	}
 
-	loadNode(scene->GetRootNode(), skinOut, skelOut, animOut);
+	loadNode(scene, scene->GetRootNode(), skinOut, animOut);
 	return 0;
 }
