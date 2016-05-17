@@ -237,34 +237,44 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 void loadAnim(FbxScene *scene, FbxMesh *mesh, string &animOut)
 {
 	FbxAnimEvaluator *animEvaluator = scene->GetAnimationEvaluator();
-	FbxTime time;
-	
-	time.SetFrame(0);
-
 	FbxSkin *skin = (FbxSkin*)mesh->GetDeformer(0, FbxDeformer::eSkin);
+
 	if (skin)
 	{
-		ofstream fout(animOut, ios::out | ios::binary);
+		uint32_t boneCount = min((unsigned)((happy::Index16)-1), (unsigned)skin->GetClusterCount());
+		uint32_t frameCount = 0;
 
-		uint32_t boneCount = (unsigned)skin->GetClusterCount();
-		fout.write((const char*)&boneCount, sizeof(uint32_t));
+		vector<FbxNode*> bones;
 
+		float fps = 0;
 		for (unsigned boneIndex = 0; boneIndex < boneCount; ++boneIndex)
 		{
-			if (boneIndex >= ((happy::Index16) - 1))
-			{
-				cout << "Warning: too many bones! Skipping..." << endl;
-				break;
-			}
-
 			FbxCluster *cluster = skin->GetCluster(boneIndex);
-			FbxNode    *bone = cluster->GetLink();
+			bones.push_back(cluster->GetLink());
+			FbxTimeSpan localInterval;
+			bones.back()->GetAnimationInterval(localInterval);
 
-			FbxAMatrix mat = bone->EvaluateGlobalTransform(time);
-			Mat4 m;
-			for (int i = 0; i < 16; ++i) m.m[i] = ((double*)mat)[i];
+			fps = (float)localInterval.GetDuration().GetFrameRate(FbxTime::EMode::eDefaultMode);
+			frameCount = max(frameCount, (unsigned)localInterval.GetDuration().GetFrameCount());
+		}
 
-			fout.write((const char*)&m.m, sizeof(Mat4));
+		ofstream fout(animOut, ios::out | ios::binary);
+		fout.write((const char*)&frameCount, sizeof(uint32_t));
+		fout.write((const char*)&boneCount, sizeof(uint32_t));
+
+		for (unsigned frameIndex = 0; frameIndex < frameCount; ++frameIndex)
+		{
+			FbxTime time;
+			time.SetFrame(frameIndex);
+
+			for (unsigned boneIndex = 0; boneIndex < boneCount; ++boneIndex)
+			{
+				Mat4 m;
+				FbxAMatrix mat = bones[boneIndex]->EvaluateGlobalTransform(time);
+				for (int i = 0; i < 16; ++i) m.m[i] = (float)(((double*)mat)[i]);
+
+				fout.write((const char*)&m.m, sizeof(Mat4));
+			}
 		}
 	}
 }

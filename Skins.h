@@ -17,6 +17,12 @@ namespace happy
 		ComPtr<ID3D11Buffer> m_pBindPose;
 	};
 
+	class Animation
+	{
+	public:
+		shared_ptr<vector<ComPtr<ID3D11Buffer>>> m_pFrames;
+	};
+
 	struct SkinRenderItem
 	{
 		RenderSkin m_Skin;
