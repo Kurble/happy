@@ -63,6 +63,29 @@ namespace happy
 		return result;
 	}
 
+	Animation Resources::getAnimation(string animPath)
+	{
+		Animation result;
+		bool found = false;
+
+		for (auto it = m_CachedAnimations.begin(); it != m_CachedAnimations.end(); ++it)
+		{
+			auto &cached = *it;
+			if (cached.first == animPath)
+			{
+				result = cached.second;
+				found = true;
+			}
+		}
+
+		if (!found)
+		{
+			result = loadAnimFromFile(m_pRenderContext, m_BasePath + animPath);
+			m_CachedAnimations.emplace_back(animPath, result);
+		}
+		return result;
+	}
+
 	ComPtr<ID3D11ShaderResourceView> Resources::getTexture(string filePath)
 	{
 		ComPtr<ID3D11ShaderResourceView> result;

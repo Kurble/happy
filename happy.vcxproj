@@ -134,6 +134,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Animation.h" />
     <ClInclude Include="AssetLoaders.h" />
     <ClInclude Include="CBuffers.h" />
     <ClInclude Include="DeferredRenderer.h" />
@@ -145,8 +146,9 @@
     <ClInclude Include="RendererCommon.h" />
     <ClInclude Include="RenderingContext.h" />
     <ClInclude Include="RenderMesh.h" />
-    <ClInclude Include="Skins.h" />
+    <ClInclude Include="RenderSkin.h" />
     <ClInclude Include="Resources.h" />
+    <ClInclude Include="SkinController.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Vector.h" />
@@ -227,6 +229,8 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="AnimationLoader.cpp" />
     <ClCompile Include="DeferredRenderer.cpp" />
     <ClCompile Include="Mat3.cpp" />
     <ClCompile Include="Mat4.cpp" />
@@ -234,8 +238,9 @@
     <ClCompile Include="PBREnvironment.cpp" />
     <ClCompile Include="RenderingContext.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
-    <ClCompile Include="Skins.cpp" />
+    <ClCompile Include="RenderSkin.cpp" />
     <ClCompile Include="Resources.cpp" />
+    <ClCompile Include="SkinController.cpp" />
     <ClCompile Include="SkinLoader.cpp" />
     <ClCompile Include="VertexTypes.cpp" />
     <ClCompile Include="WICLoader.cpp" />

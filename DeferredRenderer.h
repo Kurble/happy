@@ -2,7 +2,7 @@
 
 #include "RenderingContext.h"
 #include "RenderMesh.h"
-#include "Skins.h"
+#include "SkinController.h"
 #include "PBREnvironment.h"
 
 namespace happy

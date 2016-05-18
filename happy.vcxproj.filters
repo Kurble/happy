@@ -53,7 +53,13 @@
     <ClInclude Include="Resources.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="Skins.h">
+    <ClInclude Include="RenderSkin.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinController.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
@@ -129,7 +135,16 @@
     <ClCompile Include="SkinLoader.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Skins.cpp">
+    <ClCompile Include="AnimationLoader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderSkin.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinController.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

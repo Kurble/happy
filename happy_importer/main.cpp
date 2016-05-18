@@ -121,8 +121,7 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 			FbxCluster *cluster = skin->GetCluster(boneIndex);
 
 			{
-				FbxAMatrix bindPoseMatrix;
-				cluster->GetTransformLinkMatrix(bindPoseMatrix);
+				FbxAMatrix bindPoseMatrix = cluster->GetLink()->EvaluateGlobalTransform();
 				Mat4 m;
 				for (int i = 0; i < 16; ++i) m.m[i] = (float)((double*)bindPoseMatrix)[i];
 
@@ -259,6 +258,7 @@ void loadAnim(FbxScene *scene, FbxMesh *mesh, string &animOut)
 		}
 
 		ofstream fout(animOut, ios::out | ios::binary);
+		fout.write((const char*)&fps, sizeof(float));
 		fout.write((const char*)&frameCount, sizeof(uint32_t));
 		fout.write((const char*)&boneCount, sizeof(uint32_t));
 

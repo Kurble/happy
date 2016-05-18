@@ -36,9 +36,9 @@ namespace happy
 	struct CBufferObject
 	{
 		Mat4 world;
-		float blendAnim;
-		float blendAnim1;
-		float blendFrame;
+		float blendAnim[4];
+		float blendFrame[4];
+		unsigned int animationCount;
 	};
 
 	struct CBufferPointLight
@@ -520,8 +520,9 @@ namespace happy
 		for (const auto &elem : m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights)
 		{
 			objectCB.world = elem.m_World;
-			objectCB.blendAnim = elem.m_BlendAnimation;
-			objectCB.blendFrame = elem.m_BlendFrame;
+			objectCB.animationCount = elem.m_AnimationCount;
+			for (int i = 0; i < 4; ++i) objectCB.blendAnim[i] = (&elem.m_BlendAnimation.x)[i];
+			for (int i = 0; i < 4; ++i) objectCB.blendFrame[i] = (&elem.m_BlendFrame.x)[i];
 			D3D11_MAPPED_SUBRESOURCE msr;
 			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
 			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
@@ -537,12 +538,14 @@ namespace happy
 				elem.m_Skin.getNormalMetallicMap()
 			};
 
-			ID3D11Buffer* buffers[] = 
+			vector<ID3D11Buffer*> buffers = 
 			{
 				elem.m_Skin.getBindPoseBuffer()
 			};
 
-			context.VSSetConstantBuffers(2, 1, buffers);
+			for (unsigned i = 0; i < elem.m_AnimationCount * 2; ++i) buffers.push_back(elem.m_Frames[i]);
+
+			context.VSSetConstantBuffers(2, 1 + elem.m_AnimationCount, &buffers[0]);
 			context.PSSetShaderResources(0, 2, textures);
 			context.IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
 			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);

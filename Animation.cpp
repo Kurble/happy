@@ -1,34 +1,13 @@
 #include "stdafx.h"
-#include "Skins.h"
+#include "Animation.h"
 
 namespace happy
 {
-	void RenderSkin::setBindPose(const RenderingContext *pRenderContext, const vector<Mat4>& pose)
-	{
-		D3D11_BUFFER_DESC poseDesc;
-		ZeroMemory(&poseDesc, sizeof(poseDesc));
-
-		poseDesc.ByteWidth = (UINT)pose.size() * sizeof(Mat4);
-		poseDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		poseDesc.Usage = D3D11_USAGE_IMMUTABLE;
-
-		D3D11_SUBRESOURCE_DATA poseData;
-		ZeroMemory(&poseData, sizeof(poseData));
-		poseData.pSysMem = (void*)&pose[0];
-
-		THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&poseDesc, &poseData, m_pBindPose.GetAddressOf()));
-	}
-
-	ID3D11Buffer* RenderSkin::getBindPoseBuffer() const
-	{
-		return m_pBindPose.Get();
-	}
-
 	void Animation::setAnimation(const RenderingContext *pRenderContext, const vector<Mat4> &animation, const unsigned bones, const unsigned frames, const float framerate)
 	{
 		m_FrameRate = framerate;
-		m_Looping   = true;
-		m_pFrames   = make_shared<vector<ComPtr<ID3D11Buffer>>>();
+		m_Looping = true;
+		m_pFrames = make_shared<vector<ComPtr<ID3D11Buffer>>>();
 
 		D3D11_BUFFER_DESC poseDesc;
 		ZeroMemory(&poseDesc, sizeof(poseDesc));
@@ -55,5 +34,26 @@ namespace happy
 	void Animation::setLooping(bool looping)
 	{
 		m_Looping = looping;
+	}
+
+	ID3D11Buffer* Animation::getFrame0(float time) const
+	{
+		static unsigned hurdurr = 0;
+		hurdurr++;
+
+		return m_pFrames->at(hurdurr % m_pFrames->size()).Get();
+	}
+
+	ID3D11Buffer* Animation::getFrame1(float time) const
+	{
+		static unsigned hurdurr = 1;
+		hurdurr++;
+
+		return m_pFrames->at(hurdurr % m_pFrames->size()).Get();
+	}
+
+	float Animation::getFrameBlend(float time) const
+	{
+		return 0;
 	}
 }
