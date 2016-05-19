@@ -90,7 +90,7 @@ namespace happy
 			return a.second > b.second;
 		});
 
-		m_RenderItem.m_AnimationCount = min(4, influences.size());
+		m_RenderItem.m_AnimationCount = min(4, (unsigned)influences.size());
 		float total = 0;
 		for (unsigned a = 0; a < m_RenderItem.m_AnimationCount; ++a)
 		{

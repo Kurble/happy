@@ -20,7 +20,7 @@ namespace happy
 		Vec4 m_BlendFrame;
 		Vec4 m_BlendAnimation;
 
-		ID3D11Buffer* m_Frames[16];
+		ID3D11Buffer* m_Frames[8];
 	};
 
 	class SkinController

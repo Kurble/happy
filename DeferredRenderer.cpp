@@ -545,7 +545,7 @@ namespace happy
 
 			for (unsigned i = 0; i < elem.m_AnimationCount * 2; ++i) buffers.push_back(elem.m_Frames[i]);
 
-			context.VSSetConstantBuffers(2, 1 + elem.m_AnimationCount, &buffers[0]);
+			context.VSSetConstantBuffers(2, (UINT)buffers.size(), &buffers[0]);
 			context.PSSetShaderResources(0, 2, textures);
 			context.IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
 			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);

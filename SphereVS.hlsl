@@ -23,7 +23,7 @@ VSOut main(VSIn input)
 {
 	VSOut output;
 
-	output.position  = float4((input.position.xyz * lightSize) + lightPosition, 1);
+	output.position  = float4((input.position.xyz * lightSize) + lightPosition.xyz, 1);
 	output.position  = mul(view, output.position);
 	output.position  = mul(projection, output.position);
 	output.screenPos = (output.position.xy / output.position.w)*float2(.5f, -.5f) + .5f;

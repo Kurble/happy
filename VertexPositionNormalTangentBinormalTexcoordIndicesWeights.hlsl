@@ -1,10 +1,14 @@
 #include "GBufferCommon.h"
 
-cbuffer CBufferBindPose    : register(b2) { float4x4 bindpose[126]; };
-cbuffer CBufferAnim0Frame0 : register(b3) { float4x4 pose0[126]; }
-cbuffer CBufferAnim0Frame1 : register(b4) { float4x4 pose1[126]; }
-cbuffer CBufferAnim1Frame0 : register(b5) { float4x4 pose2[126]; }
-cbuffer CBufferAnim1Frame1 : register(b6) { float4x4 pose3[126]; }
+cbuffer CBufferBindPose    : register(b2 ) { float4x4 bindpose[64]; };
+cbuffer CBufferAnim0Frame0 : register(b3 ) { float4x4 pose0[64]; }
+cbuffer CBufferAnim0Frame1 : register(b4 ) { float4x4 pose1[64]; }
+cbuffer CBufferAnim1Frame0 : register(b5 ) { float4x4 pose2[64]; }
+cbuffer CBufferAnim1Frame1 : register(b6 ) { float4x4 pose3[64]; }
+cbuffer CBufferAnim0Frame0 : register(b7 ) { float4x4 pose4[64]; }
+cbuffer CBufferAnim0Frame1 : register(b9 ) { float4x4 pose5[64]; }
+cbuffer CBufferAnim1Frame0 : register(b10) { float4x4 pose6[64]; }
+cbuffer CBufferAnim1Frame1 : register(b11) { float4x4 pose7[64]; }
 
 struct VSIn
 {
@@ -25,10 +29,11 @@ float4x4 resolveBoneMatrix(uint bone)
 	}
 	else
 	{
-		float4x4 animation = lerp(pose0[bone], pose1[bone], frameBlend.x);
-
-		float4x4 result = mul(animation, bindpose[bone]);
-		return result;
+		float4x4 animation                 = animationBlend.x * lerp(pose0[bone], pose1[bone], frameBlend.x);
+		if (animationCount > 1) animation += animationBlend.y * lerp(pose2[bone], pose3[bone], frameBlend.y);
+		if (animationCount > 2) animation += animationBlend.z * lerp(pose4[bone], pose5[bone], frameBlend.z);
+		if (animationCount > 3) animation += animationBlend.w * lerp(pose6[bone], pose7[bone], frameBlend.w);
+		return mul(animation, bindpose[bone]);
 	}
 }
 
@@ -48,9 +53,9 @@ VSOut main(VSIn input)
 	output.position  = mul(world,           output.position);
 	output.position  = mul(view,            output.position);
 	output.position  = mul(projection,      output.position);
-	output.normal    = mul(normalTransform, input.normal);
-	output.tangent   = mul(normalTransform, input.tangent);
-	output.binormal  = mul(normalTransform, input.binormal);
+	output.normal    = normalize(mul(normalTransform, input.normal));
+	output.tangent   = normalize(mul(normalTransform, input.tangent));
+	output.binormal  = normalize(mul(normalTransform, input.binormal));
 	output.texcoord0 = input.texcoord;
 	output.texcoord1 = input.texcoord;
 

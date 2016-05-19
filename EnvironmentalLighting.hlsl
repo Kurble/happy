@@ -11,9 +11,9 @@ Texture2D<float>  g_DepthBuffer              : register(t3);
 TextureCubeArray<float4> g_Lighting          : register(t4);
 TextureCube<float4>      g_Environment       : register(t5);
 
-float4 sampleEnv(float3 normal, float index)
+float3 sampleEnv(float3 normal, float index)
 {
-	return g_Lighting.Sample(g_TextureSampler, float4(normal.x, normal.z, normal.y, index));
+	return g_Lighting.Sample(g_TextureSampler, float4(normal.x, normal.z, normal.y, index)).xyz;
 }
 
 float4 main(VSOut input) : SV_TARGET

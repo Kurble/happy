@@ -20,7 +20,6 @@ namespace happy
 		for (unsigned b = 0; b < boneCount; ++b)
 		{
 			Mat4 bind = read<Mat4>(fin);
-			//bind.swapHandedness();
 			bind.inverse();
 			bindPose.push_back(bind);
 		}
@@ -41,6 +40,8 @@ namespace happy
 			vertex.indices[2] = read<Index16>(fin);
 			vertex.indices[3] = read<Index16>(fin);
 			vertex.weights    = read<Vec4>(fin);
+
+			vertex.weights = vertex.weights * (1.0f/(vertex.weights.x+vertex.weights.y+vertex.weights.z+vertex.weights.w));
 			vertices.push_back(vertex);
 		}
 

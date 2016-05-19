@@ -38,8 +38,8 @@ namespace happy
 
 	ID3D11Buffer* Animation::getFrame0(float time) const
 	{
-		unsigned frame = floorf(time * m_FrameRate);
-		if (!m_Looping) frame = min(m_pFrames->size() - 1, frame);
+		unsigned frame = (unsigned)floorf(time * m_FrameRate);
+		if (!m_Looping) frame = min((unsigned)m_pFrames->size() - 1, frame);
 		else            frame = (frame % m_pFrames->size());
 
 		return m_pFrames->at(frame).Get();
@@ -47,8 +47,8 @@ namespace happy
 
 	ID3D11Buffer* Animation::getFrame1(float time) const
 	{
-		unsigned frame = floorf(time * m_FrameRate) + 1;
-		if (!m_Looping) frame = min(m_pFrames->size() - 1, frame);
+		unsigned frame = (unsigned)floorf(time * m_FrameRate) + 1;
+		if (!m_Looping) frame = min((unsigned)m_pFrames->size() - 1, frame);
 		else            frame = (frame % m_pFrames->size());
 
 		return m_pFrames->at(frame).Get();
