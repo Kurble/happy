@@ -20,6 +20,7 @@ namespace happy
 		for (unsigned b = 0; b < boneCount; ++b)
 		{
 			Mat4 bind = read<Mat4>(fin);
+			//bind.swapHandedness();
 			bind.inverse();
 			bindPose.push_back(bind);
 		}

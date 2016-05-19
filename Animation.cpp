@@ -13,7 +13,7 @@ namespace happy
 		ZeroMemory(&poseDesc, sizeof(poseDesc));
 
 		poseDesc.ByteWidth = (UINT)bones * sizeof(Mat4);
-		poseDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		poseDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		poseDesc.Usage = D3D11_USAGE_IMMUTABLE;
 
 		auto &bufs = *m_pFrames.get();
@@ -38,22 +38,24 @@ namespace happy
 
 	ID3D11Buffer* Animation::getFrame0(float time) const
 	{
-		static unsigned hurdurr = 0;
-		hurdurr++;
+		unsigned frame = floorf(time * m_FrameRate);
+		if (!m_Looping) frame = min(m_pFrames->size() - 1, frame);
+		else            frame = (frame % m_pFrames->size());
 
-		return m_pFrames->at(hurdurr % m_pFrames->size()).Get();
+		return m_pFrames->at(frame).Get();
 	}
 
 	ID3D11Buffer* Animation::getFrame1(float time) const
 	{
-		static unsigned hurdurr = 1;
-		hurdurr++;
+		unsigned frame = floorf(time * m_FrameRate) + 1;
+		if (!m_Looping) frame = min(m_pFrames->size() - 1, frame);
+		else            frame = (frame % m_pFrames->size());
 
-		return m_pFrames->at(hurdurr % m_pFrames->size()).Get();
+		return m_pFrames->at(frame).Get();
 	}
 
 	float Animation::getFrameBlend(float time) const
 	{
-		return 0;
+		return (time * m_FrameRate) - floorf(time * m_FrameRate);
 	}
 }

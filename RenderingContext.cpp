@@ -13,6 +13,23 @@ namespace happy
 		D3D_FEATURE_LEVEL featureLevels = D3D_FEATURE_LEVEL_11_0;
 		THROW_ON_FAIL(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, &featureLevels, 1, D3D11_SDK_VERSION, &m_pDevice, nullptr, &m_pContext));
 
+		#if defined(DEBUG) || defined(_DEBUG)  
+		ComPtr<ID3D11Debug> debug;
+		THROW_ON_FAIL(m_pDevice.As(&debug));
+		ComPtr<ID3D11InfoQueue> infoQueue;
+		THROW_ON_FAIL(debug.As(&infoQueue));
+		D3D11_MESSAGE_ID hide[] =
+		{
+			D3D11_MESSAGE_ID_DEVICE_DRAW_CONSTANT_BUFFER_TOO_SMALL,
+			// TODO: Add more message IDs here as needed 
+		};
+		D3D11_INFO_QUEUE_FILTER filter;
+		memset(&filter, 0, sizeof(filter));
+		filter.DenyList.NumIDs = _countof(hide);
+		filter.DenyList.pIDList = hide;
+		infoQueue->AddStorageFilterEntries(&filter);
+		#endif
+
 		m_Width = 0;
 		m_Height = 0;
 	}

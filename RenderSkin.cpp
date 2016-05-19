@@ -9,7 +9,7 @@ namespace happy
 		ZeroMemory(&poseDesc, sizeof(poseDesc));
 
 		poseDesc.ByteWidth = (UINT)pose.size() * sizeof(Mat4);
-		poseDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		poseDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		poseDesc.Usage = D3D11_USAGE_IMMUTABLE;
 
 		D3D11_SUBRESOURCE_DATA poseData;

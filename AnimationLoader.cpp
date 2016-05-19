@@ -26,6 +26,7 @@ namespace happy
 			for (unsigned b = 0; b < boneCount; ++b)
 			{
 				Mat4 pose = read<Mat4>(fin);
+				//pose.swapHandedness();
 				animation.push_back(pose);
 			}
 		}

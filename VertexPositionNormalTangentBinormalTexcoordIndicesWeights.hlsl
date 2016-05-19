@@ -26,8 +26,9 @@ float4x4 resolveBoneMatrix(uint bone)
 	else
 	{
 		float4x4 animation = lerp(pose0[bone], pose1[bone], frameBlend.x);
-		
-		return mul(animation, bindpose[bone]);
+
+		float4x4 result = mul(animation, bindpose[bone]);
+		return result;
 	}
 }
 
@@ -41,17 +42,15 @@ VSOut main(VSIn input)
 		input.weights.z * resolveBoneMatrix(input.indices.z) +
 		input.weights.w * resolveBoneMatrix(input.indices.w);
 
-	float4 huh = input.position;
-	huh.x = huh.x * -1;
-	huh.y = huh.y * -1;
+	float3x3 normalTransform = mul((float3x3)skinTransform, (float3x3)world);
 
-	output.position  = mul(skinTransform,   huh);
+	output.position  = mul(skinTransform,   input.position);
 	output.position  = mul(world,           output.position);
 	output.position  = mul(view,            output.position);
 	output.position  = mul(projection,      output.position);
-	output.normal    = mul((float3x3)world, input.normal);
-	output.tangent   = mul((float3x3)world, input.tangent);
-	output.binormal  = mul((float3x3)world, input.binormal);
+	output.normal    = mul(normalTransform, input.normal);
+	output.tangent   = mul(normalTransform, input.tangent);
+	output.binormal  = mul(normalTransform, input.binormal);
 	output.texcoord0 = input.texcoord;
 	output.texcoord1 = input.texcoord;
 

@@ -32,7 +32,7 @@ namespace happy
 		int getAnimationIndex(string name);
 
 		void setAnimationTimer(int id, system_clock::duration offset);
-		void setAnimationBlend(int id, float blend, float speed = 0);
+		void setAnimationBlend(int id, float blend, float duration = 0);
 		void setAnimationSpeed(int id, float multiplier);
 
 		void update();
@@ -50,8 +50,9 @@ namespace happy
 			system_clock::time_point m_Blender;
 
 			float m_SpeedMultiplier;
+			float m_BlendSource;
 			float m_BlendTarget;
-			float m_BlendSpeed;
+			float m_BlendDuration;
 
 			bool m_Looped;
 		};

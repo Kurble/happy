@@ -291,6 +291,33 @@ void Mat4::ortho(float left, float right, float bottom, float top, float nearZ, 
 	multiply(ortho);
 }
 
+void Mat4::swapHandedness() {
+	float tmp[16];
+
+	tmp[ 0] = m[ 0];
+	tmp[ 1] = m[ 1];
+	tmp[ 2] = -m[ 2];
+	tmp[ 3] = m[ 3];
+
+	tmp[ 4] = m[ 4];
+	tmp[ 5] = m[ 5];
+	tmp[ 6] = -m[ 6];
+	tmp[ 7] = m[ 7];
+
+	tmp[ 8] = -m[ 8];
+	tmp[ 9] = -m[ 9];
+	tmp[10] = m[10];
+	tmp[11] = -m[11];
+
+	tmp[12] = m[12];
+	tmp[13] = m[13];
+	tmp[14] =- m[14];
+	tmp[15] = m[15];
+	
+
+	memcpy(m, tmp, sizeof(m));
+}
+
 void Mat4::transpose() {
 	float tmp[16];
 

@@ -33,6 +33,7 @@ public:
 	void frustum(float left, float right, float bottom, float top, float _near, float _far);
 	void perspective(float fovY, float aspect, float _near, float _far);
 	void ortho(float left, float right, float bottom, float top, float _near, float _far);
+	void swapHandedness();
 	void transpose();
 	void inverse();
 	void identity();
