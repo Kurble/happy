@@ -35,7 +35,7 @@ namespace happy
 		void setAnimationBlend(int id, float blend, float duration = 0);
 		void setAnimationSpeed(int id, float multiplier);
 
-		void update();
+		void update(system_clock::time_point time);
 
 		const SkinRenderItem& getRenderItem() const;
 

@@ -74,14 +74,12 @@ namespace happy
 		m_States[id].m_SpeedMultiplier = multiplier;
 	}
 
-	void SkinController::update()
+	void SkinController::update(system_clock::time_point time)
 	{
-		auto t = system_clock::now();
-
 		vector<pair<unsigned,float>> influences;
 		for (unsigned i = 0; i < m_States.size(); ++i)
 		{
-			float blend = resolveBlend(m_States[i].m_Blender, t, m_States[i].m_BlendSource, m_States[i].m_BlendTarget, m_States[i].m_BlendDuration);
+			float blend = resolveBlend(m_States[i].m_Blender, time, m_States[i].m_BlendSource, m_States[i].m_BlendTarget, m_States[i].m_BlendDuration);
 			if (blend) influences.emplace_back(i, blend);
 		}
 
@@ -95,7 +93,7 @@ namespace happy
 		for (unsigned a = 0; a < m_RenderItem.m_AnimationCount; ++a)
 		{
 			auto &state = m_States[influences[a].first];
-			std::chrono::duration<float, std::ratio<1, 1>> timer(t - state.m_Timer);
+			std::chrono::duration<float, std::ratio<1, 1>> timer(time - state.m_Timer);
 
 			float x = timer.count() * state.m_SpeedMultiplier;
 			m_RenderItem.m_Frames[a * 2 + 0] = state.m_Anim.getFrame0(x);
