@@ -3,16 +3,13 @@ Deferred PBR rendering engine for DirectX 11.
 
 Features:
 - Deferred rendering
-- Deferred Screen Space Direction Occlusion
+- Deferred Screen Space Directional Occlusion
 - PBR with normal, roughness and metallic maps
 - Cubemap lighting
 - Texture loaders
 - OBJ loader
-
-TBA:
-- Point lights
-- Skinmesh format/fbx converter
-- Skinmesh rendering
+- Dynamic point lights
+- Skinmeshes imported from fbx
 
 # Setup
 Happy is very easy to setup. All you need to do is create a window and an event loop. The rest is handled by happy!
@@ -26,23 +23,18 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 	happy::RenderingContext context;
 	happy::DeferredRenderer renderer(&context);
+	happy::Resources        resources("Path\\To\\Resources...", &context);
 	context.attach(g_hWnd);
 	renderer.resize(context.getWidth(), context.getHeight());
 
 	g_pRenderingContext = &context;
 	g_pRenderer = &renderer;
 	
-	happy::PBREnvironment environment(happy::loadCubemapWICFolder(
-		&context,
-		"Path\\To\\Cubemap", "jpg"));
+	happy::PBREnvironment environment = resources.getCubemapFolder("cubemap", "jpg");
 	environment.convolute(&context, 32, 16);
 	renderer.setEnvironment(environment);
 
-	happy::RenderMesh testModel = happy::loadRenderMeshFromObj(
-		&context,
-		"Path\\To\\Mesh.obj",
-		"Path\\To\\Texture.png",
-		"Path\\To\\Normals.png");
+	happy::RenderMesh testModel = resources.getRenderMesh(&context, "Mesh.obj", "Texture.png", "Normals.png");
 
 	MSG msg = { 0 };
 	while (msg.message != WM_QUIT)
