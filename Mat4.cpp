@@ -56,9 +56,9 @@ Vec4 Mat4::operator* (const Vec4 &other) {
 	for (int i = 0; i < 4; i++)
 	{
 		v[i] = m[i + 0] * other.x +
-			m[i + 4] * other.y +
-			m[i + 8] * other.z +
-			m[i + 12] * other.w;
+			   m[i + 4] * other.y +
+			   m[i + 8] * other.z +
+			   m[i + 12] * other.w;
 	}
 
 	return tmp;
@@ -464,11 +464,24 @@ Vec3 Mat4::unproject(Vec3 _v, float* viewport) {
 }
 
 Vec2 Mat4::project(Vec3 _v, float* viewport) {
-	Vec4 v(_v.x, _v.y, _v.z, 1.0f);
-	Vec4 o = (*this) * v;
+	//Vec4 v(_v.x, _v.y, _v.z, 1.0f);
+	//Vec4 o = (*this) * v;
+	
+	float v[4];
+	for (int i = 0; i < 4; i++)
+	{
+		v[i] = m[i +  0]  * _v.x +
+			   m[i +  4]  * _v.y +
+			   m[i +  8]  * _v.z +
+			   m[i + 12];
+	}
 
-	return Vec2(lerp<float>((o.x / o.w)*0.5f + 0.5f, viewport[0], viewport[2]),
-		lerp<float>((o.y / o.w)*0.5f + 0.5f, viewport[3], viewport[1]));
+	float _x = (v[0] / v[3])*0.5f + 0.5f;
+	float _y = (v[1] / v[3])*0.5f + 0.5f;
+
+	return Vec2(
+		lerp<float>(viewport[0], viewport[2], _x),
+		lerp<float>(viewport[3], viewport[1], _y));
 }
 
 void Mat4::setRow(int r, Vec4 val)
