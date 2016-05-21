@@ -53,19 +53,18 @@ namespace happy
 		return -1;
 	}
 
-	void SkinController::setAnimationTimer(int id, system_clock::duration offset)
+	void SkinController::setAnimationTimer(int id, system_clock::time_point start, system_clock::duration offset)
 	{
-		m_States[id].m_Timer = system_clock::now() + offset;
+		m_States[id].m_Timer = start - offset;
 	}
 
-	void SkinController::setAnimationBlend(int id, float blend, float duration)
+	void SkinController::setAnimationBlend(int id, float blend, system_clock::time_point start, float duration)
 	{
 		auto &s = m_States[id];
-		auto t = system_clock::now();
 
 		s.m_BlendSource = resolveBlend(s.m_Blender, t, s.m_BlendSource, s.m_BlendTarget, s.m_BlendDuration);
 		s.m_BlendTarget = blend;
-		s.m_Blender = t;
+		s.m_Blender = start;
 		s.m_BlendDuration = duration;
 	}
 
