@@ -74,6 +74,11 @@ namespace happy
 		m_States[id].m_SpeedMultiplier = multiplier;
 	}
 
+	Mat4 &SkinController::worldMatrix()
+	{
+		return m_RenderItem.m_World;
+	}
+
 	void SkinController::update(system_clock::time_point time)
 	{
 		vector<pair<unsigned,float>> influences;
