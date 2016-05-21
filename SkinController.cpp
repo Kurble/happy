@@ -62,7 +62,7 @@ namespace happy
 	{
 		auto &s = m_States[id];
 
-		s.m_BlendSource = resolveBlend(s.m_Blender, t, s.m_BlendSource, s.m_BlendTarget, s.m_BlendDuration);
+		s.m_BlendSource = resolveBlend(s.m_Blender, start, s.m_BlendSource, s.m_BlendTarget, s.m_BlendDuration);
 		s.m_BlendTarget = blend;
 		s.m_Blender = start;
 		s.m_BlendDuration = duration;
