@@ -3,6 +3,7 @@
 #include "RenderMesh.h"
 #include "RenderSkin.h"
 #include "Animation.h"
+#include "TextureHandle.h"
 
 namespace happy
 {
@@ -19,11 +20,11 @@ namespace happy
 
 		Animation getAnimation(std::string animationPath);
 
-		ComPtr<ID3D11ShaderResourceView> getCubemap(std::string filePath[6]);
+		TextureHandle getCubemap(std::string filePath[6]);
 
-		ComPtr<ID3D11ShaderResourceView> getCubemapFolder(std::string folderPath, std::string format);
+		TextureHandle getCubemapFolder(std::string folderPath, std::string format);
 
-		ComPtr<ID3D11ShaderResourceView> getTexture(std::string filePath);
+		TextureHandle getTexture(std::string filePath);
 
 		std::string getFilePath(std::string localPath);
 

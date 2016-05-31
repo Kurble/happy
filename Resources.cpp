@@ -33,8 +33,8 @@ namespace happy
 			result = loadRenderMeshFromObj(m_pRenderContext, m_BasePath + objPath, "", "");
 			m_CachedRenderMeshes.emplace_back(objPath, result);
 		}
-		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.length() ? getTexture(albedoRoughness) : nullptr);
-		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.length() ? getTexture(normalMetallic) : nullptr);
+		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.length() ? getTexture(albedoRoughness).m_Handle : nullptr);
+		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.length() ? getTexture(normalMetallic).m_Handle : nullptr);
 		return result;
 	}
 
@@ -58,8 +58,8 @@ namespace happy
 			result = loadSkinFromFile(m_pRenderContext, m_BasePath + skinPath, "", "");
 			m_CachedRenderSkins.emplace_back(skinPath, result);
 		}
-		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.length() ? getTexture(albedoRoughness) : nullptr);
-		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.length() ? getTexture(normalMetallic) : nullptr);
+		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.length() ? getTexture(albedoRoughness).m_Handle : nullptr);
+		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.length() ? getTexture(normalMetallic).m_Handle : nullptr);
 		return result;
 	}
 
@@ -86,7 +86,7 @@ namespace happy
 		return result;
 	}
 
-	ComPtr<ID3D11ShaderResourceView> Resources::getTexture(string filePath)
+	TextureHandle Resources::getTexture(string filePath)
 	{
 		ComPtr<ID3D11ShaderResourceView> result;
 		for (auto it = m_CachedTextures.begin(); it != m_CachedTextures.end(); ++it)
@@ -94,16 +94,16 @@ namespace happy
 			auto &cached = *it;
 			if (cached.first == filePath)
 			{
-				return cached.second;
+				return{ cached.second };
 			}
 		}
 
 		result = loadTextureWIC(m_pRenderContext, m_BasePath + filePath);
 		m_CachedTextures.emplace_back(filePath, result);
-		return result;
+		return{ result };
 	}
 
-	ComPtr<ID3D11ShaderResourceView> Resources::getCubemap(string filePath[6])
+	TextureHandle Resources::getCubemap(string filePath[6])
 	{
 		string id = filePath[0];
 
@@ -113,7 +113,7 @@ namespace happy
 			auto &cached = *it;
 			if (cached.first == id)
 			{
-				return cached.second;
+				return{ cached.second };
 			}
 		}
 
@@ -129,10 +129,10 @@ namespace happy
 
 		result = loadCubemapWIC(m_pRenderContext, files);
 		m_CachedCubemaps.emplace_back(id, result);
-		return result;
+		return{ result };
 	}
 
-	ComPtr<ID3D11ShaderResourceView> Resources::getCubemapFolder(string filePath, string format)
+	TextureHandle Resources::getCubemapFolder(string filePath, string format)
 	{
 		std::string files[] =
 		{

@@ -151,6 +151,7 @@
     <ClInclude Include="SkinController.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="TextureHandle.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="VertexTypes.h" />
   </ItemGroup>

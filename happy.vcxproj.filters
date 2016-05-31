@@ -62,6 +62,9 @@
     <ClInclude Include="SkinController.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="TextureHandle.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
