@@ -34,6 +34,7 @@ namespace happy
 		void setAnimationTimer(int id, system_clock::time_point start, system_clock::duration offset);
 		void setAnimationBlend(int id, float blend, system_clock::time_point start, float duration = 0);
 		void setAnimationSpeed(int id, float multiplier);
+		void resetAllAnimationBlends();
 		Mat4 &worldMatrix();
 
 		void update(system_clock::time_point time);

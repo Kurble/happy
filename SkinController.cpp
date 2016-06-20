@@ -1,3 +1,4 @@
+#include "SkinController.h"
 #include "stdafx.h"
 #include "SkinController.h"
 
@@ -71,6 +72,16 @@ namespace happy
 	void SkinController::setAnimationSpeed(int id, float multiplier)
 	{
 		m_States[id].m_SpeedMultiplier = multiplier;
+	}
+
+	void SkinController::resetAllAnimationBlends()
+	{
+		for (auto &s : m_States)
+		{
+			s.m_BlendDuration = 0;
+			s.m_BlendSource = 0;
+			s.m_BlendTarget = 0;
+		}
 	}
 
 	Mat4 &SkinController::worldMatrix()

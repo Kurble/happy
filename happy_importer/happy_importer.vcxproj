@@ -133,12 +133,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="fbxImporter.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="texImporter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\happy.vcxproj">
       <Project>{d4fd92ce-2d7b-4c31-a5c3-f149ab24301f}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="happy_importer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
