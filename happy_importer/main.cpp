@@ -28,11 +28,20 @@ static Vec2 toVec2(const FbxVector2 &fbx)
 
 int main(int argc, char** argv)
 {
-	importer("SwordmasterTest.FBX", "test.skin", "test.anim");
-
 	if (argc >= 3)
 	{
-		// 
+		string exec = argv[0];
+		string input = argv[1];
+		string skin = "";
+		string anim = "";
+		for (int o = 2; o < argc; o += 2)
+		{
+			string option = argv[o];
+			if (option == "-s") skin = argv[o + 1];
+			if (option == "-a") anim = argv[o + 1];
+		}
+
+		importer(input, skin, anim);
 	}
 	else
 	{
