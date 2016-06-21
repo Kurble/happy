@@ -8,7 +8,7 @@ namespace happy
 {
 	static float resolveBlend(system_clock::time_point start, system_clock::time_point current, float source, float target, float duration)
 	{
-		if (duration)
+		if (duration && source != target)
 		{
 			std::chrono::duration<float, std::ratio<1, 1>> offset(current - start);
 			return lerp(source, target, fminf(1.0f, offset.count() / duration));
@@ -95,6 +95,7 @@ namespace happy
 		for (unsigned i = 0; i < m_States.size(); ++i)
 		{
 			float blend = resolveBlend(m_States[i].m_Blender, time, m_States[i].m_BlendSource, m_States[i].m_BlendTarget, m_States[i].m_BlendDuration);
+
 			if (blend) influences.emplace_back(i, blend);
 		}
 
