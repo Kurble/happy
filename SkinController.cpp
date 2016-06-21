@@ -74,13 +74,14 @@ namespace happy
 		m_States[id].m_SpeedMultiplier = multiplier;
 	}
 
-	void SkinController::resetAllAnimationBlends()
+	void SkinController::resetAllAnimationBlends(system_clock::time_point start, float duration)
 	{
 		for (auto &s : m_States)
 		{
-			s.m_BlendDuration = 0;
-			s.m_BlendSource = 0;
+			s.m_BlendSource = resolveBlend(s.m_Blender, start, s.m_BlendSource, s.m_BlendTarget, s.m_BlendDuration);
 			s.m_BlendTarget = 0;
+			s.m_Blender = start;
+			s.m_BlendDuration = duration;
 		}
 	}
 
