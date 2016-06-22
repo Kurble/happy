@@ -104,7 +104,8 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 			FbxCluster *cluster = skin->GetCluster(boneIndex);
 
 			{
-				FbxAMatrix bindPoseMatrix = cluster->GetLink()->EvaluateGlobalTransform();
+				FbxAMatrix bindPoseMatrix;
+				cluster->GetTransformLinkMatrix(bindPoseMatrix);
 				Mat4 m;
 				for (int i = 0; i < 16; ++i) m.m[i] = (float)((double*)bindPoseMatrix)[i];
 

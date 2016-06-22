@@ -23,7 +23,7 @@ struct VSIn
 
 float4x4 resolveBoneMatrix(uint bone)
 {
-	if (bone >= 126)
+	if (bone >= 63)
 	{
 		return 0;
 	}

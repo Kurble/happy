@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 		string fm = "";
 		string texture = "";
 
-		for (int o = 2; o < argc; o += 2)
+		for (int o = 1; o < argc; o += 2)
 		{
 			auto val = argv[o + 1];
 			string option = argv[o];
