@@ -23,7 +23,7 @@ GBufferOut main(VSOut input)
 
 	output.albedoRoughness = g_AlbedoRoughnessMap.Sample(g_TextureSampler, input.texcoord0);
 	float4 normalMetallic = g_NormalMetallicMap.Sample(g_TextureSampler, input.texcoord0);
-	float3 normal = mul(2.0f*normalMetallic.xyz-1.0f, normalMatrix);
+	float3 normal = normalize(mul(2.0f*normalMetallic.xyz-1.0f, normalMatrix));
 	float  metallic = normalMetallic.w;
 	output.normalMetallic = float4(normal.x*0.5f+0.5f, normal.y*0.5f + 0.5f, normal.z*0.5f + 0.5f, metallic);
 

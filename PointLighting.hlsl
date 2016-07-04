@@ -64,7 +64,7 @@ float4 main(VSOut input) : SV_TARGET
 
 		float intensity = saturate((lightSize - to_light_dist) / lightSize);
 		
-		float3 normal = normalMetallic.xyz * 2.0f - 1.0f;
+		float3 normal = normalize(normalMetallic.xyz * 2.0f - 1.0f);
 		float rough = albedoRoughness.w;
 		float invRough = 1 - rough;
 		float invMetal = 1 - normalMetallic.w;
@@ -72,7 +72,7 @@ float4 main(VSOut input) : SV_TARGET
 		float3 color = albedoRoughness.xyz * lightColor.xyz;
 
 		float3 diffuse = saturate(dot(normal, to_light_norm)) * color * intensity;
-		float3 specular = (pow(saturate(dot(reflect(viewNormal, normal), to_light_norm)), invRough *1000)*invRough) * color;
+		float3 specular = (pow(saturate(dot(reflect(viewNormal, normal), to_light_norm)), invRough *1000)*rough) * color;
 
 		return float4(lerp(diffuse, specular, reflectivity) * light_occlusion, 1.0f);
 	}
