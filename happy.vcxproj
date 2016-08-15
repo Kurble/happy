@@ -141,6 +141,7 @@
     <ClInclude Include="DSSDO_Kernel.h" />
     <ClInclude Include="GBufferCommon.h" />
     <ClInclude Include="happy.h" />
+    <ClInclude Include="Intersection.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="PBREnvironment.h" />
     <ClInclude Include="RendererCommon.h" />
@@ -233,6 +234,7 @@
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="AnimationLoader.cpp" />
     <ClCompile Include="DeferredRenderer.cpp" />
+    <ClCompile Include="Intersection.cpp" />
     <ClCompile Include="Mat3.cpp" />
     <ClCompile Include="Mat4.cpp" />
     <ClCompile Include="ObjLoader.cpp" />
