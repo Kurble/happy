@@ -49,7 +49,7 @@ VSOut main(VSIn input)
 
 	float3x3 normalTransform = mul((float3x3)skinTransform, (float3x3)world);
 
-	output.position  = mul(skinTransform,   input.position);
+	output.position =  mul(skinTransform,   input.position);
 	output.position  = mul(world,           output.position);
 	output.position  = mul(view,            output.position);
 	output.position  = mul(projection,      output.position);
