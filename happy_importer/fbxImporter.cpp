@@ -226,14 +226,13 @@ void loadAnim(FbxScene *scene, FbxMesh *mesh, string &animOut)
 	{
 		uint32_t boneCount = min((unsigned)((happy::Index16) - 1), (unsigned)skin->GetClusterCount());
 		uint32_t frameCount = 0;
+		float frameCountPrecise = 0;
+		float fps = 0;
 
 		vector<FbxNode*> bones;
 
-		FbxTimeSpan timespan;
-		skin->GetCluster(0)->GetLink()->GetAnimationInterval(timespan);
-		auto timeMode = FbxTime::EMode::eCustom;		
+		auto timeMode = FbxTime::EMode::eFrames30;
 		
-		float fps = 0;
 		for (unsigned boneIndex = 0; boneIndex < boneCount; ++boneIndex)
 		{
 			FbxCluster *cluster = skin->GetCluster(boneIndex);
@@ -241,21 +240,15 @@ void loadAnim(FbxScene *scene, FbxMesh *mesh, string &animOut)
 			FbxTimeSpan localInterval;
 			bones.back()->GetAnimationInterval(localInterval);
 
-			if (localInterval.GetStart() < timespan.GetStart()) timespan.SetStart(localInterval.GetStart());
-			if (localInterval.GetStop() > timespan.GetStop())   timespan.SetStop(localInterval.GetStop());
-
 			fps = (float)localInterval.GetDuration().GetFrameRate(timeMode);
 			frameCount = max(frameCount, (unsigned)localInterval.GetDuration().GetFrameCount(timeMode));
+			frameCountPrecise = fmaxf(frameCountPrecise, localInterval.GetDuration().GetFrameCountPrecise(timeMode));
 		}
-
-		std::cout << "Framerate: " << fps << std::endl;
-		std::cout << "Framecount 1: " << frameCount << std::endl;
-		float frameCount2 = timespan.GetDuration().GetFrameCountPrecise(timeMode);
-		std::cout << "Framecount 2: " << frameCount2 << std::endl;
 
 		ofstream fout(animOut, ios::out | ios::binary);
 		fout.write((const char*)&fps, sizeof(float));
 		fout.write((const char*)&frameCount, sizeof(uint32_t));
+		//fout.write((const char*)&frameCountPrecise, sizeof(float));
 		fout.write((const char*)&boneCount, sizeof(uint32_t));
 
 		for (unsigned frameIndex = 0; frameIndex < frameCount; ++frameIndex)
