@@ -1,8 +1,8 @@
 #include "RendererCommon.h"
 #include "DSSDO_Kernel.h"
 
-static const float g_OcclusionRadius = 0.13;
-static const float g_OcclusionMaxDistance = 1.3;
+static const float g_OcclusionRadius = 0.013;
+static const float g_OcclusionMaxDistance = 0.13;
 static const int g_Samples = 32;
 static const float2 g_NoiseTextureSize = float2(4, 4);
 

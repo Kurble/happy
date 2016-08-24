@@ -29,6 +29,23 @@ namespace happy
 
 			bufs.push_back(pose);
 		}
+
+		if (frames == 0)
+		{
+			Mat4 identity;
+			identity.identity();
+			vector<Mat4> stillFrame;
+			stillFrame.resize(bones, identity);
+
+			D3D11_SUBRESOURCE_DATA poseData;
+			ZeroMemory(&poseData, sizeof(poseData));
+			poseData.pSysMem = (void*)stillFrame.data();
+
+			ComPtr<ID3D11Buffer> pose;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&poseDesc, &poseData, pose.GetAddressOf()));
+
+			bufs.push_back(pose);
+		}
 	}
 
 	void Animation::setLooping(bool looping)

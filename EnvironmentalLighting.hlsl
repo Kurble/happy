@@ -38,7 +38,7 @@ float4 main(VSOut input) : SV_TARGET
 		float rough = albedoRoughness.w;
 		float invRough = 1 - rough;
 		float invMetal = 1 - normalMetallic.w;
-		float reflectivity = normalMetallic.w + invMetal * invRough * pow(1.0f+dot(viewNormal, normal), 4);
+		float reflectivity = normalMetallic.w +invMetal * invRough * pow(1.0f + dot(viewNormal, normal), 4);
 
 		float3 diffuse = sampleEnv(normal, convolutionStages - 1) * albedoRoughness.xyz;
 		float3 specular = sampleEnv(reflect(viewNormal, normal), (convolutionStages - 1) * albedoRoughness.w) * albedoRoughness.xyz;
