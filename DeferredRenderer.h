@@ -9,6 +9,51 @@ namespace happy
 {
 	using RenderList = vector<pair<RenderMesh, Mat4>>;
 
+	struct RendererConfiguration
+	{
+		bool     m_AOEnabled     = true;
+		unsigned m_AOSamples     = 32;
+		float    m_AOOcclusionRadius = 0.13f;
+		float    m_AOOcclusionMaxDistance = 1.3f;
+	};
+
+	struct CBufferScene
+	{
+		Mat4 view;
+		Mat4 projection;
+		Mat4 viewInverse;
+		Mat4 projectionInverse;
+		float width;
+		float height;
+		unsigned int convolutionStages;
+	};
+
+	struct CBufferObject
+	{
+		Mat4 world;
+		float blendAnim[4];
+		float blendFrame[4];
+		unsigned int animationCount;
+	};
+
+	struct CBufferPointLight
+	{
+		Vec4 position;
+		Vec4 color;
+		float scale;
+		float falloff;
+	};
+
+	struct CBufferDSSDO
+	{
+		float occlusionRadius = 0.1f;
+		float occlusionMaxDistance = 10.2f;
+		int   samples = 128;
+		int   padding = 0;
+
+		Vec4 random_points[128];
+	};
+
 	class DeferredRenderer
 	{
 	public:
@@ -25,11 +70,14 @@ namespace happy
 
 		void setEnvironment(const PBREnvironment &environment);
 		void setCamera(const Mat4 &view, const Mat4 &projection);
+		void setConfiguration(const RendererConfiguration &config);
 
 		void render() const;
 
 	private:
 		const RenderingContext *m_pRenderContext;
+
+		RendererConfiguration m_Config;
 
 		void renderGeometryToGBuffer() const;
 		void renderGBufferToBackBuffer() const;
@@ -98,6 +146,7 @@ namespace happy
 		ComPtr<ID3D11InputLayout>         m_pILScreenQuad;
 		ComPtr<ID3D11PixelShader>         m_pPSGlobalLighting;
 		ComPtr<ID3D11PixelShader>         m_pPSDSSDO;
+		ComPtr<ID3D11Buffer>              m_pCBDSSDO;
 		ComPtr<ID3D11Buffer>              m_pSphereVBuffer;
 		ComPtr<ID3D11Buffer>              m_pSphereIBuffer;
 		ComPtr<ID3D11VertexShader>        m_pVSPointLighting;
@@ -117,5 +166,6 @@ namespace happy
 		RenderList                        m_GeometryPositionNormalTangentBinormalTexcoord;
 		vector<SkinRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
 		vector<PointLight>                m_PointLights;
+		CBufferDSSDO                      m_DSSDOBuffer;
 	};
 }

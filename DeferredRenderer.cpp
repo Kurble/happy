@@ -22,33 +22,6 @@
 
 namespace happy
 {
-	struct CBufferScene
-	{
-		Mat4 view;
-		Mat4 projection;
-		Mat4 viewInverse;
-		Mat4 projectionInverse;
-		float width;
-		float height;
-		unsigned int convolutionStages;
-	};
-
-	struct CBufferObject
-	{
-		Mat4 world;
-		float blendAnim[4];
-		float blendFrame[4];
-		unsigned int animationCount;
-	};
-
-	struct CBufferPointLight
-	{
-		Vec4 position;
-		Vec4 color;
-		float scale;
-		float falloff;
-	};
-
 	DeferredRenderer::DeferredRenderer(const RenderingContext* pRenderContext)
 		: m_pRenderContext(pRenderContext)
 	{
@@ -135,6 +108,32 @@ namespace happy
 			bufferDesc.MiscFlags = 0;
 			bufferDesc.ByteWidth = (UINT)((sizeof(CBufferPointLight) + 15) / 16) * 16;
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBPointLighting));
+		}
+
+		// DSSDO CB
+		{
+			D3D11_BUFFER_DESC bufferDesc;
+			bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+			bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			bufferDesc.MiscFlags = 0;
+			bufferDesc.ByteWidth = (UINT)((sizeof(CBufferDSSDO) + 15) / 16) * 16;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBDSSDO));
+
+			for (unsigned i = 0; i < 128; ++i)
+			{
+				m_DSSDOBuffer.random_points[i] = Vec4(
+					-1.0f + (rand() % 2000) / 1000.0f,
+					-1.0f + (rand() % 2000) / 1000.0f,
+					-1.0f + (rand() % 2000) / 1000.0f,
+					-1.0f + (rand() % 2000) / 1000.0f
+				);
+			}
+
+			D3D11_MAPPED_SUBRESOURCE msr;
+			THROW_ON_FAIL(pRenderContext->getContext()->Map(m_pCBDSSDO.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+			memcpy(msr.pData, (void*)&m_DSSDOBuffer, ((sizeof(CBufferDSSDO) + 15) / 16) * 16);
+			pRenderContext->getContext()->Unmap(m_pCBDSSDO.Get(), 0);
 		}
 
 		// G-Buffer shaders
@@ -375,6 +374,26 @@ namespace happy
 		m_Projection = projection;
 	}
 
+	void DeferredRenderer::setConfiguration(const RendererConfiguration &config)
+	{
+		m_Config = config;
+
+		if (m_DSSDOBuffer.occlusionRadius != m_Config.m_AOOcclusionRadius ||
+			m_DSSDOBuffer.occlusionMaxDistance != m_Config.m_AOOcclusionMaxDistance ||
+			m_DSSDOBuffer.samples != m_Config.m_AOSamples)
+		{
+			m_DSSDOBuffer.occlusionRadius = m_Config.m_AOOcclusionRadius;
+			m_DSSDOBuffer.occlusionMaxDistance = m_Config.m_AOOcclusionMaxDistance;
+			m_DSSDOBuffer.samples = m_Config.m_AOSamples;
+
+			ID3D11DeviceContext& context = *m_pRenderContext->getContext();
+			D3D11_MAPPED_SUBRESOURCE msr;
+			THROW_ON_FAIL(context.Map(m_pCBDSSDO.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+			memcpy(msr.pData, (void*)&m_DSSDOBuffer, ((sizeof(CBufferDSSDO) + 15) / 16) * 16);
+			context.Unmap(m_pCBDSSDO.Get(), 0);
+		}
+	}
+
 	void DeferredRenderer::render() const
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
@@ -582,9 +601,16 @@ namespace happy
 		
 		//--------------------------------------------------------------------
 		// Generate DSSDO buffer
+		if (m_Config.m_AOEnabled)
 		{
+			ID3D11Buffer* constBuffers[] =
+			{
+				m_pCBDSSDO.Get()
+			};
+
 			context.OMSetRenderTargets(1, m_pGBufferTarget[2].GetAddressOf(), nullptr);
 			context.PSSetShader(m_pPSDSSDO.Get(), nullptr, 0);
+			context.PSSetConstantBuffers(2, 1, constBuffers);
 
 			srvs[0] = m_pGBufferView[0].Get();
 			srvs[1] = m_pGBufferView[1].Get();
