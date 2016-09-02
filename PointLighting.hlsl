@@ -66,9 +66,10 @@ float4 main(VSOut input) : SV_TARGET
 		
 		float3 normal = normalize(normalMetallic.xyz * 2.0f - 1.0f);
 		float rough = albedoRoughness.w;
+		float metal = normalMetallic.w;
 		float invRough = 1 - rough;
-		float invMetal = 1 - normalMetallic.w;
-		float reflectivity = normalMetallic.w + invMetal * invRough * pow(1.0f + dot(viewNormal, normal), 4);
+		float invMetal = 1 - metal;
+		float reflectivity = metal + invMetal*invRough*pow(1.0f + dot(viewNormal, normal), 4)*0.1f;
 		float3 color = albedoRoughness.xyz * lightColor.xyz;
 
 		float3 diffuse = saturate(dot(normal, to_light_norm)) * color * intensity;

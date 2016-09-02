@@ -2,6 +2,8 @@
 #include "DeferredRenderer.h"
 #include "Sphere.h"
 
+#include <algorithm>
+
 //----------------------------------------------------------------------
 // G-Buffer shaders
 #include "CompiledShaders\VertexPositionTexcoord.h"
@@ -16,6 +18,7 @@
 #include "CompiledShaders\ScreenQuadVS.h"
 #include "CompiledShaders\SphereVS.h"
 #include "CompiledShaders\DeferredDirectionalOcclusion.h"
+#include "CompiledShaders\EdgePreserveBlur.h"
 #include "CompiledShaders\EnvironmentalLighting.h"
 #include "CompiledShaders\PointLighting.h"
 //----------------------------------------------------------------------
@@ -65,7 +68,7 @@ namespace happy
 		{
 			D3D11_SAMPLER_DESC desc;
 			ZeroMemory(&desc, sizeof(desc));
-			desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+			desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 			desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
 			desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 			desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -110,30 +113,52 @@ namespace happy
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBPointLighting));
 		}
 
-		// DSSDO CB
+		// Random CB
 		{
 			D3D11_BUFFER_DESC bufferDesc;
 			bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 			bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 			bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 			bufferDesc.MiscFlags = 0;
-			bufferDesc.ByteWidth = (UINT)((sizeof(CBufferDSSDO) + 15) / 16) * 16;
-			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBDSSDO));
+			bufferDesc.ByteWidth = (UINT)((sizeof(CBufferRandom) + 15) / 16) * 16;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBRandom));
 
-			for (unsigned i = 0; i < 128; ++i)
+			CBufferRandom randomCB;
+
+			float xs[512], ys[512];
+			for (unsigned i = 0; i < 512; ++i)
 			{
-				m_DSSDOBuffer.random_points[i] = Vec4(
-					-1.0f + (rand() % 2000) / 1000.0f,
-					-1.0f + (rand() % 2000) / 1000.0f,
-					-1.0f + (rand() % 2000) / 1000.0f,
-					-1.0f + (rand() % 2000) / 1000.0f
-				);
+				int slotI = -4 + (i % 8);
+				float slotF = slotI / 4.0f;
+				xs[i] = slotF + (rand() / (float)(RAND_MAX * 4));
+				ys[i] = slotF + (rand() / (float)(RAND_MAX * 4));
+			}
+			for (unsigned i = 0; i < 512; i += 32)
+			{
+				std::random_shuffle(&xs[i], &xs[i + 32]);
+				std::random_shuffle(&ys[i], &ys[i + 32]);
+			}
+			for (unsigned i = 0; i < 512; ++i)
+			{
+				randomCB.random_points[i] = { xs[i], ys[i] };
 			}
 
 			D3D11_MAPPED_SUBRESOURCE msr;
-			THROW_ON_FAIL(pRenderContext->getContext()->Map(m_pCBDSSDO.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&m_DSSDOBuffer, ((sizeof(CBufferDSSDO) + 15) / 16) * 16);
-			pRenderContext->getContext()->Unmap(m_pCBDSSDO.Get(), 0);
+			THROW_ON_FAIL(pRenderContext->getContext()->Map(m_pCBRandom.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+			memcpy(msr.pData, (void*)&randomCB, ((sizeof(CBufferRandom) + 15) / 16) * 16);
+			pRenderContext->getContext()->Unmap(m_pCBRandom.Get(), 0);
+		}
+
+		// Effects CB
+		{
+			D3D11_BUFFER_DESC bufferDesc;
+			bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+			bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			bufferDesc.MiscFlags = 0;
+			bufferDesc.ByteWidth = (UINT)((sizeof(CBufferEffects) + 15) / 16) * 16;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBEffects[0]));
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBEffects[1]));
 		}
 
 		// G-Buffer shaders
@@ -147,6 +172,7 @@ namespace happy
 		CreateVertexShader<VertexPositionTexcoord>(m_pVSScreenQuad, m_pILScreenQuad, g_shScreenQuadVS);
 		CreateVertexShader<VertexPositionTexcoord>(m_pVSPointLighting, m_pILPointLighting, g_shSphereVS);
 		CreatePixelShader(m_pPSDSSDO, g_shDeferredDirectionalOcclusion);
+		CreatePixelShader(m_pPSBlur, g_shEdgePreserveBlur);
 		CreatePixelShader(m_pPSGlobalLighting, g_shEnvironmentalLighting);
 		CreatePixelShader(m_pPSPointLighting, g_shPointLighting);
 
@@ -281,6 +307,13 @@ namespace happy
 		m_ViewPort.TopLeftX = 0;
 		m_ViewPort.TopLeftY = 0;
 
+		m_BlurViewPort = m_ViewPort;
+		if (!m_Config.m_AOHiRes)
+		{
+			m_BlurViewPort.Width = (float)width / 2.0f;
+			m_BlurViewPort.Height = (float)height / 2.0f;
+		}
+
 		// Create G-Buffer
 		vector<unsigned char> texture(width * height * 4, 0);
 		D3D11_TEXTURE2D_DESC texDesc;
@@ -300,30 +333,43 @@ namespace happy
 		data.pSysMem = texture.data();
 		data.SysMemPitch = width * 4;
 
-		for (unsigned int i = 0; i < 3; ++i)
+		for (unsigned int i = 0; i < 4; ++i)
 		{
+			if ((i == 2 || i == 3) && !m_Config.m_AOHiRes)
+			{
+				texDesc.Width = width / 2;
+				texDesc.Height = height / 2;
+			}
+			else
+			{
+				texDesc.Width = width;
+				texDesc.Height = height;
+			}
+
 			THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &m_pGBuffer[i]));
 			THROW_ON_FAIL(device.CreateRenderTargetView(m_pGBuffer[i].Get(), nullptr, m_pGBufferTarget[i].GetAddressOf()));
 			THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[i].Get(), nullptr, m_pGBufferView[i].GetAddressOf()));
 		}
 
+		texDesc.Width = width;
+		texDesc.Height = height;
 		texDesc.Format = DXGI_FORMAT_R32_TYPELESS;
 		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-		THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &m_pGBuffer[3]));
+		THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &m_pGBuffer[4]));
 
 		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
 		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 		dsvDesc.Texture2D.MipSlice = 0;
 		dsvDesc.Flags = 0;
-		THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[3].Get(), &dsvDesc, m_pDepthBufferView.GetAddressOf()));
+		THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[4].Get(), &dsvDesc, m_pDepthBufferView.GetAddressOf()));
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MostDetailedMip = 0;
 		srvDesc.Texture2D.MipLevels = -1;
-		THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[3].Get(), &srvDesc, m_pGBufferView[3].GetAddressOf()));
+		THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[4].Get(), &srvDesc, m_pGBufferView[4].GetAddressOf()));
 	}
 
 	void DeferredRenderer::clear()
@@ -377,21 +423,6 @@ namespace happy
 	void DeferredRenderer::setConfiguration(const RendererConfiguration &config)
 	{
 		m_Config = config;
-
-		if (m_DSSDOBuffer.occlusionRadius != m_Config.m_AOOcclusionRadius ||
-			m_DSSDOBuffer.occlusionMaxDistance != m_Config.m_AOOcclusionMaxDistance ||
-			m_DSSDOBuffer.samples != m_Config.m_AOSamples)
-		{
-			m_DSSDOBuffer.occlusionRadius = m_Config.m_AOOcclusionRadius;
-			m_DSSDOBuffer.occlusionMaxDistance = m_Config.m_AOOcclusionMaxDistance;
-			m_DSSDOBuffer.samples = m_Config.m_AOSamples;
-
-			ID3D11DeviceContext& context = *m_pRenderContext->getContext();
-			D3D11_MAPPED_SUBRESOURCE msr;
-			THROW_ON_FAIL(context.Map(m_pCBDSSDO.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&m_DSSDOBuffer, ((sizeof(CBufferDSSDO) + 15) / 16) * 16);
-			context.Unmap(m_pCBDSSDO.Get(), 0);
-		}
 	}
 
 	void DeferredRenderer::render() const
@@ -415,6 +446,21 @@ namespace happy
 		THROW_ON_FAIL(context.Map(m_pCBScene.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
 		memcpy(msr.pData, (void*)&sceneCB, ((sizeof(CBufferScene) + 15) / 16) * 16);
 		context.Unmap(m_pCBScene.Get(), 0);
+
+		CBufferEffects effectsCB;
+		effectsCB.occlusionRadius = m_Config.m_AOOcclusionRadius;
+		effectsCB.occlusionMaxDistance = m_Config.m_AOOcclusionMaxDistance;
+		effectsCB.samples = m_Config.m_AOSamples;
+
+		for (int i = 0; i < 2; ++i)
+		{
+			effectsCB.blurDir = i ? Vec2(0, 1) : Vec2(1, 0);
+
+			D3D11_MAPPED_SUBRESOURCE msr;
+			THROW_ON_FAIL(context.Map(m_pCBEffects[i].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+			memcpy(msr.pData, (void*)&effectsCB, ((sizeof(CBufferEffects) + 15) / 16) * 16);
+			context.Unmap(m_pCBEffects[i].Get(), 0);
+		}
 
 		renderGeometryToGBuffer();
 		renderGBufferToBackBuffer();
@@ -576,6 +622,7 @@ namespace happy
 	{
 		float clearColor[] = { 0, 0, 0, 0 };
 		ID3D11ShaderResourceView* srvs[] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+		ID3D11ShaderResourceView* nullSRV = nullptr;
 
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
 		context.OMSetDepthStencilState(m_pRenderDepthState.Get(), 0);
@@ -605,20 +652,47 @@ namespace happy
 		{
 			ID3D11Buffer* constBuffers[] =
 			{
-				m_pCBDSSDO.Get()
+				m_pCBEffects[0].Get(),
+				m_pCBRandom.Get(),
 			};
 
+			context.RSSetViewports(1, &m_BlurViewPort);
+
+			// Shader 1: DSSDO
 			context.OMSetRenderTargets(1, m_pGBufferTarget[2].GetAddressOf(), nullptr);
 			context.PSSetShader(m_pPSDSSDO.Get(), nullptr, 0);
-			context.PSSetConstantBuffers(2, 1, constBuffers);
+			context.PSSetConstantBuffers(2, 2, constBuffers);
 
 			srvs[0] = m_pGBufferView[0].Get();
 			srvs[1] = m_pGBufferView[1].Get();
-			srvs[3] = m_pGBufferView[3].Get();
+			srvs[3] = m_pGBufferView[4].Get();
 			srvs[4] = m_pNoiseTexture.Get();
 			context.PSSetShaderResources(0, 6, srvs);
 
 			context.Draw(6, 0);
+
+			int target = 3;
+			int view = 2;
+
+			// Shader 2+3: BLUR H+V
+			context.PSSetShader(m_pPSBlur.Get(), nullptr, 0);
+			for (int t = 0; t < 2; ++t)
+			{
+				context.PSSetShaderResources(2, 1, &nullSRV);
+				context.OMSetRenderTargets(1, m_pGBufferTarget[target].GetAddressOf(), nullptr);
+
+				srvs[2] = m_pGBufferView[view].Get();
+				context.PSSetShaderResources(0, 6, srvs);
+
+				constBuffers[0] = m_pCBEffects[t].Get();
+				context.PSSetConstantBuffers(2, 2, constBuffers);
+
+				context.Draw(6, 0);
+
+				std::swap(target, view);
+			}
+
+			context.RSSetViewports(1, &m_ViewPort);
 		}
 
 		//--------------------------------------------------------------------

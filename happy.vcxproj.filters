@@ -106,6 +106,9 @@
     <FxCompile Include="VertexPositionNormalTangentBinormalTexcoordIndicesWeights.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="EdgePreserveBlur.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeferredRenderer.cpp">

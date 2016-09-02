@@ -3,12 +3,16 @@
 
 cbuffer CBufferDSSDO : register(b2)
 {
-	float g_OcclusionRadius = 0.013;
-	float g_OcclusionMaxDistance = 0.13;
-	int   g_Samples = 32;
-
-	float4 random_points[128];
+	float  g_OcclusionRadius      = 0.013;
+	float  g_OcclusionMaxDistance = 0.13;
+	float2 g_BlurDir;
+	int    g_Samples              = 32;
 };
+
+cbuffer CBufferRandom : register(b3)
+{
+	float2 random_points[512];
+}
 
 static const float2 g_NoiseTextureSize = float2(4, 4);
 
@@ -59,7 +63,7 @@ float4 main(VSOut input) : SV_TARGET
 
 	const float4 sh2_weight = float4(sh2_weight_l1, sh2_weight_l0) / g_Samples;
 
-	[unroll] // compiler wants to branch here by default and this makes it run nearly 2x slower.
+	//[unroll] // compiler wants to branch here by default and this makes it run nearly 2x slower.
 	for (int i = 0; i<g_Samples; ++i)
 	{
 		float2 textureOffset = reflect(random_points[i].xy, noise.xy).xy * radius;
