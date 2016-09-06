@@ -441,6 +441,7 @@ namespace happy
 		sceneCB.width = (float)m_pRenderContext->getWidth();
 		sceneCB.height = (float)m_pRenderContext->getHeight();
 		sceneCB.convolutionStages = m_Environment.getCubemapArrayLength();
+		sceneCB.aoEnabled = m_Config.m_AOEnabled ? 1 : 0;
 
 		D3D11_MAPPED_SUBRESOURCE msr;
 		THROW_ON_FAIL(context.Map(m_pCBScene.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));

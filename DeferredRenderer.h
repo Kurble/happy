@@ -27,6 +27,7 @@ namespace happy
 		float width;
 		float height;
 		unsigned int convolutionStages;
+		unsigned int aoEnabled;
 	};
 
 	struct CBufferObject

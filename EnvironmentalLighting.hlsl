@@ -44,7 +44,8 @@ float4 main(VSOut input) : SV_TARGET
 		float3 diffuse = sampleEnv(normal, convolutionStages - 1) * albedoRoughness.xyz;
 		float3 specular = sampleEnv(reflect(viewNormal, normal), (convolutionStages - 1) * rough) * albedoRoughness.xyz;
 
-		float ambient = pow(1 - saturate(occlusion.w), 2);
+		float ambient = 1.0f;
+		if (aoEnabled > 0) ambient = pow(1 - saturate(occlusion.w), 2);
 
 		return float4(lerp(diffuse, specular, reflectivity) * ambient, 1.0f);
 	}

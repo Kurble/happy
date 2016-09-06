@@ -7,6 +7,7 @@ cbuffer CBufferScene : register(b0)
 	float width;
 	float height;
 	unsigned int convolutionStages;
+	unsigned int aoEnabled;
 };
 
 cbuffer CBufferObject : register(b1)
