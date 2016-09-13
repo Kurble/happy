@@ -13,13 +13,37 @@ template <class T> T lerp(T a, T b, float x)
 
 struct Vec2
 {
-	Vec2() {}
-	Vec2(float x, float y) : x(x), y(y) {}
+	Vec2(): x(0), y(0) { }
+	Vec2(float x, float y) : x(x), y(y) 
+	{
+		if (isnan(x)) throw std::exception("x is nan");
+		if (isnan(y)) throw std::exception("y is nan");
+	}
+	/*Vec2(const Vec2 &copy) : x(copy.x), y(copy.y) 
+	{
+		if (isnan(x)) throw std::exception("x is nan");
+		if (isnan(y)) throw std::exception("y is nan");
+	}
+	Vec2(Vec2 && move) : x(move.x), y(move.y)
+	{
+		if (isnan(x)) throw std::exception("x is nan");
+		if (isnan(y)) throw std::exception("y is nan");
+	}
+	Vec2 &operator=(const Vec2 &copy)
+	{
+		x = copy.x;
+		y = copy.y;
+		if (isnan(x)) throw std::exception("x is nan");
+		if (isnan(y)) throw std::exception("y is nan");
+		return *this;
+	}*/
 
 	void set(float x, float y)
 	{
 		this->x = x;
 		this->y = y;
+		if (isnan(x)) throw std::exception("x is nan");
+		if (isnan(y)) throw std::exception("y is nan");
 	}
 
 	bool operator==(const Vec2 &b) const {
@@ -28,22 +52,22 @@ struct Vec2
 
 	Vec2 operator+(const Vec2& b) const
 	{
-		return{ x + b.x, y + b.y };
+		return Vec2(x + b.x, y + b.y);
 	}
 
 	Vec2 operator-(const Vec2& b) const
 	{
-		return{ x - b.x, y - b.y };
+		return Vec2(x - b.x, y - b.y);
 	}
 
 	Vec2 operator*(const Vec2& b) const
 	{
-		return{ x * b.x, y * b.y };
+		return Vec2(x * b.x, y * b.y);
 	}
 
 	Vec2 operator*(const float& scalar) const
 	{
-		return{ x*scalar, y*scalar };
+		return Vec2(x*scalar, y*scalar);
 	}
 
 	bool operator < (const Vec2& other) const {
