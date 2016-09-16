@@ -120,8 +120,11 @@ namespace happy
 				}
 
 
-				Vec2 uv1 = (vertices[baseIndex+1].texcoord - vertices[baseIndex].texcoord).normalized() * Vec2(1, -1);
-				Vec2 uv2 = (vertices[baseIndex+2].texcoord - vertices[baseIndex].texcoord).normalized() * Vec2(1, -1);
+				Vec2 uv1 = (vertices[baseIndex+1].texcoord - vertices[baseIndex].texcoord);
+				if (uv1.mag() > 0) uv1 = uv1.normalized() * Vec2(1, -1);
+
+				Vec2 uv2 = (vertices[baseIndex+2].texcoord - vertices[baseIndex].texcoord);
+				if (uv2.mag() > 0) uv2 = uv2.normalized() * Vec2(1, -1);
 
 				float uvMatrix[] = 
 				{
