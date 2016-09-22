@@ -79,6 +79,10 @@ struct Vec2
 		return sqrtf(x*x + y*y);
 	}
 
+	float mag2() const {
+		return x*x + y*y;
+	}
+
 	Vec2 normalized() const {
 		float f = 1.0f / mag();
 		return Vec2(
