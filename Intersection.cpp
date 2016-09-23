@@ -80,3 +80,12 @@ bool lineCircleIntersection(const Vec2 &p0, const Vec2 &p1, const Vec2 &center, 
 
 	return false;
 }
+
+bool pointsCollinear(const Vec2 &a, const Vec2 &b, const Vec2 &c)
+{
+	return fabsf(
+		 a.x * (b.y - c.y) +
+		 b.x * (c.y - a.y) +
+		 c.x * (a.y - b.y)
+		) == 0;
+}
