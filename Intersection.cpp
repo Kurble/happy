@@ -35,7 +35,7 @@ float pointLineDistanceSquared(const Vec2 &p0, const Vec2 &p1, const Vec2 &point
 	float b = fmaxf(0.0f, fminf(1.0f, c1 / c2));
 
 	Vec2 pB = p0 + v * b;
-	return (point - pB).dot(point - pB);
+	return (point - pB).mag2();
 }
 
 Vec2 projectPointOnLine(const Vec2 &p0, const Vec2 &p1, const Vec2 &point)
