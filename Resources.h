@@ -4,6 +4,7 @@
 #include "RenderSkin.h"
 #include "Animation.h"
 #include "TextureHandle.h"
+#include "Canvas.h"
 
 namespace happy
 {
@@ -27,6 +28,8 @@ namespace happy
 		TextureHandle getTexture(std::string filePath);
 
 		std::string getFilePath(std::string localPath);
+
+		Canvas createCanvas(unsigned width, unsigned height);
 
 	private:
 		RenderingContext *m_pRenderContext;

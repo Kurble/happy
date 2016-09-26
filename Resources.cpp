@@ -151,4 +151,34 @@ namespace happy
 	{
 		return m_BasePath + localPath;
 	}
+
+	Canvas Resources::createCanvas(unsigned width, unsigned height)
+	{
+		Canvas result;
+
+		vector<unsigned char> texture(width * height * 4, 0);
+		D3D11_TEXTURE2D_DESC texDesc;
+		texDesc.Width = width;
+		texDesc.Height = height;
+		texDesc.MipLevels = 1;
+		texDesc.ArraySize = 1;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.SampleDesc.Quality = 0;
+		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		texDesc.Usage = D3D11_USAGE_DEFAULT;
+		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+		texDesc.CPUAccessFlags = 0;
+		texDesc.MiscFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA data;
+		data.pSysMem = texture.data();
+		data.SysMemPitch = width * 4;
+
+		ComPtr<ID3D11Texture2D> textureHandle;
+		THROW_ON_FAIL(m_pRenderContext->getDevice()->CreateTexture2D(&texDesc, &data, &textureHandle));
+		THROW_ON_FAIL(m_pRenderContext->getDevice()->CreateShaderResourceView(textureHandle.Get(), nullptr, result.m_Handle.GetAddressOf()));
+		THROW_ON_FAIL(m_pRenderContext->getDevice()->CreateRenderTargetView(textureHandle.Get(),   nullptr, result.m_RenderTarget.GetAddressOf()));
+
+		return result;
+	}
 }

@@ -190,6 +190,7 @@
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AssetLoaders.h" />
+    <ClInclude Include="Canvas.h" />
     <ClInclude Include="CBuffers.h" />
     <ClInclude Include="DeferredRenderer.h" />
     <ClInclude Include="DSSDO_Kernel.h" />
@@ -319,6 +320,7 @@
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="AnimationLoader.cpp" />
+    <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="DeferredRenderer.cpp" />
     <ClCompile Include="Intersection.cpp" />
     <ClCompile Include="Mat3.cpp" />
