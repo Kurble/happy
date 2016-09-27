@@ -9,6 +9,7 @@ namespace happy
 {
 	enum class VertexType
 	{
+		VertexPosition,
 		VertexPositionTexcoord,
 		VertexPositionNormalTexcoord,
 		VertexPositionNormalTangentBinormalTexcoord,
@@ -17,6 +18,15 @@ namespace happy
 
 	typedef uint16_t Index16;
 	typedef uint32_t Index32;
+
+	struct VertexPosition
+	{
+		Vec4 pos;
+
+		static const D3D11_INPUT_ELEMENT_DESC Elements[1];
+		static const UINT ElementCount = 1;
+		static const VertexType Type = VertexType::VertexPosition;
+	};
 
 	struct VertexPositionTexcoord
 	{

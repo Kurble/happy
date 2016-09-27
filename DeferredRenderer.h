@@ -88,19 +88,6 @@ namespace happy
 		void renderGeometryToGBuffer() const;
 		void renderGBufferToBackBuffer() const;
 
-		template <typename T, size_t Length> void CreateVertexShader(ComPtr<ID3D11VertexShader> &vs, ComPtr<ID3D11InputLayout> &il, const BYTE (&shaderByteCode)[Length])
-		{
-			size_t length = Length;
-			THROW_ON_FAIL(m_pRenderContext->getDevice()->CreateVertexShader(shaderByteCode, length, nullptr, &vs));
-			THROW_ON_FAIL(m_pRenderContext->getDevice()->CreateInputLayout(T::Elements, T::ElementCount, shaderByteCode, length, &il));
-		}
-
-		template <size_t Length> void CreatePixelShader(ComPtr<ID3D11PixelShader> &ps, const BYTE(&shaderByteCode)[Length])
-		{
-			size_t length = Length;
-			THROW_ON_FAIL(m_pRenderContext->getDevice()->CreatePixelShader(shaderByteCode, length, nullptr, &ps));
-		}
-
 		struct PointLight
 		{
 			Vec3 m_Position;
@@ -125,10 +112,6 @@ namespace happy
 		ComPtr<ID3D11SamplerState>        m_pGSampler;
 		ComPtr<ID3D11Buffer>              m_pCBScene;
 		ComPtr<ID3D11Buffer>              m_pCBObject;
-
-		//--------------------------------------------------------------------
-		// G-Buffer shaders, skinned
-		/* sorry no shaders yet */
 
 		//--------------------------------------------------------------------
 		// G-Buffer content:
@@ -161,7 +144,6 @@ namespace happy
 		ComPtr<ID3D11InputLayout>         m_pILPointLighting;
 		ComPtr<ID3D11PixelShader>         m_pPSPointLighting;
 		ComPtr<ID3D11Buffer>              m_pCBPointLighting;
-
 
 		//--------------------------------------------------------------------
 		// State

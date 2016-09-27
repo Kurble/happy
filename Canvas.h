@@ -1,51 +1,40 @@
 #pragma once
 
 #include "TextureHandle.h"
-#include "RenderMesh.h"
+#include "Vector.h"
 
 namespace happy
 {
-	using RenderList = vector<pair<RenderMesh, Mat4>>;
-
 	class Canvas : public TextureHandle
 	{
 	public:
 		void clearTexture();
 		void clearGeometry();
 
-		void pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform);
-		void setCamera(const Mat4 &view, const Mat4 &projection);
+		void pushTriangleList(const vector<Vec2> &triangles);
 
 		void renderToTexture() const;
 
 	private:
 		friend class Resources;
 
-		void load(ID3D11Device* device);
+		void load(RenderingContext* context, unsigned width, unsigned height);
 
-		template <typename T, size_t Length> void CreateVertexShader(ID3D11Device* device, ComPtr<ID3D11VertexShader> &vs, ComPtr<ID3D11InputLayout> &il, const BYTE(&shaderByteCode)[Length])
-		{
-			size_t length = Length;
-			THROW_ON_FAIL(device->CreateVertexShader(shaderByteCode, length, nullptr, &vs));
-			THROW_ON_FAIL(device->CreateInputLayout(T::Elements, T::ElementCount, shaderByteCode, length, &il));
-		}
-
-		template <size_t Length> void CreatePixelShader(ID3D11Device* device, ComPtr<ID3D11PixelShader> &ps, const BYTE(&shaderByteCode)[Length])
-		{
-			size_t length = Length;
-			THROW_ON_FAIL(device->CreatePixelShader(shaderByteCode, length, nullptr, &ps));
-		}
+		RenderingContext *m_pContext;
 
 		ComPtr<ID3D11RenderTargetView> m_RenderTarget;
-		RenderList m_GeometryPositionTexcoord;
-		RenderList m_GeometryPositionNormalTexcoord;
-		RenderList m_GeometryPositionNormalTangentBinormalTexcoord;
-		Mat4 m_View;
-		Mat4 m_Projection;
+		bool m_ClearRenderTarget;
 
-		ComPtr<ID3D11VertexShader> m_pVSPositionTexcoord;
-		ComPtr<ID3D11VertexShader> m_pVSPositionNormalTexcoord;
-		ComPtr<ID3D11VertexShader> m_pVSPositionNormalTangentBinormalTexcoord;
-		ComPtr<ID3D11PixelShader>  m_pPSGeometry;
+		D3D11_VIEWPORT m_ViewPort;
+		ComPtr<ID3D11RasterizerState> m_pRasterState;
+		ComPtr<ID3D11DepthStencilState> m_pDepthStencilState;
+		ComPtr<ID3D11BlendState> m_pBlendState;
+
+		ComPtr<ID3D11VertexShader> m_pVertexShader;
+		ComPtr<ID3D11InputLayout> m_pInputLayout;
+		ComPtr<ID3D11PixelShader> m_pPixelShader;
+
+		ComPtr<ID3D11Buffer> m_pTriangleBuffer;
+		unsigned m_TriangleBufferPtr = 0;
 	};
 }

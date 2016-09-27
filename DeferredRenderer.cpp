@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "DeferredRenderer.h"
 #include "Sphere.h"
+#include "Resources.h"
 
 #include <algorithm>
 
@@ -162,19 +163,19 @@ namespace happy
 		}
 
 		// G-Buffer shaders
-		CreateVertexShader<VertexPositionTexcoord>(m_pVSPositionTexcoord, m_pILPositionTexcoord, g_shVertexPositionTexcoord);
-		CreateVertexShader<VertexPositionNormalTexcoord>(m_pVSPositionNormalTexcoord, m_pILPositionNormalTexcoord, g_shVertexPositionNormalTexcoord);
-		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoord>(m_pVSPositionNormalTangentBinormalTexcoord, m_pILPositionNormalTangentBinormalTexcoord, g_shVertexPositionNormalTangentBinormalTexcoord);
-		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoordIndicesWeights>(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights, m_pILPositionNormalTangentBinormalTexcoordIndicesWeights, g_shVertexPositionNormalTangentBinormalTexcoordIndicesWeights);
-		CreatePixelShader(m_pPSGeometry, g_shGeometryPS);
+		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSPositionTexcoord, m_pILPositionTexcoord, g_shVertexPositionTexcoord);
+		CreateVertexShader<VertexPositionNormalTexcoord>(pRenderContext->getDevice(), m_pVSPositionNormalTexcoord, m_pILPositionNormalTexcoord, g_shVertexPositionNormalTexcoord);
+		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoord>(pRenderContext->getDevice(), m_pVSPositionNormalTangentBinormalTexcoord, m_pILPositionNormalTangentBinormalTexcoord, g_shVertexPositionNormalTangentBinormalTexcoord);
+		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoordIndicesWeights>(pRenderContext->getDevice(), m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights, m_pILPositionNormalTangentBinormalTexcoordIndicesWeights, g_shVertexPositionNormalTangentBinormalTexcoordIndicesWeights);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSGeometry, g_shGeometryPS);
 		
 		// Rendering shaders
-		CreateVertexShader<VertexPositionTexcoord>(m_pVSScreenQuad, m_pILScreenQuad, g_shScreenQuadVS);
-		CreateVertexShader<VertexPositionTexcoord>(m_pVSPointLighting, m_pILPointLighting, g_shSphereVS);
-		CreatePixelShader(m_pPSDSSDO, g_shDeferredDirectionalOcclusion);
-		CreatePixelShader(m_pPSBlur, g_shEdgePreserveBlur);
-		CreatePixelShader(m_pPSGlobalLighting, g_shEnvironmentalLighting);
-		CreatePixelShader(m_pPSPointLighting, g_shPointLighting);
+		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSScreenQuad, m_pILScreenQuad, g_shScreenQuadVS);
+		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSPointLighting, m_pILPointLighting, g_shSphereVS);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSDSSDO, g_shDeferredDirectionalOcclusion);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSBlur, g_shEdgePreserveBlur);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shEnvironmentalLighting);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSPointLighting, g_shPointLighting);
 
 		// Noise texture
 		{
