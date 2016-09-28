@@ -11,7 +11,7 @@ namespace happy
 		void clearTexture();
 		void clearGeometry();
 
-		void pushTriangleList(const vector<Vec2> &triangles);
+		void pushTriangleList(const Vec2 *triangles, unsigned count);
 
 		void renderToTexture() const;
 

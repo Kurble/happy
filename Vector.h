@@ -16,8 +16,10 @@ struct Vec2
 	Vec2(): x(0), y(0) { }
 	Vec2(float x, float y) : x(x), y(y) 
 	{
+#ifdef DEBUG
 		if (isnan(x)) throw std::exception("x is nan");
 		if (isnan(y)) throw std::exception("y is nan");
+#endif
 	}
 	/*Vec2(const Vec2 &copy) : x(copy.x), y(copy.y) 
 	{
@@ -42,8 +44,10 @@ struct Vec2
 	{
 		this->x = x;
 		this->y = y;
+#ifdef DEBUG
 		if (isnan(x)) throw std::exception("x is nan");
 		if (isnan(y)) throw std::exception("y is nan");
+#endif
 	}
 
 	bool operator==(const Vec2 &b) const {

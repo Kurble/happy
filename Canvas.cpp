@@ -140,20 +140,20 @@ namespace happy
 		m_TriangleBufferPtr = 0;
 	}
 
-	void Canvas::pushTriangleList(const vector<Vec2> &triangles)
+	void Canvas::pushTriangleList(const Vec2 *triangles, const unsigned count)
 	{
-		if (triangles.size() % 3 || triangles.size() < 3) 
+		if (count % 3 || count < 3)
 			throw std::exception("Triangle list must contain exactly 3 or a multiple of 3 vertices");
 
-		if (m_TriangleBufferPtr > max_canvas_vtx_buffer_vertices - triangles.size())
+		if (m_TriangleBufferPtr > max_canvas_vtx_buffer_vertices - count)
 			throw std::exception("Triange list exceeds internal buffer. Did you forget clearGeometry()?");
 
 		D3D11_MAPPED_SUBRESOURCE msr;
 		THROW_ON_FAIL(m_pContext->getContext()->Map(m_pTriangleBuffer.Get(), 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &msr));
 
-		for (auto &vertex : triangles)
+		for (unsigned i = 0; i < count; ++i)
 		{
-			((VertexPosition*)msr.pData)[m_TriangleBufferPtr++] = { Vec4(vertex.x, vertex.y, 1, 1) };
+			((VertexPosition*)msr.pData)[m_TriangleBufferPtr++] = { Vec4(triangles[i].x, triangles[i].y, 1, 1) };
 		}
 
 		m_pContext->getContext()->Unmap(m_pTriangleBuffer.Get(), 0);

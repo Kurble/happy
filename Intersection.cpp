@@ -3,26 +3,21 @@
 
 bool lineLineIntersection(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, Vec2 &result)
 {
-	float d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
-	if (d == 0) return false; // no intersection
+	float rxs = (p2.x - p1.x)*(p4.y - p3.y) - (p2.y - p1.y)*(p4.x - p3.x);
+	if (rxs != 0)
+	{
+		float t = ((p3.x - p1.x)*(p2.y - p1.y) - (p3.y - p1.y)*(p2.x - p1.x)) / rxs;
+		float u = ((p3.x - p1.x)*(p4.y - p3.y) - (p3.y - p1.y)*(p4.x - p3.x)) / rxs;
 
-	float pre  = (p1.x*p2.y - p1.y*p2.x);
-	float post = (p3.x*p4.y - p3.y*p4.x);
+		if (t >= 0 && t <= 1 &&
+			u >= 0 && u <= 1)
+		{
+			result = p1 + (p2 - p1) * u;
+			return true;
+		}
+	}
 
-	float x = (pre * (p3.x - p4.x) - (p1.x - p2.x) * post) / d;
-	if (x < fminf(p1.x, p2.x) || 
-		x > fmaxf(p1.x, p2.x) || 
-		x < fminf(p3.x, p4.x) || 
-		x > fmaxf(p3.x, p4.x)) return false;
-
-	float y = (pre * (p3.y - p4.y) - (p1.y - p2.y) * post) / d;
-	if (y < fminf(p1.y, p2.y) || 
-		y > fmaxf(p1.y, p2.y) || 
-		y < fminf(p3.y, p4.y) || 
-		y > fmaxf(p3.y, p4.y)) return false;
-
-	result.set(x, y);
-	return true;
+	return false;
 }
 
 float pointLineDistanceSquared(const Vec2 &p0, const Vec2 &p1, const Vec2 &point)
