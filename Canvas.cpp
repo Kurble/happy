@@ -11,7 +11,7 @@ namespace happy
 	static const int max_canvas_vtx_buffer_bytes = 65536;
 	static const int max_canvas_vtx_buffer_vertices = max_canvas_vtx_buffer_bytes / sizeof(VertexPosition);
 
-	void Canvas::load(RenderingContext *context, unsigned width, unsigned height)
+	void Canvas::load(RenderingContext *context, unsigned width, unsigned height, DXGI_FORMAT format)
 	{
 		m_pContext = context;
 
@@ -20,7 +20,7 @@ namespace happy
 		//-------------------------------------------------------------
 		// Create RTT handle
 		{
-			vector<unsigned char> texture(width * height * 4, 0);
+			vector<unsigned char> texture(width * height * 4, 0x80);
 			D3D11_TEXTURE2D_DESC desc;
 			ZeroMemory(&desc, sizeof(desc));
 			desc.Width = width;
@@ -29,7 +29,7 @@ namespace happy
 			desc.ArraySize = 1;
 			desc.SampleDesc.Count = 1;
 			desc.SampleDesc.Quality = 0;
-			desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			desc.Format = format;
 			desc.Usage = D3D11_USAGE_DEFAULT;
 			desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 			desc.CPUAccessFlags = 0;
@@ -44,8 +44,6 @@ namespace happy
 			THROW_ON_FAIL(device->CreateTexture2D(&desc, &data, &textureHandle));
 			THROW_ON_FAIL(device->CreateShaderResourceView(textureHandle.Get(), nullptr, m_Handle.GetAddressOf()));
 			THROW_ON_FAIL(device->CreateRenderTargetView(textureHandle.Get(), nullptr, m_RenderTarget.GetAddressOf()));
-
-			m_ClearRenderTarget = true;
 		}
 
 		//-------------------------------------------------------------
@@ -133,7 +131,7 @@ namespace happy
 
 	void Canvas::clearTexture()
 	{
-		float clearColor[] = { 0, 0, 0, 0 };
+		float clearColor[] = { 0, 0, 0, 1 };
 		m_pContext->getContext()->ClearRenderTargetView(m_RenderTarget.Get(), clearColor);
 	}
 

@@ -29,7 +29,7 @@ namespace happy
 
 		std::string getFilePath(std::string localPath);
 
-		Canvas createCanvas(unsigned width, unsigned height);
+		Canvas createCanvas(unsigned width, unsigned height, bool monoColor);
 
 	private:
 		RenderingContext *m_pRenderContext;

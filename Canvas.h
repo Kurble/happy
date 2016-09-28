@@ -18,12 +18,11 @@ namespace happy
 	private:
 		friend class Resources;
 
-		void load(RenderingContext* context, unsigned width, unsigned height);
+		void load(RenderingContext* context, unsigned width, unsigned height, DXGI_FORMAT format);
 
 		RenderingContext *m_pContext;
 
 		ComPtr<ID3D11RenderTargetView> m_RenderTarget;
-		bool m_ClearRenderTarget;
 
 		D3D11_VIEWPORT m_ViewPort;
 		ComPtr<ID3D11RasterizerState> m_pRasterState;

@@ -152,10 +152,10 @@ namespace happy
 		return m_BasePath + localPath;
 	}
 
-	Canvas Resources::createCanvas(unsigned width, unsigned height)
+	Canvas Resources::createCanvas(unsigned width, unsigned height, bool monoColor)
 	{
 		Canvas result;
-		result.load(m_pRenderContext, width, height);
+		result.load(m_pRenderContext, width, height, monoColor ? DXGI_FORMAT_R8_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM);
 		return result;
 	}
 }
