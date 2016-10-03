@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TextureHandle.h"
-#include "Vector.h"
+#include "VertexTypes.h"
 
 namespace happy
 {
@@ -11,7 +11,7 @@ namespace happy
 		void clearTexture();
 		void clearGeometry();
 
-		void pushTriangleList(const Vec2 *triangles, unsigned count);
+		void pushTriangleList(const VertexPositionColor *triangles, unsigned count);
 
 		void renderToTexture() const;
 

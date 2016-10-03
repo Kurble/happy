@@ -9,7 +9,7 @@
 namespace happy
 {
 	static const int max_canvas_vtx_buffer_bytes = 1048576; // 1 MiB
-	static const int max_canvas_vtx_buffer_vertices = max_canvas_vtx_buffer_bytes / sizeof(VertexPosition);
+	static const int max_canvas_vtx_buffer_vertices = max_canvas_vtx_buffer_bytes / sizeof(VertexPositionColor);
 
 	void Canvas::load(RenderingContext *context, unsigned width, unsigned height, DXGI_FORMAT format)
 	{
@@ -90,10 +90,10 @@ namespace happy
 			desc.RenderTarget[0].BlendEnable = true;
 			desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
 			desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-			desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+			desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_MAX;
 			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
 			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-			desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+			desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_MAX;
 			desc.RenderTarget[0].RenderTargetWriteMask =
 				D3D11_COLOR_WRITE_ENABLE_RED |
 				D3D11_COLOR_WRITE_ENABLE_GREEN |
@@ -103,7 +103,7 @@ namespace happy
 		}
 
 		// Shaders
-		CreateVertexShader<VertexPosition>(device, m_pVertexShader, m_pInputLayout, g_shCanvasVS);
+		CreateVertexShader<VertexPositionColor>(device, m_pVertexShader, m_pInputLayout, g_shCanvasVS);
 		CreatePixelShader(device, m_pPixelShader, g_shCanvasPS);
 
 		// Dynamic vertex buffer
@@ -140,7 +140,7 @@ namespace happy
 		m_TriangleBufferPtr = 0;
 	}
 
-	void Canvas::pushTriangleList(const Vec2 *triangles, const unsigned count)
+	void Canvas::pushTriangleList(const VertexPositionColor *triangles, const unsigned count)
 	{
 		if (count % 3 || count < 3)
 			throw std::exception("Triangle list must contain exactly 3 or a multiple of 3 vertices");
@@ -151,10 +151,8 @@ namespace happy
 		D3D11_MAPPED_SUBRESOURCE msr;
 		THROW_ON_FAIL(m_pContext->getContext()->Map(m_pTriangleBuffer.Get(), 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &msr));
 
-		for (unsigned i = 0; i < count; ++i)
-		{
-			((VertexPosition*)msr.pData)[m_TriangleBufferPtr++] = { Vec4(triangles[i].x, triangles[i].y, 1, 1) };
-		}
+		memcpy(&((VertexPositionColor*)msr.pData)[m_TriangleBufferPtr], triangles, count * sizeof(VertexPositionColor));
+		m_TriangleBufferPtr += count;
 
 		m_pContext->getContext()->Unmap(m_pTriangleBuffer.Get(), 0);
 	}
@@ -174,7 +172,7 @@ namespace happy
 			context.VSSetShader(m_pVertexShader.Get(), nullptr, 0);
 
 			context.PSSetShader(m_pPixelShader.Get(), nullptr, 0);
-			UINT stride = sizeof(VertexPosition);
+			UINT stride = sizeof(VertexPositionColor);
 			UINT offset = 0;
 
 			context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

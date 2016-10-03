@@ -1,4 +1,10 @@
-float4 main() : SV_TARGET
+struct VSOut
 {
-	return float4(1.0f, 0.0f, 1.0f, 1.0f);
+	float4 pos : SV_POSITION;
+	float4 col : TEXCOORD0;
+};
+
+float4 main(VSOut input) : SV_TARGET
+{
+	return input.col;
 }
