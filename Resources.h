@@ -4,10 +4,24 @@
 #include "RenderSkin.h"
 #include "Animation.h"
 #include "TextureHandle.h"
+#include "PostProcessItem.h"
 #include "Canvas.h"
 
 namespace happy
 {
+	template <typename T, size_t Length> void CreateVertexShader(ID3D11Device* device, ComPtr<ID3D11VertexShader> &vs, ComPtr<ID3D11InputLayout> &il, const BYTE(&shaderByteCode)[Length])
+	{
+		size_t length = Length;
+		THROW_ON_FAIL(device->CreateVertexShader(shaderByteCode, length, nullptr, &vs));
+		THROW_ON_FAIL(device->CreateInputLayout(T::Elements, T::ElementCount, shaderByteCode, length, &il));
+	}
+
+	template <size_t Length> void CreatePixelShader(ID3D11Device* device, ComPtr<ID3D11PixelShader> &ps, const BYTE(&shaderByteCode)[Length])
+	{
+		size_t length = Length;
+		THROW_ON_FAIL(device->CreatePixelShader(shaderByteCode, length, nullptr, &ps));
+	}
+
 	class Resources
 	{
 	public:
@@ -29,6 +43,15 @@ namespace happy
 
 		std::string getFilePath(std::string localPath);
 
+		template<size_t Length>
+		PostProcessItem createPostProcess(const BYTE(&shaderByteCode)[Length])
+		{
+			PostProcessItem result;
+			CreatePixelShader(m_pRenderContext->getDevice(), result.m_Handle, shaderByteCode);
+
+			return result;
+		}
+
 		Canvas createCanvas(unsigned width, unsigned height, bool monoColor);
 
 	private:
@@ -41,17 +64,4 @@ namespace happy
 		vector<pair<string, RenderSkin>> m_CachedRenderSkins;
 		vector<pair<string, Animation>> m_CachedAnimations;
 	};
-
-	template <typename T, size_t Length> void CreateVertexShader(ID3D11Device* device, ComPtr<ID3D11VertexShader> &vs, ComPtr<ID3D11InputLayout> &il, const BYTE(&shaderByteCode)[Length])
-	{
-		size_t length = Length;
-		THROW_ON_FAIL(device->CreateVertexShader(shaderByteCode, length, nullptr, &vs));
-		THROW_ON_FAIL(device->CreateInputLayout(T::Elements, T::ElementCount, shaderByteCode, length, &il));
-	}
-
-	template <size_t Length> void CreatePixelShader(ID3D11Device* device, ComPtr<ID3D11PixelShader> &ps, const BYTE(&shaderByteCode)[Length])
-	{
-		size_t length = Length;
-		THROW_ON_FAIL(device->CreatePixelShader(shaderByteCode, length, nullptr, &ps));
-	}
 }

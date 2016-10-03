@@ -4,6 +4,8 @@
 #include "RenderMesh.h"
 #include "SkinController.h"
 #include "PBREnvironment.h"
+#include "TextureHandle.h"
+#include "PostProcessItem.h"
 
 namespace happy
 {
@@ -73,6 +75,7 @@ namespace happy
 		void pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform);
 		void pushSkinRenderItem(const SkinRenderItem &skin);
 		void pushLight(const Vec3 &position, const Vec3 &color, const float radius, const float falloff);
+		void pushPostProcessItem(const PostProcessItem &proc);
 
 		void setEnvironment(const PBREnvironment &environment);
 		void setCamera(const Mat4 &view, const Mat4 &projection);
@@ -128,6 +131,7 @@ namespace happy
 		// Screen rendering
 		ComPtr<ID3D11DepthStencilState>   m_pRenderDepthState;
 		ComPtr<ID3D11BlendState>          m_pRenderBlendState;
+		ComPtr<ID3D11BlendState>          m_pDefaultBlendState;
 		ComPtr<ID3D11SamplerState>        m_pScreenSampler;
 		ComPtr<ID3D11Buffer>              m_pScreenQuadBuffer;
 		ComPtr<ID3D11ShaderResourceView>  m_pNoiseTexture;
@@ -144,6 +148,8 @@ namespace happy
 		ComPtr<ID3D11InputLayout>         m_pILPointLighting;
 		ComPtr<ID3D11PixelShader>         m_pPSPointLighting;
 		ComPtr<ID3D11Buffer>              m_pCBPointLighting;
+		ComPtr<ID3D11RenderTargetView>    m_pPostProcessRT[2];
+		ComPtr<ID3D11ShaderResourceView>  m_pPostProcessView[2];
 
 		//--------------------------------------------------------------------
 		// State
@@ -157,5 +163,6 @@ namespace happy
 		RenderList                        m_GeometryPositionNormalTangentBinormalTexcoord;
 		vector<SkinRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
 		vector<PointLight>                m_PointLights;
+		vector<PostProcessItem>           m_PostProcessItems;
 	};
 }

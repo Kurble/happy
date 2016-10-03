@@ -199,6 +199,7 @@
     <ClInclude Include="Intersection.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="PBREnvironment.h" />
+    <ClInclude Include="PostProcessItem.h" />
     <ClInclude Include="RendererCommon.h" />
     <ClInclude Include="RenderingContext.h" />
     <ClInclude Include="RenderMesh.h" />
@@ -343,6 +344,7 @@
     <ClCompile Include="Mat4.cpp" />
     <ClCompile Include="ObjLoader.cpp" />
     <ClCompile Include="PBREnvironment.cpp" />
+    <ClCompile Include="PostProcessItem.cpp" />
     <ClCompile Include="RenderingContext.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
     <ClCompile Include="RenderSkin.cpp" />

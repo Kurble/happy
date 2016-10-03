@@ -71,6 +71,9 @@
     <ClInclude Include="Canvas.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessItem.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
@@ -169,6 +172,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Canvas.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessItem.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

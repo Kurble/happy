@@ -234,6 +234,13 @@ namespace happy
 				D3D11_COLOR_WRITE_ENABLE_BLUE;
 			desc.IndependentBlendEnable = false;
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBlendState(&desc, &m_pRenderBlendState));
+
+			desc.RenderTarget[0].BlendEnable = false;
+			desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+			desc.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
+			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBlendState(&desc, &m_pDefaultBlendState));
 		}
 
 		// Full screen quad
@@ -358,6 +365,19 @@ namespace happy
 		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
 		THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &m_pGBuffer[4]));
 
+		for (unsigned int i = 0; i < 2; ++i)
+		{
+			ComPtr<ID3D11Texture2D> texHandle;
+			texDesc.Width = width;
+			texDesc.Height = height;
+			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+
+			THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &texHandle));
+			THROW_ON_FAIL(device.CreateRenderTargetView(texHandle.Get(), nullptr, m_pPostProcessRT[i].GetAddressOf()));
+			THROW_ON_FAIL(device.CreateShaderResourceView(texHandle.Get(), nullptr, m_pPostProcessView[i].GetAddressOf()));
+		}
+
 		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
 		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -379,8 +399,8 @@ namespace happy
 		m_GeometryPositionNormalTexcoord.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoord.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.clear();
-
 		m_PointLights.clear();
+		m_PostProcessItems.clear();
 	}
 
 	void DeferredRenderer::pushSkinRenderItem(const SkinRenderItem &skin)
@@ -407,7 +427,12 @@ namespace happy
 	void DeferredRenderer::pushLight(const Vec3 &position, const Vec3 &color, float radius, float falloff)
 	{
 		PointLight pl = { position, color, radius, falloff };
-		m_PointLights.emplace_back(pl);
+		m_PointLights.push_back(pl);
+	}
+
+	void DeferredRenderer::pushPostProcessItem(const PostProcessItem &proc)
+	{
+		m_PostProcessItems.push_back(proc);
 	}
 
 	void DeferredRenderer::setEnvironment(const PBREnvironment &environment)
@@ -629,6 +654,8 @@ namespace happy
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
 		context.OMSetDepthStencilState(m_pRenderDepthState.Get(), 0);
 		context.ClearRenderTargetView(m_pRenderContext->getBackBuffer(), clearColor);
+		context.ClearRenderTargetView(m_pPostProcessRT[0].Get(), clearColor);
+		context.ClearRenderTargetView(m_pPostProcessRT[1].Get(), clearColor);
 
 		ID3D11SamplerState* samplers[] = { m_pScreenSampler.Get(), m_pGSampler.Get() };
 
@@ -700,7 +727,7 @@ namespace happy
 		//--------------------------------------------------------------------
 		// Render lighting
 		{
-			ID3D11RenderTargetView* rtvs[] = { m_pRenderContext->getBackBuffer() };
+			ID3D11RenderTargetView* rtvs[] = { m_PostProcessItems.size() > 0 ? m_pPostProcessRT[0].Get() : m_pRenderContext->getBackBuffer() };
 			context.OMSetRenderTargets(1, rtvs, nullptr);
 			context.OMSetBlendState(m_pRenderBlendState.Get(), nullptr, 0xffffffff);
 			srvs[2] = m_pGBufferView[2].Get();
@@ -733,6 +760,56 @@ namespace happy
 				context.Unmap(m_pCBPointLighting.Get(), 0);
 
 				context.DrawIndexed(sizeof(g_SphereIndices) / sizeof(uint16_t), 0, 0);
+			}
+		}
+
+		//--------------------------------------------------------------------
+		// Post processing
+		{
+			ID3D11Buffer* constBuffers[] =
+			{
+				m_pCBScene.Get(),
+			};
+
+			context.OMSetBlendState(m_pDefaultBlendState.Get(), nullptr, 0xffffffff);
+			context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			context.IASetInputLayout(m_pILScreenQuad.Get());
+			context.VSSetShader(m_pVSScreenQuad.Get(), nullptr, 0);
+			context.VSSetConstantBuffers(0, 1, constBuffers);
+			context.PSSetConstantBuffers(0, 1, constBuffers);
+			UINT stride = sizeof(VertexPositionTexcoord);
+			UINT offset = 0;
+			context.IASetVertexBuffers(0, 1, m_pScreenQuadBuffer.GetAddressOf(), &stride, &offset);
+
+			int target = 1;
+			int view = 0;
+
+			for (auto process = m_PostProcessItems.begin(); process != m_PostProcessItems.end(); ++process)
+			{
+				ID3D11RenderTargetView* pp_rtvs[] = { m_pPostProcessRT[target].Get() };
+				if (process == m_PostProcessItems.end() - 1)
+				{
+					pp_rtvs[0] = m_pRenderContext->getBackBuffer();
+				}
+
+				ID3D11ShaderResourceView* pp_srvs[] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+				if (process->m_SceneInputSlot < 10) 
+					pp_srvs[process->m_SceneInputSlot] = m_pPostProcessView[view].Get();
+				if (process->m_DepthInputSlot < 10) 
+					pp_srvs[process->m_DepthInputSlot] = m_pGBufferView[4].Get();
+				for (auto &slot : process->m_InputSlots)
+					pp_srvs[slot.first] = (ID3D11ShaderResourceView*)slot.second;
+
+				context.OMSetRenderTargets(1, pp_rtvs, nullptr);
+				context.PSSetShader(process->m_Handle.Get(), nullptr, 0);
+				context.PSSetShaderResources(0, 6, pp_srvs);
+				context.PSSetSamplers(0, 2, samplers);
+
+				context.Draw(6, 0);
+
+				std::swap(target, view);
+
+				context.PSSetShaderResources(process->m_SceneInputSlot, 1, &nullSRV);
 			}
 		}
 
