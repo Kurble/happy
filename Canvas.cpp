@@ -8,7 +8,7 @@
 
 namespace happy
 {
-	static const int max_canvas_vtx_buffer_bytes = 65536;
+	static const int max_canvas_vtx_buffer_bytes = 1048576; // 1 MiB
 	static const int max_canvas_vtx_buffer_vertices = max_canvas_vtx_buffer_bytes / sizeof(VertexPosition);
 
 	void Canvas::load(RenderingContext *context, unsigned width, unsigned height, DXGI_FORMAT format)
@@ -108,10 +108,10 @@ namespace happy
 
 		// Dynamic vertex buffer
 		{
-			vector<unsigned char> vertexBuffer(65536, 0);
+			vector<unsigned char> vertexBuffer(max_canvas_vtx_buffer_bytes, 0);
 			D3D11_BUFFER_DESC desc;
 			ZeroMemory(&desc, sizeof(desc));
-			desc.ByteWidth = 65536;
+			desc.ByteWidth = max_canvas_vtx_buffer_bytes;
 			desc.Usage = D3D11_USAGE_DYNAMIC;
 			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
