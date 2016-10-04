@@ -47,7 +47,40 @@ namespace happy
 		PostProcessItem createPostProcess(const BYTE(&shaderByteCode)[Length])
 		{
 			PostProcessItem result;
+
+			// Create shader
 			CreatePixelShader(m_pRenderContext->getDevice(), result.m_Handle, shaderByteCode);
+
+			return result;
+		}
+
+		template<typename T, size_t Length>
+		ConstBufPostProcessItem<T> createCBPostProcess(const BYTE(&shaderByteCode)[Length])
+		{
+			ConstBufPostProcessItem<T> result;
+
+			// Create shader
+			CreatePixelShader(m_pRenderContext->getDevice(), result.m_Handle, shaderByteCode);
+
+			// Create constbuf data
+			result.m_ConstBufferData = make_shared<vector<unsigned char>>(((sizeof(T) + 15) / 16) * 16);
+
+			// Create constbuf
+			D3D11_BUFFER_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.ByteWidth = ((sizeof(T) + 15) / 16) * 16;
+			desc.Usage = D3D11_USAGE_DYNAMIC;
+			desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			desc.MiscFlags = 0;
+			desc.StructureByteStride = 0;
+
+			D3D11_SUBRESOURCE_DATA data;
+			data.pSysMem = result.m_ConstBufferData->data();
+			data.SysMemPitch = 0;
+			data.SysMemSlicePitch = 0;
+
+			THROW_ON_FAIL(m_pRenderContext->getDevice()->CreateBuffer(&desc, &data, result.m_ConstBuffer.GetAddressOf()));
 
 			return result;
 		}

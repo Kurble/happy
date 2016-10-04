@@ -7,11 +7,6 @@ namespace happy
 		void setSceneInputSlot(unsigned slot);
 		void setDepthInputSlot(unsigned slot);
 		void addInputSlot(const TextureHandle &texture, unsigned slot);
-		template <typename T> void setConstBuffer(const T& value)
-		{
-			m_ConstBufferData = vector<unsigned char>(sizeof(value));
-			memcpy(m_ConstBufferData->data(), reinterpet_cast<unsigned char*>(&value), sizeof(value));
-		}
 
 		void* getShaderId() { return (void*)m_Handle.Get(); }
 
@@ -26,5 +21,13 @@ namespace happy
 		unsigned                      m_SceneInputSlot = 0;
 		unsigned                      m_DepthInputSlot = (unsigned)-1;
 		vector<pair<unsigned, void*>> m_InputSlots;
+	};
+
+	template <typename T> struct ConstBufPostProcessItem: public PostProcessItem
+	{
+		void setConstBuffer(const T& value)
+		{
+			memcpy(m_ConstBufferData->data(), reinterpret_cast<const unsigned char*>(&value), sizeof(value));
+		}
 	};
 }

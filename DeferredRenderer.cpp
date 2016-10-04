@@ -769,14 +769,14 @@ namespace happy
 			ID3D11Buffer* constBuffers[] =
 			{
 				m_pCBScene.Get(),
+				nullptr,
 			};
 
 			context.OMSetBlendState(m_pDefaultBlendState.Get(), nullptr, 0xffffffff);
 			context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			context.IASetInputLayout(m_pILScreenQuad.Get());
 			context.VSSetShader(m_pVSScreenQuad.Get(), nullptr, 0);
-			context.VSSetConstantBuffers(0, 1, constBuffers);
-			context.PSSetConstantBuffers(0, 1, constBuffers);
+			context.VSSetConstantBuffers(0, 2, constBuffers);
 			UINT stride = sizeof(VertexPositionTexcoord);
 			UINT offset = 0;
 			context.IASetVertexBuffers(0, 1, m_pScreenQuadBuffer.GetAddressOf(), &stride, &offset);
@@ -800,11 +800,26 @@ namespace happy
 				for (auto &slot : process->m_InputSlots)
 					pp_srvs[slot.first] = (ID3D11ShaderResourceView*)slot.second;
 
+				if (process->m_ConstBuffer)
+				{
+					D3D11_MAPPED_SUBRESOURCE msr;
+					THROW_ON_FAIL(context.Map(process->m_ConstBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+					memcpy(msr.pData, (void*)process->m_ConstBufferData->data(), process->m_ConstBufferData->size());
+					context.Unmap(process->m_ConstBuffer.Get(), 0);
+
+					constBuffers[1] = process->m_ConstBuffer.Get();
+				}
+				else
+				{
+					constBuffers[1] = nullptr;
+				}
+
 				context.OMSetRenderTargets(1, pp_rtvs, nullptr);
 				context.PSSetShader(process->m_Handle.Get(), nullptr, 0);
 				context.PSSetShaderResources(0, 6, pp_srvs);
 				context.PSSetSamplers(0, 2, samplers);
-
+				context.PSSetConstantBuffers(0, 2, constBuffers);
+				
 				context.Draw(6, 0);
 
 				std::swap(target, view);
