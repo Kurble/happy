@@ -20,6 +20,19 @@ bool lineLineIntersection(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const 
 	return false;
 }
 
+bool rayRayIntersection(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, Vec2 &result)
+{
+	float rxs = (p2.x - p1.x)*(p4.y - p3.y) - (p2.y - p1.y)*(p4.x - p3.x);
+	if (rxs != 0)
+	{
+		float u = ((p3.x - p1.x)*(p4.y - p3.y) - (p3.y - p1.y)*(p4.x - p3.x)) / rxs;
+		result = p1 + (p2 - p1) * u;
+		return true;
+	}
+
+	return false;
+}
+
 float pointLineDistanceSquared(const Vec2 &p0, const Vec2 &p1, const Vec2 &point)
 {
 	Vec2 v = p1 - p0;
