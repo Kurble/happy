@@ -54,6 +54,10 @@ struct Vec2
 		return (b.x == x && b.y == y);
 	}
 
+	bool operator!=(const Vec2 &b) const {
+		return (b.x != x || b.y != y);
+	}
+
 	Vec2 operator+(const Vec2& b) const
 	{
 		return Vec2(x + b.x, y + b.y);

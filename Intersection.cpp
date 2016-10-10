@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Intersection.h"
 
-bool lineLineIntersection(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, Vec2 &result)
+bool lineLineIntersection(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const Vec2 &p4, Vec2 &result, bool inclusive)
 {
 	float rxs = (p2.x - p1.x)*(p4.y - p3.y) - (p2.y - p1.y)*(p4.x - p3.x);
 	if (rxs != 0)
@@ -9,11 +9,23 @@ bool lineLineIntersection(const Vec2 &p1, const Vec2 &p2, const Vec2 &p3, const 
 		float t = ((p3.x - p1.x)*(p2.y - p1.y) - (p3.y - p1.y)*(p2.x - p1.x)) / rxs;
 		float u = ((p3.x - p1.x)*(p4.y - p3.y) - (p3.y - p1.y)*(p4.x - p3.x)) / rxs;
 
-		if (t >= 0 && t <= 1 &&
-			u >= 0 && u <= 1)
+		if (inclusive)
 		{
-			result = p1 + (p2 - p1) * u;
-			return true;
+			if (t >= 0 && t <= 1 &&
+				u >= 0 && u <= 1)
+			{
+				result = p1 + (p2 - p1) * u;
+				return true;
+			}
+		}
+		else
+		{
+			if (t > 0 && t < 1 &&
+				u > 0 && u < 1)
+			{
+				result = p1 + (p2 - p1) * u;
+				return true;
+			}
 		}
 	}
 
