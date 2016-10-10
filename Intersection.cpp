@@ -70,6 +70,37 @@ Vec2 projectPointOnLine(const Vec2 &p0, const Vec2 &p1, const Vec2 &point)
 	return p0 + v * b;
 }
 
+bool rayCircleIntersection(const Vec2 &p0, const Vec2 &p1, const Vec2 &center, const float &radius, Vec2 &result)
+{
+	Vec2 d = p1 - p0;
+	Vec2 f = p0 - center;
+
+	float a = d.dot(d);
+	float b = 2.0f * f.dot(d);
+	float c = f.dot(f) - radius*radius;
+
+	float disc = b*b - 4.0f*a*c;
+	if (disc < 0) return false;
+
+	disc = sqrtf(disc);
+	float t1 = (-b - disc) / (2.0f * a);
+	float t2 = (-b + disc) / (2.0f * a);
+
+	if (t1 >= 0.0f)
+	{
+		result = lerp(p0, p1, t1);
+		return true;
+	}
+
+	if (t2 >= 0.0f)
+	{
+		result = lerp(p0, p1, t2);
+		return true;
+	}
+
+	return false;
+}
+
 bool lineCircleIntersection(const Vec2 &p0, const Vec2 &p1, const Vec2 &center, const float &radius, Vec2 &result)
 {
 	Vec2 d = p1 - p0;
