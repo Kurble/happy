@@ -157,6 +157,68 @@ namespace happy
 		m_pContext->getContext()->Unmap(m_pTriangleBuffer.Get(), 0);
 	}
 
+	void Canvas::runPostProcessItem(const PostProcessItem &process) const
+	{
+		static const VertexPositionColor quad[] =
+		{
+			{ { -1,  1, 0, 1 }, { 0, 0, 0, 0 } },
+			{ {  1,  1, 0, 1 }, { 1, 0, 0, 0 } },
+			{ {  1, -1, 0, 1 }, { 1, 1, 0, 0 } },
+			{ { -1,  1, 0, 1 }, { 0, 0, 0, 0 } },
+			{ {  1, -1, 0, 1 }, { 1, 1, 0, 0 } },
+			{ { -1, -1, 0, 1 }, { 0, 1, 0, 0 } },
+		};
+
+		D3D11_MAPPED_SUBRESOURCE msr;
+		THROW_ON_FAIL(m_pContext->getContext()->Map(m_pTriangleBuffer.Get(), 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &msr));
+		memcpy(&((VertexPositionColor*)msr.pData)[m_TriangleBufferPtr], quad, 6 * sizeof(VertexPositionColor));
+		m_pContext->getContext()->Unmap(m_pTriangleBuffer.Get(), 0);
+
+		auto &context = *m_pContext->getContext();
+		context.RSSetState(m_pRasterState.Get());
+		context.RSSetViewports(1, &m_ViewPort);
+
+		context.OMSetDepthStencilState(m_pDepthStencilState.Get(), 0);
+		context.OMSetBlendState(nullptr, nullptr, 0xffffffff);
+		context.OMSetRenderTargets(1, m_RenderTarget.GetAddressOf(), nullptr);
+
+		context.VSSetShader(m_pVertexShader.Get(), nullptr, 0);
+
+		ID3D11Buffer* constBuffers[2] = { 0 };
+
+		ID3D11ShaderResourceView* pp_srvs[10] = { 0 };
+		for (auto &slot : process.m_InputSlots)
+			pp_srvs[slot.first] = (ID3D11ShaderResourceView*)slot.second;
+
+		if (process.m_ConstBuffer)
+		{
+			D3D11_MAPPED_SUBRESOURCE msr;
+			THROW_ON_FAIL(context.Map(process.m_ConstBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+			memcpy(msr.pData, (void*)process.m_ConstBufferData->data(), process.m_ConstBufferData->size());
+			context.Unmap(process.m_ConstBuffer.Get(), 0);
+
+			constBuffers[1] = process.m_ConstBuffer.Get();
+		}
+		else
+		{
+			constBuffers[1] = nullptr;
+		}
+
+		context.PSSetShader(process.m_Handle.Get(), nullptr, 0);
+		context.PSSetShaderResources(0, 10, pp_srvs);
+		context.PSSetConstantBuffers(0, 2, constBuffers);
+
+		UINT stride = sizeof(VertexPositionColor);
+		UINT offset = 0;
+		context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		context.IASetInputLayout(m_pInputLayout.Get());
+		context.IASetVertexBuffers(0, 1, m_pTriangleBuffer.GetAddressOf(), &stride, &offset);
+		context.Draw(6, m_TriangleBufferPtr);
+
+		ID3D11ShaderResourceView* reset_srvs[10] = { 0 };
+		context.PSSetShaderResources(0, 10, reset_srvs);
+	}
+
 	void Canvas::renderToTexture() const
 	{
 		if (m_TriangleBufferPtr > 0)

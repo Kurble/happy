@@ -13,6 +13,7 @@ namespace happy
 	protected:
 		friend class Resources;
 		friend class DeferredRenderer;
+		friend class Canvas;
 		
 		ComPtr<ID3D11PixelShader> m_Handle;
 		ComPtr<ID3D11Buffer>              m_ConstBuffer;

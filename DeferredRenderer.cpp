@@ -792,7 +792,7 @@ namespace happy
 					pp_rtvs[0] = m_pRenderContext->getBackBuffer();
 				}
 
-				ID3D11ShaderResourceView* pp_srvs[] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+				ID3D11ShaderResourceView* pp_srvs[10] = { 0 };
 				if (process->m_SceneInputSlot < 10) 
 					pp_srvs[process->m_SceneInputSlot] = m_pPostProcessView[view].Get();
 				if (process->m_DepthInputSlot < 10) 

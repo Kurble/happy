@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TextureHandle.h"
+#include "PostProcessItem.h"
 #include "VertexTypes.h"
 
 namespace happy
@@ -13,6 +14,7 @@ namespace happy
 
 		void pushTriangleList(const VertexPositionColor *triangles, unsigned count);
 
+		void runPostProcessItem(const PostProcessItem &proc) const;
 		void renderToTexture() const;
 
 	private:
