@@ -304,6 +304,15 @@ namespace happy
 		return m_pRenderContext;
 	}
 
+	const Mat4 DeferredRenderer::getViewProj() const
+	{
+		Mat4 viewproj;
+		viewproj.identity();
+		viewproj.multiply(m_Projection);
+		viewproj.multiply(m_View);
+		return viewproj;
+	}
+
 	void DeferredRenderer::resize(unsigned int width, unsigned int height)
 	{
 		ID3D11Device& device = *m_pRenderContext->getDevice();

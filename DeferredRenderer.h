@@ -68,6 +68,7 @@ namespace happy
 		DeferredRenderer(const RenderingContext* pRenderContext);
 
 		const RenderingContext* getContext() const;
+		const Mat4 getViewProj() const;
 
 		void resize(unsigned int width, unsigned int height);
 		void clear();
