@@ -129,9 +129,9 @@ namespace happy
 		}
 	}
 
-	void Canvas::clearTexture()
+	void Canvas::clearTexture(float alpha)
 	{
-		float clearColor[] = { 0, 0, 0, 1 };
+		float clearColor[] = { 0, 0, 0, alpha };
 		m_pContext->getContext()->ClearRenderTargetView(m_RenderTarget.Get(), clearColor);
 	}
 

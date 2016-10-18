@@ -9,7 +9,7 @@ namespace happy
 	class Canvas : public TextureHandle
 	{
 	public:
-		void clearTexture();
+		void clearTexture(float alpha = 1);
 		void clearGeometry();
 
 		void pushTriangleList(const VertexPositionColor *triangles, unsigned count);
