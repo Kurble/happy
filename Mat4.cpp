@@ -39,7 +39,7 @@ Mat4& Mat4::operator= (const float *other) {
 	return *this;
 }
 
-bool Mat4::operator== (const Mat4 &other) {
+bool Mat4::operator== (const Mat4 &other) const {
 	for (int i = 0; i < 16; i++) {
 		if (m[i] != other.m[i]) {
 			return false;
@@ -49,7 +49,7 @@ bool Mat4::operator== (const Mat4 &other) {
 	return true;
 }
 
-Vec4 Mat4::operator* (const Vec4 &other) {
+Vec4 Mat4::operator* (const Vec4 &other) const {
 	Vec4 tmp;
 
 	float *v = &tmp.x;
@@ -64,7 +64,7 @@ Vec4 Mat4::operator* (const Vec4 &other) {
 	return tmp;
 }
 
-Mat4 Mat4::operator* (const Mat4 &other) {
+Mat4 Mat4::operator* (const Mat4 &other) const {
 	const Mat4 *srcA = this;
 	const Mat4 *srcB = &other;
 	Mat4 tmp;

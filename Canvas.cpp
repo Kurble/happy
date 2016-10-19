@@ -5,6 +5,7 @@
 
 #include "CompiledShaders\CanvasVS.h"
 #include "CompiledShaders\CanvasPS.h"
+#include "CompiledShaders\CanvasTexPS.h"
 
 namespace happy
 {
@@ -91,13 +92,14 @@ namespace happy
 			desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
 			desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
 			desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_MAX;
-			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
-			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
 			desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_MAX;
 			desc.RenderTarget[0].RenderTargetWriteMask =
 				D3D11_COLOR_WRITE_ENABLE_RED |
 				D3D11_COLOR_WRITE_ENABLE_GREEN |
-				D3D11_COLOR_WRITE_ENABLE_BLUE;
+				D3D11_COLOR_WRITE_ENABLE_BLUE |
+				D3D11_COLOR_WRITE_ENABLE_ALPHA;
 			desc.IndependentBlendEnable = false;
 			THROW_ON_FAIL(device->CreateBlendState(&desc, &m_pBlendState));
 		}
@@ -105,6 +107,7 @@ namespace happy
 		// Shaders
 		CreateVertexShader<VertexPositionColor>(device, m_pVertexShader, m_pInputLayout, g_shCanvasVS);
 		CreatePixelShader(device, m_pPixelShader, g_shCanvasPS);
+		CreatePixelShader(device, m_pPixelShaderTextured, g_shCanvasTexPS);
 
 		// Dynamic vertex buffer
 		{
@@ -125,7 +128,10 @@ namespace happy
 
 			THROW_ON_FAIL(device->CreateBuffer(&desc, &data, m_pTriangleBuffer.GetAddressOf()));
 
-			m_TriangleBufferPtr = 0;
+			m_TriangleBufferPtrs.clear();
+			m_TriangleBufferPtrs.push_back(0);
+			m_TriangleBufferTextures.clear();
+			m_TriangleBufferTextures.push_back(nullptr);
 		}
 	}
 
@@ -137,7 +143,10 @@ namespace happy
 
 	void Canvas::clearGeometry()
 	{
-		m_TriangleBufferPtr = 0;
+		m_TriangleBufferPtrs.clear();
+		m_TriangleBufferPtrs.push_back(0);
+		m_TriangleBufferTextures.clear();
+		m_TriangleBufferTextures.push_back(nullptr);
 	}
 
 	void Canvas::pushTriangleList(const VertexPositionColor *triangles, const unsigned count)
@@ -145,14 +154,43 @@ namespace happy
 		if (count % 3 || count < 3)
 			throw std::exception("Triangle list must contain exactly 3 or a multiple of 3 vertices");
 
-		if (m_TriangleBufferPtr > max_canvas_vtx_buffer_vertices - count)
+		if (m_TriangleBufferPtrs.back() > max_canvas_vtx_buffer_vertices - count)
 			throw std::exception("Triange list exceeds internal buffer. Did you forget clearGeometry()?");
+
+		if (m_TriangleBufferTextures.back() != nullptr)
+		{
+			m_TriangleBufferPtrs.push_back(m_TriangleBufferPtrs.back());
+			m_TriangleBufferTextures.push_back(nullptr);
+		}
 
 		D3D11_MAPPED_SUBRESOURCE msr;
 		THROW_ON_FAIL(m_pContext->getContext()->Map(m_pTriangleBuffer.Get(), 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &msr));
 
-		memcpy(&((VertexPositionColor*)msr.pData)[m_TriangleBufferPtr], triangles, count * sizeof(VertexPositionColor));
-		m_TriangleBufferPtr += count;
+		memcpy(&((VertexPositionColor*)msr.pData)[m_TriangleBufferPtrs.back()], triangles, count * sizeof(VertexPositionColor));
+		m_TriangleBufferPtrs.back() += count;
+
+		m_pContext->getContext()->Unmap(m_pTriangleBuffer.Get(), 0);
+	}
+
+	void Canvas::pushTexturedTriangleList(const TextureHandle &texture, const VertexPositionColor *triangles, const unsigned count)
+	{
+		if (count % 3 || count < 3)
+			throw std::exception("Triangle list must contain exactly 3 or a multiple of 3 vertices");
+
+		if (m_TriangleBufferPtrs.back() > max_canvas_vtx_buffer_vertices - count)
+			throw std::exception("Triange list exceeds internal buffer. Did you forget clearGeometry()?");
+
+		if (m_TriangleBufferTextures.back() != texture.m_Handle.Get())
+		{
+			m_TriangleBufferPtrs.push_back(m_TriangleBufferPtrs.back());
+			m_TriangleBufferTextures.push_back(texture.m_Handle.Get());
+		}
+
+		D3D11_MAPPED_SUBRESOURCE msr;
+		THROW_ON_FAIL(m_pContext->getContext()->Map(m_pTriangleBuffer.Get(), 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &msr));
+
+		memcpy(&((VertexPositionColor*)msr.pData)[m_TriangleBufferPtrs.back()], triangles, count * sizeof(VertexPositionColor));
+		m_TriangleBufferPtrs.back() += count;
 
 		m_pContext->getContext()->Unmap(m_pTriangleBuffer.Get(), 0);
 	}
@@ -171,7 +209,7 @@ namespace happy
 
 		D3D11_MAPPED_SUBRESOURCE msr;
 		THROW_ON_FAIL(m_pContext->getContext()->Map(m_pTriangleBuffer.Get(), 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &msr));
-		memcpy(&((VertexPositionColor*)msr.pData)[m_TriangleBufferPtr], quad, 6 * sizeof(VertexPositionColor));
+		memcpy(&((VertexPositionColor*)msr.pData)[m_TriangleBufferPtrs.back()], quad, 6 * sizeof(VertexPositionColor));
 		m_pContext->getContext()->Unmap(m_pTriangleBuffer.Get(), 0);
 
 		auto &context = *m_pContext->getContext();
@@ -213,7 +251,7 @@ namespace happy
 		context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		context.IASetInputLayout(m_pInputLayout.Get());
 		context.IASetVertexBuffers(0, 1, m_pTriangleBuffer.GetAddressOf(), &stride, &offset);
-		context.Draw(6, m_TriangleBufferPtr);
+		context.Draw(6, m_TriangleBufferPtrs.back());
 
 		ID3D11ShaderResourceView* reset_srvs[10] = { 0 };
 		context.PSSetShaderResources(0, 10, reset_srvs);
@@ -221,27 +259,44 @@ namespace happy
 
 	void Canvas::renderToTexture() const
 	{
-		if (m_TriangleBufferPtr > 0)
+		auto &context = *m_pContext->getContext();
+		context.RSSetState(m_pRasterState.Get());
+		context.RSSetViewports(1, &m_ViewPort);
+
+		context.OMSetDepthStencilState(m_pDepthStencilState.Get(), 0);
+		context.OMSetBlendState(m_pBlendState.Get(), nullptr, 0xffffffff);
+		context.OMSetRenderTargets(1, m_RenderTarget.GetAddressOf(), nullptr);
+
+		context.VSSetShader(m_pVertexShader.Get(), nullptr, 0);
+
+		UINT stride = sizeof(VertexPositionColor);
+		UINT offset = 0;
+
+		context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		context.IASetInputLayout(m_pInputLayout.Get());
+		context.IASetVertexBuffers(0, 1, m_pTriangleBuffer.GetAddressOf(), &stride, &offset);
+
+		unsigned prev = 0;
+		for (unsigned i = 0; i < m_TriangleBufferPtrs.size(); ++i)
 		{
-			auto &context = *m_pContext->getContext();
-			context.RSSetState(m_pRasterState.Get());
-			context.RSSetViewports(1, &m_ViewPort);
-
-			context.OMSetDepthStencilState(m_pDepthStencilState.Get(), 0);
-			context.OMSetBlendState(m_pBlendState.Get(), nullptr, 0xffffffff);
-			context.OMSetRenderTargets(1, m_RenderTarget.GetAddressOf(), nullptr);
-
-			context.VSSetShader(m_pVertexShader.Get(), nullptr, 0);
-
-			context.PSSetShader(m_pPixelShader.Get(), nullptr, 0);
-			UINT stride = sizeof(VertexPositionColor);
-			UINT offset = 0;
-
-			context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			context.IASetInputLayout(m_pInputLayout.Get());
-			context.IASetVertexBuffers(0, 1, m_pTriangleBuffer.GetAddressOf(), &stride, &offset);
-
-			context.Draw(m_TriangleBufferPtr, 0);
+			if (m_TriangleBufferPtrs[i]-prev > 0)
+			{
+				if (m_TriangleBufferTextures[i])
+				{
+					context.PSSetShader(m_pPixelShaderTextured.Get(), nullptr, 0);
+					context.PSSetShaderResources(0, 1, &m_TriangleBufferTextures[i]);
+				}
+				else
+				{
+					context.PSSetShader(m_pPixelShader.Get(), nullptr, 0);
+				}
+				
+				context.Draw(m_TriangleBufferPtrs[i] - prev, prev);
+			}
+			prev = m_TriangleBufferPtrs[i];
 		}
+
+		ID3D11ShaderResourceView* reset = nullptr;
+		context.PSSetShaderResources(0, 1, &reset);
 	}
 }

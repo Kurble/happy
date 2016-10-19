@@ -121,6 +121,9 @@
     <FxCompile Include="CanvasPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="CanvasTexPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeferredRenderer.cpp">

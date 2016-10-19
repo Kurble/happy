@@ -13,6 +13,7 @@ namespace happy
 		void clearGeometry();
 
 		void pushTriangleList(const VertexPositionColor *triangles, unsigned count);
+		void pushTexturedTriangleList(const TextureHandle& texture, const VertexPositionColor *triangles, unsigned count);
 
 		void runPostProcessItem(const PostProcessItem &proc) const;
 		void renderToTexture() const;
@@ -34,8 +35,10 @@ namespace happy
 		ComPtr<ID3D11VertexShader> m_pVertexShader;
 		ComPtr<ID3D11InputLayout> m_pInputLayout;
 		ComPtr<ID3D11PixelShader> m_pPixelShader;
+		ComPtr<ID3D11PixelShader> m_pPixelShaderTextured;
 
 		ComPtr<ID3D11Buffer> m_pTriangleBuffer;
-		unsigned m_TriangleBufferPtr = 0;
+		vector<unsigned> m_TriangleBufferPtrs;
+		vector<ID3D11ShaderResourceView*> m_TriangleBufferTextures;
 	};
 }

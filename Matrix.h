@@ -18,10 +18,10 @@ public:
 	float operator()(int i, int j) const;
 	Mat4& operator= (const Mat4 &other);
 	Mat4& operator= (const float *other);
-	bool operator== (const Mat4 &other);
-	bool operator!= (const Mat4 &other) { return !operator==(other); }
-	Vec4 operator*(const Vec4& other);
-	Mat4 operator*(const Mat4& other);
+	bool operator== (const Mat4 &other) const;
+	bool operator!= (const Mat4 &other) const { return !operator==(other); }
+	Vec4 operator*(const Vec4& other) const;
+	Mat4 operator*(const Mat4& other) const;
 
 	void multiply(const Mat4& with);
 
