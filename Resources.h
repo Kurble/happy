@@ -7,6 +7,9 @@
 #include "PostProcessItem.h"
 #include "Canvas.h"
 
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
 namespace happy
 {
 	template <typename T, size_t Length> void CreateVertexShader(ID3D11Device* device, ComPtr<ID3D11VertexShader> &vs, ComPtr<ID3D11InputLayout> &il, const BYTE(&shaderByteCode)[Length])
@@ -25,23 +28,23 @@ namespace happy
 	class Resources
 	{
 	public:
-		Resources(const string basePath, RenderingContext *pRenderContext);
+		Resources(const fs::path basePath, RenderingContext *pRenderContext);
 
 		RenderingContext* getContext() const;
 
-		RenderMesh getRenderMesh(std::string objPath, std::string albedoRoughnessPath, std::string normalMetallicPath);
+		RenderMesh getRenderMesh(fs::path objPath, fs::path albedoRoughnessPath, fs::path normalMetallicPath);
 
-		RenderSkin getSkin(std::string skinPath, std::string albedoRoughnessPath, std::string normalMetallicPath);
+		RenderSkin getSkin(fs::path skinPath, fs::path albedoRoughnessPath, fs::path normalMetallicPath);
 
-		Animation getAnimation(std::string animationPath);
+		Animation getAnimation(fs::path animationPath);
 
-		TextureHandle getCubemap(std::string filePath[6]);
+		TextureHandle getCubemap(fs::path filePath[6]);
 
-		TextureHandle getCubemapFolder(std::string folderPath, std::string format);
+		TextureHandle getCubemapFolder(fs::path folderPath, std::string format);
 
-		TextureHandle getTexture(std::string filePath);
+		TextureHandle getTexture(fs::path filePath);
 
-		std::string getFilePath(std::string localPath);
+		fs::path getFilePath(fs::path localPath);
 
 		template<size_t Length>
 		PostProcessItem createPostProcess(const BYTE(&shaderByteCode)[Length])
@@ -89,12 +92,12 @@ namespace happy
 
 	private:
 		RenderingContext *m_pRenderContext;
-		string m_BasePath;
+		fs::path m_BasePath;
 
-		vector<pair<string, ComPtr<ID3D11ShaderResourceView>>> m_CachedCubemaps;
-		vector<pair<string, ComPtr<ID3D11ShaderResourceView>>> m_CachedTextures;
-		vector<pair<string, RenderMesh>> m_CachedRenderMeshes;
-		vector<pair<string, RenderSkin>> m_CachedRenderSkins;
-		vector<pair<string, Animation>> m_CachedAnimations;
+		vector<pair<fs::path, ComPtr<ID3D11ShaderResourceView>>> m_CachedCubemaps;
+		vector<pair<fs::path, ComPtr<ID3D11ShaderResourceView>>> m_CachedTextures;
+		vector<pair<fs::path, RenderMesh>> m_CachedRenderMeshes;
+		vector<pair<fs::path, RenderSkin>> m_CachedRenderSkins;
+		vector<pair<fs::path, Animation>> m_CachedAnimations;
 	};
 }

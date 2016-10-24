@@ -10,7 +10,7 @@ namespace happy
 		return val;
 	}
 
-	RenderSkin loadSkinFromFile(RenderingContext *pRenderContext, std::string skinPath, std::string albedoMetallicPath, std::string normalRougnessPath)
+	RenderSkin loadSkinFromFile(RenderingContext *pRenderContext, fs::path skinPath, fs::path albedoMetallicPath, fs::path normalRougnessPath)
 	{
 		std::ifstream fin(skinPath.c_str(), std::ios::in | std::ios::binary);
 
@@ -62,8 +62,8 @@ namespace happy
 		mesh.setBindPose(
 			pRenderContext,
 			bindPose);
-		if (albedoMetallicPath.length()) mesh.setAlbedoRoughnessMap(pRenderContext, loadTextureWIC(pRenderContext, albedoMetallicPath));
-		if (normalRougnessPath.length()) mesh.setNormalMetallicMap(pRenderContext, loadTextureWIC(pRenderContext, normalRougnessPath));
+		if (!albedoMetallicPath.empty()) mesh.setAlbedoRoughnessMap(pRenderContext, loadTextureWIC(pRenderContext, albedoMetallicPath));
+		if (!normalRougnessPath.empty()) mesh.setNormalMetallicMap(pRenderContext, loadTextureWIC(pRenderContext, normalRougnessPath));
 		return mesh;
 	}
 }

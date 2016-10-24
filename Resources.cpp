@@ -4,7 +4,7 @@
 
 namespace happy
 {
-	Resources::Resources(const string basePath, RenderingContext* pRenderContext)
+	Resources::Resources(const fs::path basePath, RenderingContext* pRenderContext)
 		: m_BasePath(basePath)
 		, m_pRenderContext(pRenderContext) { }
 
@@ -13,7 +13,7 @@ namespace happy
 		return m_pRenderContext;
 	}
 
-	RenderMesh Resources::getRenderMesh(string objPath, string albedoRoughness, string normalMetallic)
+	RenderMesh Resources::getRenderMesh(fs::path objPath, fs::path albedoRoughness, fs::path normalMetallic)
 	{
 		RenderMesh result;
 		bool found = false;
@@ -30,15 +30,15 @@ namespace happy
 
 		if (!found)
 		{
-			result = loadRenderMeshFromObj(m_pRenderContext, m_BasePath + objPath, "", "");
+			result = loadRenderMeshFromObj(m_pRenderContext, m_BasePath / objPath, "", "");
 			m_CachedRenderMeshes.emplace_back(objPath, result);
 		}
-		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.length() ? getTexture(albedoRoughness).m_Handle : nullptr);
-		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.length() ? getTexture(normalMetallic).m_Handle : nullptr);
+		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.empty() ? nullptr : getTexture(albedoRoughness).m_Handle);
+		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.empty() ? nullptr : getTexture(normalMetallic).m_Handle);
 		return result;
 	}
 
-	RenderSkin Resources::getSkin(string skinPath, string albedoRoughness, string normalMetallic)
+	RenderSkin Resources::getSkin(fs::path skinPath, fs::path albedoRoughness, fs::path normalMetallic)
 	{
 		RenderSkin result;
 		bool found = false;
@@ -55,15 +55,15 @@ namespace happy
 
 		if (!found)
 		{
-			result = loadSkinFromFile(m_pRenderContext, m_BasePath + skinPath, "", "");
+			result = loadSkinFromFile(m_pRenderContext, m_BasePath / skinPath, "", "");
 			m_CachedRenderSkins.emplace_back(skinPath, result);
 		}
-		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.length() ? getTexture(albedoRoughness).m_Handle : nullptr);
-		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.length() ? getTexture(normalMetallic).m_Handle : nullptr);
+		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.empty() ? nullptr : getTexture(albedoRoughness).m_Handle);
+		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.empty() ? nullptr : getTexture(normalMetallic).m_Handle);
 		return result;
 	}
 
-	Animation Resources::getAnimation(string animPath)
+	Animation Resources::getAnimation(fs::path animPath)
 	{
 		Animation result;
 		bool found = false;
@@ -80,13 +80,13 @@ namespace happy
 
 		if (!found)
 		{
-			result = loadAnimFromFile(m_pRenderContext, m_BasePath + animPath);
+			result = loadAnimFromFile(m_pRenderContext, m_BasePath / animPath);
 			m_CachedAnimations.emplace_back(animPath, result);
 		}
 		return result;
 	}
 
-	TextureHandle Resources::getTexture(string filePath)
+	TextureHandle Resources::getTexture(fs::path filePath)
 	{
 		ComPtr<ID3D11ShaderResourceView> result;
 		for (auto it = m_CachedTextures.begin(); it != m_CachedTextures.end(); ++it)
@@ -98,14 +98,14 @@ namespace happy
 			}
 		}
 
-		result = loadTextureWIC(m_pRenderContext, m_BasePath + filePath);
+		result = loadTextureWIC(m_pRenderContext, m_BasePath / filePath);
 		m_CachedTextures.emplace_back(filePath, result);
 		return{ result };
 	}
 
-	TextureHandle Resources::getCubemap(string filePath[6])
+	TextureHandle Resources::getCubemap(fs::path filePath[6])
 	{
-		string id = filePath[0];
+		fs::path id = filePath[0];
 
 		ComPtr<ID3D11ShaderResourceView> result;
 		for (auto it = m_CachedCubemaps.begin(); it != m_CachedCubemaps.end(); ++it)
@@ -117,14 +117,14 @@ namespace happy
 			}
 		}
 
-		std::string files[] = 
+		fs::path files[] =
 		{
-			m_BasePath + filePath[0],
-			m_BasePath + filePath[1],
-			m_BasePath + filePath[2],
-			m_BasePath + filePath[3],
-			m_BasePath + filePath[4],
-			m_BasePath + filePath[5]
+			m_BasePath / filePath[0],
+			m_BasePath / filePath[1],
+			m_BasePath / filePath[2],
+			m_BasePath / filePath[3],
+			m_BasePath / filePath[4],
+			m_BasePath / filePath[5]
 		};
 
 		result = loadCubemapWIC(m_pRenderContext, files);
@@ -132,24 +132,24 @@ namespace happy
 		return{ result };
 	}
 
-	TextureHandle Resources::getCubemapFolder(string filePath, string format)
+	TextureHandle Resources::getCubemapFolder(fs::path filePath, std::string format)
 	{
-		std::string files[] =
+		fs::path files[] =
 		{
-			filePath + "\\posx." + format,
-			filePath + "\\negx." + format,
-			filePath + "\\posy." + format,
-			filePath + "\\negy." + format,
-			filePath + "\\posz." + format,
-			filePath + "\\negz." + format,
+			filePath / ("posx." + format),
+			filePath / ("negx." + format),
+			filePath / ("posy." + format),
+			filePath / ("negy." + format),
+			filePath / ("posz." + format),
+			filePath / ("negz." + format),
 		};
 
 		return getCubemap(files);
 	}
 
-	std::string Resources::getFilePath(std::string localPath)
+	fs::path Resources::getFilePath(fs::path localPath)
 	{
-		return m_BasePath + localPath;
+		return m_BasePath / localPath;
 	}
 
 	Canvas Resources::createCanvas(unsigned width, unsigned height, bool monoColor)

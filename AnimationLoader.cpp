@@ -10,7 +10,7 @@ namespace happy
 		return val;
 	}
 
-	Animation loadAnimFromFile(RenderingContext *pRenderContext, std::string animPath)
+	Animation loadAnimFromFile(RenderingContext *pRenderContext, fs::path animPath)
 	{
 		std::ifstream fin(animPath.c_str(), std::ios::in | std::ios::binary);
 

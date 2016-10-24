@@ -758,23 +758,22 @@ namespace happy
 		return hr;
 	}
 
-	ComPtr<ID3D11ShaderResourceView> loadCubemapWICFolder(RenderingContext *pRenderContext, std::string folder, std::string format)
+	ComPtr<ID3D11ShaderResourceView> loadCubemapWICFolder(RenderingContext *pRenderContext, fs::path folder, std::string format)
 	{
-		OutputDebugStringA("Load cubemap\n");
-
-		std::string files[] =
+		fs::path files[] =
 		{
-			folder + "\\posx." + format,
-			folder + "\\negx." + format,
-			folder + "\\posy." + format,
-			folder + "\\negy." + format,
-			folder + "\\posz." + format,
-			folder + "\\negz." + format,
+			folder / ("posx." + format),
+			folder / ("negx." + format),
+			folder / ("posy." + format),
+			folder / ("negy." + format),
+			folder / ("posz." + format),
+			folder / ("negz." + format),
 		};
+
 		return loadCubemapWIC(pRenderContext, files);
 	}
 
-	ComPtr<ID3D11ShaderResourceView> loadCubemapWIC(RenderingContext *pRenderContext, std::string fileName[6])
+	ComPtr<ID3D11ShaderResourceView> loadCubemapWIC(RenderingContext *pRenderContext, fs::path fileName[6])
 	{
 		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 		IWICImagingFactory* pWIC = _GetWIC();
@@ -791,7 +790,7 @@ namespace happy
 		
 		tuple<UINT, UINT, DXGI_FORMAT, uint8_t*> faces[6];
 		for (int i = 0; i < 6; ++i)
-			loadFace(converter.from_bytes(fileName[i]), faces[i]);
+			loadFace(fileName[i].c_str(), faces[i]);
 			
 		ComPtr<ID3D11ShaderResourceView> pView;
 		
@@ -838,18 +837,15 @@ namespace happy
 		return pView;
 	}
 	
-	ComPtr<ID3D11ShaderResourceView> loadTextureWIC(RenderingContext *pRenderContext, std::string _fileName)
+	ComPtr<ID3D11ShaderResourceView> loadTextureWIC(RenderingContext *pRenderContext, fs::path fileName)
 	{
 		ComPtr<ID3D11Resource> pTexture;
 		ComPtr<ID3D11ShaderResourceView> pSRV;
 
-		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-		std::wstring wide = converter.from_bytes(_fileName);
-
 		CreateWICTextureFromFile(
 			pRenderContext->getDevice(),
 			pRenderContext->getContext(),
-			wide.c_str(),
+			fileName.c_str(),
 			pTexture.GetAddressOf(),
 			pSRV.GetAddressOf(),
 			4096);
