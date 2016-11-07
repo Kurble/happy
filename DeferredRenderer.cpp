@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "DeferredRenderer.h"
 #include "Sphere.h"
+#include "Cube.h"
 #include "Resources.h"
 
 #include <algorithm>
@@ -12,6 +13,7 @@
 #include "CompiledShaders\VertexPositionNormalTangentBinormalTexcoord.h"
 #include "CompiledShaders\VertexPositionNormalTangentBinormalTexcoordIndicesWeights.h"
 #include "CompiledShaders\GeometryPS.h"
+#include "CompiledShaders\DecalsPS.h"
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
@@ -168,6 +170,7 @@ namespace happy
 		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoord>(pRenderContext->getDevice(), m_pVSPositionNormalTangentBinormalTexcoord, m_pILPositionNormalTangentBinormalTexcoord, g_shVertexPositionNormalTangentBinormalTexcoord);
 		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoordIndicesWeights>(pRenderContext->getDevice(), m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights, m_pILPositionNormalTangentBinormalTexcoordIndicesWeights, g_shVertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSGeometry, g_shGeometryPS);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSDecals, g_shDecalsPS);
 		
 		// Rendering shaders
 		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSScreenQuad, m_pILScreenQuad, g_shScreenQuadVS);
@@ -216,8 +219,8 @@ namespace happy
 			desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 			desc.DepthFunc = D3D11_COMPARISON_LESS;
 			desc.StencilEnable = true;
-			desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
-			desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+			desc.StencilReadMask = 0x00;
+			desc.StencilWriteMask = 0xff;
 			desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 			desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
 			desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
@@ -227,15 +230,23 @@ namespace happy
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateDepthStencilState(&desc, &m_pGBufferDepthStencilState));
 		}
 
-		// Decal depth stencil state
+		// Decals depth stencil state
 		{
 			D3D11_DEPTH_STENCIL_DESC desc;
 			ZeroMemory(&desc, sizeof(desc));
-			desc.DepthEnable = true;
+			desc.DepthEnable = false;
 			desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 			desc.DepthFunc = D3D11_COMPARISON_LESS;
-			desc.StencilEnable = false;
-			THROW_ON_FAIL(pRenderContext->getDevice()->CreateDepthStencilState(&desc, &m_pDecalDepthStencilState));
+			desc.StencilEnable = true;
+			desc.StencilReadMask = 0xff;
+			desc.StencilWriteMask = 0x00;
+			desc.FrontFace.StencilFunc = D3D11_COMPARISON_EQUAL;
+			desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+			desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+			desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+			desc.BackFace = desc.FrontFace;
+			desc.BackFace.StencilFunc = D3D11_COMPARISON_NEVER;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateDepthStencilState(&desc, &m_pDecalsDepthStencilState));
 		}
 
 		// Lighting depth stencil state
@@ -271,6 +282,25 @@ namespace happy
 			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
 			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBlendState(&desc, &m_pDefaultBlendState));
+		}
+
+		// Decals blending state
+		{
+			D3D11_BLEND_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.RenderTarget[0].BlendEnable = true;
+			desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+			desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+			desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
+			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+			desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+			desc.RenderTarget[0].RenderTargetWriteMask =
+				D3D11_COLOR_WRITE_ENABLE_RED |
+				D3D11_COLOR_WRITE_ENABLE_GREEN |
+				D3D11_COLOR_WRITE_ENABLE_BLUE;
+			desc.IndependentBlendEnable = false;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBlendState(&desc, &m_pDecalBlendState));
 		}
 
 		// Full screen quad
@@ -326,6 +356,36 @@ namespace happy
 			data.pSysMem = (void*)g_SphereIndices;
 
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&desc, &data, &m_pSphereIBuffer));
+		}
+
+		// Cube vtx buffer
+		{
+			D3D11_BUFFER_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.ByteWidth = sizeof(g_CubeVertices);
+			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+			desc.Usage = D3D11_USAGE_IMMUTABLE;
+
+			D3D11_SUBRESOURCE_DATA data;
+			ZeroMemory(&data, sizeof(data));
+			data.pSysMem = (void*)g_CubeVertices;
+
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&desc, &data, &m_pCubeVBuffer));
+		}
+
+		// Cube idx buffer
+		{
+			D3D11_BUFFER_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.ByteWidth = sizeof(g_CubeIndices);
+			desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+			desc.Usage = D3D11_USAGE_IMMUTABLE;
+
+			D3D11_SUBRESOURCE_DATA data;
+			ZeroMemory(&data, sizeof(data));
+			data.pSysMem = (void*)g_CubeIndices;
+
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&desc, &data, &m_pCubeIBuffer));
 		}
 	}
 
@@ -414,6 +474,16 @@ namespace happy
 			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[4].Get(), &dsvDesc, m_pDepthBufferView.GetAddressOf()));
 		}
 
+		// depth-stencil buffer object (read only)
+		{
+			D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+			dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+			dsvDesc.Texture2D.MipSlice = 0;
+			dsvDesc.Flags = D3D11_DSV_READ_ONLY_DEPTH | D3D11_DSV_READ_ONLY_STENCIL;
+			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[4].Get(), &dsvDesc, m_pDepthBufferViewReadOnly.GetAddressOf()));
+		}
+
 		// depth buffer view
 		{
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
@@ -422,16 +492,6 @@ namespace happy
 			srvDesc.Texture2D.MostDetailedMip = 0;
 			srvDesc.Texture2D.MipLevels = -1;
 			THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[4].Get(), &srvDesc, m_pGBufferView[4].GetAddressOf()));
-		}
-
-		// stencil buffer view
-		{
-			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-			srvDesc.Format = DXGI_FORMAT_X24_TYPELESS_G8_UINT;
-			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-			srvDesc.Texture2D.MostDetailedMip = 0;
-			srvDesc.Texture2D.MipLevels = -1;
-			THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[4].Get(), &srvDesc, m_pGBufferStencilView.GetAddressOf()));
 		}
 
 		for (unsigned int i = 0; i < 2; ++i)
@@ -454,9 +514,7 @@ namespace happy
 		m_GeometryPositionNormalTexcoord.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoord.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.clear();
-		m_DecalsPositionTexcoord.clear();
-		m_DecalsPositionNormalTexcoord.clear();
-		m_DecalsPositionNormalTangentBinormalTexcoord.clear();
+		m_Decals.clear();
 		m_PointLights.clear();
 		m_PostProcessItems.clear();
 	}
@@ -482,26 +540,20 @@ namespace happy
 		}
 	}
 
-	void DeferredRenderer::pushDecalMesh(const RenderMesh &mesh, const Mat4 &transform, const StencilMask filter)
-	{
-		switch (mesh.getVertexType())
-		{
-		case VertexType::VertexPositionTexcoord:
-			m_DecalsPositionTexcoord.emplace_back(mesh, transform, filter);
-			break;
-		case VertexType::VertexPositionNormalTexcoord:
-			m_DecalsPositionNormalTexcoord.emplace_back(mesh, transform, filter);
-			break;
-		case VertexType::VertexPositionNormalTangentBinormalTexcoord:
-			m_DecalsPositionNormalTangentBinormalTexcoord.emplace_back(mesh, transform, filter);
-			break;
-		}
-	}
-
 	void DeferredRenderer::pushLight(const Vec3 &position, const Vec3 &color, float radius, float falloff)
 	{
 		PointLight pl = { position, color, radius, falloff };
 		m_PointLights.push_back(pl);
+	}
+
+	void DeferredRenderer::pushDecal(const TextureHandle &texture, const Mat4 &transform, const StencilMask filter)
+	{
+		m_Decals.emplace_back(texture, TextureHandle(), transform, filter);
+	}
+
+	void DeferredRenderer::pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const Mat4 &transform, const StencilMask filter)
+	{
+		m_Decals.emplace_back(texture, normalMap, transform, filter);
 	}
 
 	void DeferredRenderer::pushPostProcessItem(const PostProcessItem &proc)
@@ -568,7 +620,7 @@ namespace happy
 	}
 
 	template<typename T>
-	void DeferredRenderer::renderStaticMeshList(const RenderList &renderList, CBufferObject &objectCB, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const
+	void DeferredRenderer::renderStaticMeshList(const vector<MeshRenderItem> &renderList, CBufferObject &objectCB, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
 
@@ -601,39 +653,6 @@ namespace happy
 		}
 	}
 
-	template<typename T>
-	void DeferredRenderer::renderDecalList(const RenderList &renderList, CBufferObject &objectCB, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const
-	{
-		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
-
-		context.IASetInputLayout(layout);
-		context.VSSetShader(shader, nullptr, 0);
-		context.VSSetConstantBuffers(0, 2, constBuffers);
-		for (const auto &elem : renderList)
-		{
-			objectCB.world = get<1>(elem);
-			D3D11_MAPPED_SUBRESOURCE msr;
-			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
-			context.Unmap(m_pCBObject.Get(), 0);
-
-			UINT stride = sizeof(T);
-			UINT offset = 0;
-			ID3D11Buffer* buffer = get<0>(elem).getVtxBuffer();
-
-			ID3D11ShaderResourceView* textures[] =
-			{
-				get<0>(elem).getAlbedoRoughnessMap(),
-				get<0>(elem).getNormalMetallicMap()
-			};
-
-			context.PSSetShaderResources(0, 2, textures);
-			context.IASetIndexBuffer(get<0>(elem).getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
-			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
-			context.DrawIndexed((UINT)get<0>(elem).getIndexCount(), 0, 0);
-		}
-	}
-
 	void DeferredRenderer::renderGeometryToGBuffer() const
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
@@ -647,16 +666,17 @@ namespace happy
 		context.ClearRenderTargetView(m_pGBufferTarget[0].Get(), cc);
 		context.ClearDepthStencilView(m_pDepthBufferView.Get(), D3D11_CLEAR_DEPTH, 1, 0);
 
-		context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		context.PSSetShader(m_pPSGeometry.Get(), nullptr, 0);
-		context.PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
-
 		ID3D11Buffer* constBuffers[] =
 		{
 			m_pCBScene.Get(),
 			m_pCBObject.Get()
 		};
 		CBufferObject objectCB;
+
+		context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		context.PSSetShader(m_pPSGeometry.Get(), nullptr, 0);
+		context.PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
+		context.PSSetConstantBuffers(0, 2, constBuffers);
 
 		//-------------------------------------------------------------
 		// Render Static Meshes
@@ -721,6 +741,42 @@ namespace happy
 			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
 			context.DrawIndexed((UINT)elem.m_Skin.getIndexCount(), 0, 0);
 		}
+
+		//-------------------------------------------------------------
+		// Render Decals
+		context.OMSetRenderTargets(2, rtvs, m_pDepthBufferViewReadOnly.Get());
+		context.OMSetBlendState(m_pDecalBlendState.Get(), nullptr, 0xffffffff);
+		context.IASetInputLayout(m_pILPositionTexcoord.Get());
+		context.VSSetShader(m_pVSPositionTexcoord.Get(), nullptr, 0);
+		context.VSSetConstantBuffers(0, 2, constBuffers);
+		context.PSSetShader(m_pPSDecals.Get(), nullptr, 0);
+		for (const auto &elem : m_Decals)
+		{
+			objectCB.world = std::get<2>(elem);
+			objectCB.worldInverse = std::get<2>(elem);
+			objectCB.worldInverse.inverse();
+			D3D11_MAPPED_SUBRESOURCE msr;
+			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
+			context.Unmap(m_pCBObject.Get(), 0);
+
+			UINT stride = sizeof(VertexPositionTexcoord);
+			UINT offset = 0;
+			ID3D11Buffer* buffer = m_pCubeVBuffer.Get();
+
+			ID3D11ShaderResourceView* textures[] =
+			{
+				std::get<0>(elem).m_Handle.Get(),
+				std::get<1>(elem).m_Handle.Get(),
+				m_pGBufferView[4].Get(),
+			};
+
+			context.OMSetDepthStencilState(m_pDecalsDepthStencilState.Get(), std::get<3>(elem));
+			context.PSSetShaderResources(0, 3, textures);
+			context.IASetIndexBuffer(m_pCubeIBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+			context.IASetVertexBuffers(0, 1, m_pCubeVBuffer.GetAddressOf(), &stride, &offset);
+			context.DrawIndexed(36, 0, 0);
+		}
 	}
 
 	void DeferredRenderer::renderGBufferToBackBuffer() const
@@ -731,6 +787,7 @@ namespace happy
 
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
 		context.OMSetDepthStencilState(m_pLightingDepthStencilState.Get(), 0);
+		context.OMSetBlendState(nullptr, nullptr, 0xffffffff);
 		context.ClearRenderTargetView(m_pRenderContext->getBackBuffer(), clearColor);
 		context.ClearRenderTargetView(m_pPostProcessRT[0].Get(), clearColor);
 		context.ClearRenderTargetView(m_pPostProcessRT[1].Get(), clearColor);

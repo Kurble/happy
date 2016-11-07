@@ -74,6 +74,9 @@
     <ClInclude Include="PostProcessItem.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="Cube.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">

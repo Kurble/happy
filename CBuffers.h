@@ -13,6 +13,7 @@ cbuffer CBufferScene : register(b0)
 cbuffer CBufferObject : register(b1)
 {
 	float4x4 world;
+	float4x4 worldInverse;
 	float4 animationBlend;
 	float4 frameBlend;
 	uint animationCount;

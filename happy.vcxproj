@@ -192,6 +192,7 @@
     <ClInclude Include="AssetLoaders.h" />
     <ClInclude Include="Canvas.h" />
     <ClInclude Include="CBuffers.h" />
+    <ClInclude Include="Cube.h" />
     <ClInclude Include="DeferredRenderer.h" />
     <ClInclude Include="DSSDO_Kernel.h" />
     <ClInclude Include="GBufferCommon.h" />
