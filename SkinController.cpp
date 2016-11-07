@@ -23,8 +23,14 @@ namespace happy
 		m_RenderItem.m_AnimationCount = 1;
 		m_RenderItem.m_World.identity();
 		m_RenderItem.m_World.scale(Vec3(1, 1, 1) * 0.5f);
+		m_RenderItem.m_Groups = 0x00;
 		m_RenderItem.m_BlendAnimation = Vec4(1, 0, 0, 0);
 		m_RenderItem.m_BlendFrame = Vec4(0, 0, 0, 0);
+	}
+
+	void SkinController::setRenderGroups(StencilMask &groups)
+	{
+		m_RenderItem.m_Groups = groups;
 	}
 
 	int SkinController::addAnimation(string name, Animation animation)

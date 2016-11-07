@@ -208,16 +208,46 @@ namespace happy
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateShaderResourceView(pTexture.Get(), nullptr, &m_pNoiseTexture));
 		}
 
-		// Rendering depth stencil state
+		// G-Buffer depth stencil state
+		{
+			D3D11_DEPTH_STENCIL_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.DepthEnable = true;
+			desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+			desc.DepthFunc = D3D11_COMPARISON_LESS;
+			desc.StencilEnable = true;
+			desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+			desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+			desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+			desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+			desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+			desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
+			desc.BackFace = desc.FrontFace;
+			desc.BackFace.StencilFunc = D3D11_COMPARISON_NEVER;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateDepthStencilState(&desc, &m_pGBufferDepthStencilState));
+		}
+
+		// Decal depth stencil state
+		{
+			D3D11_DEPTH_STENCIL_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.DepthEnable = true;
+			desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+			desc.DepthFunc = D3D11_COMPARISON_LESS;
+			desc.StencilEnable = false;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateDepthStencilState(&desc, &m_pDecalDepthStencilState));
+		}
+
+		// Lighting depth stencil state
 		{
 			D3D11_DEPTH_STENCIL_DESC desc;
 			ZeroMemory(&desc, sizeof(desc));
 			desc.DepthEnable = false;
 			desc.StencilEnable = false;
-			THROW_ON_FAIL(pRenderContext->getDevice()->CreateDepthStencilState(&desc, &m_pRenderDepthState));
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateDepthStencilState(&desc, &m_pLightingDepthStencilState));
 		}
 
-		// Rendering blending state
+		// Lighting blending state
 		{
 			D3D11_BLEND_DESC desc;
 			ZeroMemory(&desc, sizeof(desc));
@@ -370,9 +400,39 @@ namespace happy
 
 		texDesc.Width = width;
 		texDesc.Height = height;
-		texDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+		texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
 		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
 		THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &m_pGBuffer[4]));
+
+		// depth-stencil buffer object
+		{
+			D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+			dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+			dsvDesc.Texture2D.MipSlice = 0;
+			dsvDesc.Flags = 0;
+			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[4].Get(), &dsvDesc, m_pDepthBufferView.GetAddressOf()));
+		}
+
+		// depth buffer view
+		{
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+			srvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.Texture2D.MostDetailedMip = 0;
+			srvDesc.Texture2D.MipLevels = -1;
+			THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[4].Get(), &srvDesc, m_pGBufferView[4].GetAddressOf()));
+		}
+
+		// stencil buffer view
+		{
+			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+			srvDesc.Format = DXGI_FORMAT_X24_TYPELESS_G8_UINT;
+			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.Texture2D.MostDetailedMip = 0;
+			srvDesc.Texture2D.MipLevels = -1;
+			THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[4].Get(), &srvDesc, m_pGBufferStencilView.GetAddressOf()));
+		}
 
 		for (unsigned int i = 0; i < 2; ++i)
 		{
@@ -386,20 +446,6 @@ namespace happy
 			THROW_ON_FAIL(device.CreateRenderTargetView(texHandle.Get(), nullptr, m_pPostProcessRT[i].GetAddressOf()));
 			THROW_ON_FAIL(device.CreateShaderResourceView(texHandle.Get(), nullptr, m_pPostProcessView[i].GetAddressOf()));
 		}
-
-		D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-		dsvDesc.Texture2D.MipSlice = 0;
-		dsvDesc.Flags = 0;
-		THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[4].Get(), &dsvDesc, m_pDepthBufferView.GetAddressOf()));
-
-		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-		srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
-		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		srvDesc.Texture2D.MostDetailedMip = 0;
-		srvDesc.Texture2D.MipLevels = -1;
-		THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[4].Get(), &srvDesc, m_pGBufferView[4].GetAddressOf()));
 	}
 
 	void DeferredRenderer::clear()
@@ -408,6 +454,9 @@ namespace happy
 		m_GeometryPositionNormalTexcoord.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoord.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.clear();
+		m_DecalsPositionTexcoord.clear();
+		m_DecalsPositionNormalTexcoord.clear();
+		m_DecalsPositionNormalTangentBinormalTexcoord.clear();
 		m_PointLights.clear();
 		m_PostProcessItems.clear();
 	}
@@ -417,18 +466,34 @@ namespace happy
 		m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.push_back(skin);
 	}
 
-	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform)
+	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform, const StencilMask groups)
 	{
 		switch (mesh.getVertexType())
 		{
 		case VertexType::VertexPositionTexcoord:
-			m_GeometryPositionTexcoord.emplace_back(mesh, transform);
+			m_GeometryPositionTexcoord.emplace_back(mesh, transform, groups);
 			break;
 		case VertexType::VertexPositionNormalTexcoord:
-			m_GeometryPositionNormalTexcoord.emplace_back(mesh, transform);
+			m_GeometryPositionNormalTexcoord.emplace_back(mesh, transform, groups);
 			break;
 		case VertexType::VertexPositionNormalTangentBinormalTexcoord:
-			m_GeometryPositionNormalTangentBinormalTexcoord.emplace_back(mesh, transform);
+			m_GeometryPositionNormalTangentBinormalTexcoord.emplace_back(mesh, transform, groups);
+			break;
+		}
+	}
+
+	void DeferredRenderer::pushDecalMesh(const RenderMesh &mesh, const Mat4 &transform, const StencilMask filter)
+	{
+		switch (mesh.getVertexType())
+		{
+		case VertexType::VertexPositionTexcoord:
+			m_DecalsPositionTexcoord.emplace_back(mesh, transform, filter);
+			break;
+		case VertexType::VertexPositionNormalTexcoord:
+			m_DecalsPositionNormalTexcoord.emplace_back(mesh, transform, filter);
+			break;
+		case VertexType::VertexPositionNormalTangentBinormalTexcoord:
+			m_DecalsPositionNormalTangentBinormalTexcoord.emplace_back(mesh, transform, filter);
 			break;
 		}
 	}
@@ -502,13 +567,80 @@ namespace happy
 		renderGBufferToBackBuffer();
 	}
 
+	template<typename T>
+	void DeferredRenderer::renderStaticMeshList(const RenderList &renderList, CBufferObject &objectCB, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const
+	{
+		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
+
+		context.IASetInputLayout(layout);
+		context.VSSetShader(shader, nullptr, 0);
+		context.VSSetConstantBuffers(0, 2, constBuffers);
+		for (const auto &elem : renderList)
+		{
+			objectCB.world = get<1>(elem);
+			D3D11_MAPPED_SUBRESOURCE msr;
+			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
+			context.Unmap(m_pCBObject.Get(), 0);
+
+			UINT stride = sizeof(T);
+			UINT offset = 0;
+			ID3D11Buffer* buffer = get<0>(elem).getVtxBuffer();
+
+			ID3D11ShaderResourceView* textures[] =
+			{
+				get<0>(elem).getAlbedoRoughnessMap(),
+				get<0>(elem).getNormalMetallicMap()
+			};
+
+			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), std::get<2>(elem));
+			context.PSSetShaderResources(0, 2, textures);
+			context.IASetIndexBuffer(get<0>(elem).getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
+			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+			context.DrawIndexed((UINT)get<0>(elem).getIndexCount(), 0, 0);
+		}
+	}
+
+	template<typename T>
+	void DeferredRenderer::renderDecalList(const RenderList &renderList, CBufferObject &objectCB, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const
+	{
+		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
+
+		context.IASetInputLayout(layout);
+		context.VSSetShader(shader, nullptr, 0);
+		context.VSSetConstantBuffers(0, 2, constBuffers);
+		for (const auto &elem : renderList)
+		{
+			objectCB.world = get<1>(elem);
+			D3D11_MAPPED_SUBRESOURCE msr;
+			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
+			context.Unmap(m_pCBObject.Get(), 0);
+
+			UINT stride = sizeof(T);
+			UINT offset = 0;
+			ID3D11Buffer* buffer = get<0>(elem).getVtxBuffer();
+
+			ID3D11ShaderResourceView* textures[] =
+			{
+				get<0>(elem).getAlbedoRoughnessMap(),
+				get<0>(elem).getNormalMetallicMap()
+			};
+
+			context.PSSetShaderResources(0, 2, textures);
+			context.IASetIndexBuffer(get<0>(elem).getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
+			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+			context.DrawIndexed((UINT)get<0>(elem).getIndexCount(), 0, 0);
+		}
+	}
+
 	void DeferredRenderer::renderGeometryToGBuffer() const
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
 
 		ID3D11RenderTargetView* rtvs[] = { m_pGBufferTarget[0].Get(), m_pGBufferTarget[1].Get() };
 		context.OMSetRenderTargets(2, rtvs, m_pDepthBufferView.Get());
-		context.OMSetDepthStencilState(nullptr, 0);
+		context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
 		context.OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 		float cc[4] = { 0, 0, 0, 0 };
@@ -527,94 +659,30 @@ namespace happy
 		CBufferObject objectCB;
 
 		//-------------------------------------------------------------
-		// Render VertexPositionTexcoord elements
-		context.IASetInputLayout(m_pILPositionTexcoord.Get());
-		context.VSSetShader(m_pVSPositionTexcoord.Get(), nullptr, 0);
-		context.VSSetConstantBuffers(0, 2, constBuffers);
-		for (const auto &elem : m_GeometryPositionTexcoord)
-		{
-			objectCB.world = elem.second;
-			D3D11_MAPPED_SUBRESOURCE msr;
-			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
-			context.Unmap(m_pCBObject.Get(), 0);
+		// Render Static Meshes
+		renderStaticMeshList<VertexPositionTexcoord>(
+			m_GeometryPositionTexcoord, 
+			objectCB, 
+			m_pILPositionTexcoord.Get(), 
+			m_pVSPositionTexcoord.Get(), 
+			constBuffers);
+		
+		renderStaticMeshList<VertexPositionNormalTexcoord>(
+			m_GeometryPositionNormalTexcoord, 
+			objectCB, 
+			m_pILPositionNormalTexcoord.Get(), 
+			m_pVSPositionTexcoord.Get(), 
+			constBuffers);
 
-			UINT stride = sizeof(VertexPositionTexcoord);
-			UINT offset = 0;
-			ID3D11Buffer* buffer = elem.first.getVtxBuffer();
-
-			ID3D11ShaderResourceView* textures[] = 
-			{
-				elem.first.getAlbedoRoughnessMap(),
-				elem.first.getNormalMetallicMap()
-			};
-
-			context.PSSetShaderResources(0, 2, textures);
-			context.IASetIndexBuffer(elem.first.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
-			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
-			context.DrawIndexed((UINT)elem.first.getIndexCount(), 0, 0);
-		}
+		renderStaticMeshList<VertexPositionNormalTangentBinormalTexcoord>(
+			m_GeometryPositionNormalTangentBinormalTexcoord, 
+			objectCB, 
+			m_pILPositionNormalTangentBinormalTexcoord.Get(),
+			m_pVSPositionNormalTangentBinormalTexcoord.Get(), 
+			constBuffers);
 
 		//-------------------------------------------------------------
-		// Render VertexPositionNormalTexcoord elements
-		context.IASetInputLayout(m_pILPositionNormalTexcoord.Get());
-		context.VSSetShader(m_pVSPositionNormalTexcoord.Get(), nullptr, 0);
-		context.VSSetConstantBuffers(0, 2, constBuffers);
-		for (const auto &elem : m_GeometryPositionNormalTexcoord)
-		{
-			objectCB.world = elem.second;
-			D3D11_MAPPED_SUBRESOURCE msr;
-			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
-			context.Unmap(m_pCBObject.Get(), 0);
-
-			UINT stride = sizeof(VertexPositionNormalTexcoord);
-			UINT offset = 0;
-			ID3D11Buffer* buffer = elem.first.getVtxBuffer();
-
-			ID3D11ShaderResourceView* textures[] =
-			{
-				elem.first.getAlbedoRoughnessMap(),
-				elem.first.getNormalMetallicMap()
-			};
-
-			context.PSSetShaderResources(0, 2, textures);
-			context.IASetIndexBuffer(elem.first.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
-			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
-			context.DrawIndexed((UINT)elem.first.getIndexCount(), 0, 0);
-		}
-
-		//-------------------------------------------------------------
-		// Render VertexPositionNormalTangentBinormalTexcoord elements
-		context.IASetInputLayout(m_pILPositionNormalTangentBinormalTexcoord.Get());
-		context.VSSetShader(m_pVSPositionNormalTangentBinormalTexcoord.Get(), nullptr, 0);
-		context.VSSetConstantBuffers(0, 2, constBuffers);
-		for (const auto &elem : m_GeometryPositionNormalTangentBinormalTexcoord)
-		{
-			objectCB.world = elem.second;
-			D3D11_MAPPED_SUBRESOURCE msr;
-			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
-			context.Unmap(m_pCBObject.Get(), 0);
-
-			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoord);
-			UINT offset = 0;
-			ID3D11Buffer* buffer = elem.first.getVtxBuffer();
-
-			ID3D11ShaderResourceView* textures[] =
-			{
-				elem.first.getAlbedoRoughnessMap(),
-				elem.first.getNormalMetallicMap()
-			};
-
-			context.PSSetShaderResources(0, 2, textures);
-			context.IASetIndexBuffer(elem.first.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
-			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
-			context.DrawIndexed((UINT)elem.first.getIndexCount(), 0, 0);
-		}
-
-		//-------------------------------------------------------------
-		// Render VertexPositionNormalTangentBinormalTexcoordIndicesWeights elements
+		// Render Skins
 		context.IASetInputLayout(m_pILPositionNormalTangentBinormalTexcoordIndicesWeights.Get());
 		context.VSSetShader(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights.Get(), nullptr, 0);
 		context.VSSetConstantBuffers(0, 2, constBuffers);
@@ -646,6 +714,7 @@ namespace happy
 
 			for (unsigned i = 0; i < elem.m_AnimationCount * 2; ++i) buffers.push_back(elem.m_Frames[i]);
 
+			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Groups);
 			context.VSSetConstantBuffers(2, (UINT)buffers.size(), &buffers[0]);
 			context.PSSetShaderResources(0, 2, textures);
 			context.IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
@@ -661,7 +730,7 @@ namespace happy
 		ID3D11ShaderResourceView* nullSRV = nullptr;
 
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
-		context.OMSetDepthStencilState(m_pRenderDepthState.Get(), 0);
+		context.OMSetDepthStencilState(m_pLightingDepthStencilState.Get(), 0);
 		context.ClearRenderTargetView(m_pRenderContext->getBackBuffer(), clearColor);
 		context.ClearRenderTargetView(m_pPostProcessRT[0].Get(), clearColor);
 		context.ClearRenderTargetView(m_pPostProcessRT[1].Get(), clearColor);

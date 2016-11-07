@@ -9,7 +9,9 @@
 
 namespace happy
 {
-	using RenderList = vector<pair<RenderMesh, Mat4>>;
+	using StencilMask = uint8_t;
+
+	using RenderList = vector<tuple<RenderMesh, Mat4, StencilMask>>;
 
 	struct RendererConfiguration
 	{
@@ -73,8 +75,10 @@ namespace happy
 		void resize(unsigned int width, unsigned int height);
 		void clear();
 		
-		void pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform);
+		void pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform, const StencilMask groups = 0x00);
 		void pushSkinRenderItem(const SkinRenderItem &skin);
+		void pushDecal(const TextureHandle &texture, const Mat4 &transform, const StencilMask filter = 0xff);
+		void pushDecalMesh(const RenderMesh &mesh, const Mat4 &transform, const StencilMask filter = 0xff);
 		void pushLight(const Vec3 &position, const Vec3 &color, const float radius, const float falloff);
 		void pushPostProcessItem(const PostProcessItem &proc);
 
@@ -91,6 +95,12 @@ namespace happy
 
 		void renderGeometryToGBuffer() const;
 		void renderGBufferToBackBuffer() const;
+
+		template<typename T>
+		void renderStaticMeshList(const RenderList &renderList, CBufferObject &objectCB, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
+
+		template<typename T>
+		void renderDecalList(const RenderList &renderList, CBufferObject &objectCB, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
 
 		struct PointLight
 		{
@@ -113,6 +123,7 @@ namespace happy
 		ComPtr<ID3D11VertexShader>        m_pVSPositionNormalTangentBinormalTexcoord;
 		ComPtr<ID3D11VertexShader>        m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights;
 		ComPtr<ID3D11PixelShader>         m_pPSGeometry;
+		ComPtr<ID3D11PixelShader>         m_pPSDecals;
 		ComPtr<ID3D11SamplerState>        m_pGSampler;
 		ComPtr<ID3D11Buffer>              m_pCBScene;
 		ComPtr<ID3D11Buffer>              m_pCBObject;
@@ -126,11 +137,14 @@ namespace happy
 		ComPtr<ID3D11Texture2D>           m_pGBuffer[5];
 		ComPtr<ID3D11RenderTargetView>    m_pGBufferTarget[5];
 		ComPtr<ID3D11ShaderResourceView>  m_pGBufferView[5];
+		ComPtr<ID3D11ShaderResourceView>  m_pGBufferStencilView;
 		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferView;
 
 		//--------------------------------------------------------------------
 		// Screen rendering
-		ComPtr<ID3D11DepthStencilState>   m_pRenderDepthState;
+		ComPtr<ID3D11DepthStencilState>   m_pGBufferDepthStencilState;
+		ComPtr<ID3D11DepthStencilState>   m_pDecalDepthStencilState;
+		ComPtr<ID3D11DepthStencilState>   m_pLightingDepthStencilState;
 		ComPtr<ID3D11BlendState>          m_pRenderBlendState;
 		ComPtr<ID3D11BlendState>          m_pDefaultBlendState;
 		ComPtr<ID3D11SamplerState>        m_pScreenSampler;
@@ -163,6 +177,9 @@ namespace happy
 		RenderList                        m_GeometryPositionNormalTexcoord;
 		RenderList                        m_GeometryPositionNormalTangentBinormalTexcoord;
 		vector<SkinRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
+		RenderList                        m_DecalsPositionTexcoord;
+		RenderList                        m_DecalsPositionNormalTexcoord;
+		RenderList                        m_DecalsPositionNormalTangentBinormalTexcoord;
 		vector<PointLight>                m_PointLights;
 		vector<PostProcessItem>           m_PostProcessItems;
 	};

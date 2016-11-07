@@ -12,10 +12,13 @@ using std::chrono::system_clock;
 
 namespace happy
 {
+	using StencilMask = uint8_t;
+
 	struct SkinRenderItem
 	{
 		RenderSkin m_Skin;
 		Mat4  m_World;
+		StencilMask m_Groups;
 		unsigned m_AnimationCount;
 		Vec4 m_BlendFrame;
 		Vec4 m_BlendAnimation;
@@ -27,6 +30,7 @@ namespace happy
 	{
 	public:
 		void setSkin(RenderSkin &skin);
+		void setRenderGroups(StencilMask &groups);
 
 		int addAnimation(string name, Animation animation);
 		int getAnimationIndex(string name);
