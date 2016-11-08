@@ -11,10 +11,6 @@ namespace happy
 {
 	using StencilMask = uint8_t;
 
-	using MeshRenderItem = tuple<RenderMesh, Mat4, StencilMask>;
-
-	using DecalItem = tuple<TextureHandle, TextureHandle, Mat4, StencilMask>;
-
 	struct RendererConfiguration
 	{
 		bool     m_AOEnabled     = true;
@@ -22,49 +18,6 @@ namespace happy
 		float    m_AOOcclusionRadius = 0.13f;
 		float    m_AOOcclusionMaxDistance = 1.3f;
 		bool     m_AOHiRes       = true;
-	};
-
-	struct CBufferScene
-	{
-		Mat4 view;
-		Mat4 projection;
-		Mat4 viewInverse;
-		Mat4 projectionInverse;
-		float width;
-		float height;
-		unsigned int convolutionStages;
-		unsigned int aoEnabled;
-	};
-
-	struct CBufferObject
-	{
-		Mat4 world;
-		Mat4 worldInverse;
-		float blendAnim[4];
-		float blendFrame[4];
-		unsigned int animationCount;
-	};
-
-	struct CBufferPointLight
-	{
-		Vec4 position;
-		Vec4 color;
-		float scale;
-		float falloff;
-	};
-
-	struct CBufferEffects
-	{
-		float occlusionRadius = 0.1f;
-		float occlusionMaxDistance = 10.2f;
-		Vec2  blurDir;
-		
-		int   samples = 128;
-	};
-
-	struct CBufferRandom
-	{
-		Vec2 random_points[512];
 	};
 
 	class DeferredRenderer
@@ -94,26 +47,77 @@ namespace happy
 	private:
 		const RenderingContext *m_pRenderContext;
 
-		RendererConfiguration m_Config;
-
-		void renderGeometryToGBuffer() const;
-		void renderGBufferToBackBuffer() const;
-
-		template<typename T>
-		void renderStaticMeshList(const vector<MeshRenderItem> &renderList, CBufferObject &objectCB, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
-
-		struct PointLight
+		struct MeshItem
 		{
-			Vec3 m_Position;
-			Vec3 m_Color;
-			float m_Radius;
-			float m_FaloffExponent;
+			MeshItem(const RenderMesh &mesh, const Mat4 &transform, const StencilMask group)
+				: m_Mesh(mesh), m_Transform(transform), m_Group(group) 
+			{}
+
+			RenderMesh    m_Mesh;
+			Mat4          m_Transform;
+			StencilMask   m_Group;
 		};
 
-		ComPtr<ID3D11RasterizerState>     m_pRasterState;
+		struct DecalItem
+		{
+			DecalItem(const TextureHandle &texture, const TextureHandle &normal, const Mat4 &transform, const StencilMask filter)
+				: m_Texture(texture), m_NormalMap(normal), m_Transform(transform), m_Filter(filter) 
+			{}
+
+			TextureHandle m_Texture;
+			TextureHandle m_NormalMap;
+			Mat4          m_Transform;
+			StencilMask   m_Filter;
+		};
+
+		struct PointLightItem
+		{
+			PointLightItem(const Vec3 &position, const Vec3 &color, const float radius, const float faloff)
+				: m_Position(position), m_Color(color), m_Radius(radius), m_FaloffExponent(faloff) 
+			{}
+
+			Vec3          m_Position;
+			Vec3          m_Color;
+			float         m_Radius;
+			float         m_FaloffExponent;
+		};
 
 		//--------------------------------------------------------------------
-		// G-Buffer shaders, static
+		// State
+		RendererConfiguration             m_Config;
+		D3D11_VIEWPORT                    m_ViewPort;
+		D3D11_VIEWPORT                    m_BlurViewPort;
+		Mat4                              m_View;
+		Mat4                              m_Projection;
+		PBREnvironment                    m_Environment;
+		vector<MeshItem>                  m_GeometryPositionTexcoord;
+		vector<MeshItem>                  m_GeometryPositionNormalTexcoord;
+		vector<MeshItem>                  m_GeometryPositionNormalTangentBinormalTexcoord;
+		vector<SkinRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
+		vector<DecalItem>                 m_Decals;
+		vector<PointLightItem>            m_PointLights;
+		vector<PostProcessItem>           m_PostProcessItems;
+
+		//--------------------------------------------------------------------
+		// Private functions
+		void renderGeometryToGBuffer() const;
+		void renderGBufferToBackBuffer() const;
+		template<typename T>
+		void renderStaticMeshList(const vector<MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
+
+		//--------------------------------------------------------------------
+		// D3D11 Objects
+		// G-Buffer content:
+		// 0:   color buffer
+		// 1:   normal buffer
+		// 2-3: directional occlusion double buffer
+		// 4:   depth buffer
+		ComPtr<ID3D11Texture2D>           m_pGBuffer[5];
+		ComPtr<ID3D11RenderTargetView>    m_pGBufferTarget[5];
+		ComPtr<ID3D11ShaderResourceView>  m_pGBufferView[5];
+		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferView;
+		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferViewReadOnly;
+		ComPtr<ID3D11RasterizerState>     m_pRasterState;
 		ComPtr<ID3D11InputLayout>         m_pILPositionTexcoord;
 		ComPtr<ID3D11InputLayout>         m_pILPositionNormalTexcoord;
 		ComPtr<ID3D11InputLayout>         m_pILPositionNormalTangentBinormalTexcoord;
@@ -127,21 +131,6 @@ namespace happy
 		ComPtr<ID3D11SamplerState>        m_pGSampler;
 		ComPtr<ID3D11Buffer>              m_pCBScene;
 		ComPtr<ID3D11Buffer>              m_pCBObject;
-
-		//--------------------------------------------------------------------
-		// G-Buffer content:
-		// 0:   color buffer
-		// 1:   normal buffer
-		// 2-3: directional occlusion double buffer
-		// 4:   depth buffer
-		ComPtr<ID3D11Texture2D>           m_pGBuffer[5];
-		ComPtr<ID3D11RenderTargetView>    m_pGBufferTarget[5];
-		ComPtr<ID3D11ShaderResourceView>  m_pGBufferView[5];
-		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferView;
-		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferViewReadOnly;
-
-		//--------------------------------------------------------------------
-		// Screen rendering
 		ComPtr<ID3D11DepthStencilState>   m_pGBufferDepthStencilState;
 		ComPtr<ID3D11DepthStencilState>   m_pLightingDepthStencilState;
 		ComPtr<ID3D11DepthStencilState>   m_pDecalsDepthStencilState;
@@ -168,20 +157,5 @@ namespace happy
 		ComPtr<ID3D11Buffer>              m_pCBPointLighting;
 		ComPtr<ID3D11RenderTargetView>    m_pPostProcessRT[2];
 		ComPtr<ID3D11ShaderResourceView>  m_pPostProcessView[2];
-
-		//--------------------------------------------------------------------
-		// State
-		D3D11_VIEWPORT                    m_ViewPort;
-		D3D11_VIEWPORT                    m_BlurViewPort;
-		Mat4                              m_View;
-		Mat4                              m_Projection;
-		PBREnvironment                    m_Environment;
-		vector<MeshRenderItem>            m_GeometryPositionTexcoord;
-		vector<MeshRenderItem>            m_GeometryPositionNormalTexcoord;
-		vector<MeshRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoord;
-		vector<SkinRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
-		vector<DecalItem>                 m_Decals;
-		vector<PointLight>                m_PointLights;
-		vector<PostProcessItem>           m_PostProcessItems;
 	};
 }
