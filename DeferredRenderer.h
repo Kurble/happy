@@ -31,10 +31,11 @@ namespace happy
 		void resize(unsigned int width, unsigned int height);
 		void clear();
 		
-		void pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform, const StencilMask group = 0);
+		void pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform, const StencilMask group);
+		void pushRenderMesh(const RenderMesh &mesh, float alpha, const Mat4 &transform, const StencilMask group);
 		void pushSkinRenderItem(const SkinRenderItem &skin);
-		void pushDecal(const TextureHandle &texture, const Mat4 &transform, const StencilMask filter = 0);
-		void pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const Mat4 &transform, const StencilMask filter = 0);
+		void pushDecal(const TextureHandle &texture, const Mat4 &transform, const StencilMask filter);
+		void pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const Mat4 &transform, const StencilMask filter);
 		void pushLight(const Vec3 &position, const Vec3 &color, const float radius, const float falloff);
 		void pushPostProcessItem(const PostProcessItem &proc);
 
@@ -49,11 +50,12 @@ namespace happy
 
 		struct MeshItem
 		{
-			MeshItem(const RenderMesh &mesh, const Mat4 &transform, const StencilMask group)
-				: m_Mesh(mesh), m_Transform(transform), m_Group(group) 
+			MeshItem(const RenderMesh &mesh, const float alpha, const Mat4 &transform, const StencilMask group)
+				: m_Mesh(mesh), m_Alpha(alpha), m_Transform(transform), m_Group(group)
 			{}
 
 			RenderMesh    m_Mesh;
+			float         m_Alpha;
 			Mat4          m_Transform;
 			StencilMask   m_Group;
 		};
@@ -94,6 +96,10 @@ namespace happy
 		vector<MeshItem>                  m_GeometryPositionNormalTexcoord;
 		vector<MeshItem>                  m_GeometryPositionNormalTangentBinormalTexcoord;
 		vector<SkinRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
+		vector<MeshItem>                  m_GeometryPositionTexcoordTransparent;
+		vector<MeshItem>                  m_GeometryPositionNormalTexcoordTransparent;
+		vector<MeshItem>                  m_GeometryPositionNormalTangentBinormalTexcoordTransparent;
+		vector<SkinRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent;
 		vector<DecalItem>                 m_Decals;
 		vector<PointLightItem>            m_PointLights;
 		vector<PostProcessItem>           m_PostProcessItems;
@@ -104,6 +110,8 @@ namespace happy
 		void renderGBufferToBackBuffer() const;
 		template<typename T>
 		void renderStaticMeshList(const vector<MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
+		template<typename T>
+		void updateConstantBuffer(ID3D11DeviceContext *context, ID3D11Buffer *buffer, const T &value) const;
 
 		//--------------------------------------------------------------------
 		// D3D11 Objects
@@ -127,10 +135,12 @@ namespace happy
 		ComPtr<ID3D11VertexShader>        m_pVSPositionNormalTangentBinormalTexcoord;
 		ComPtr<ID3D11VertexShader>        m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights;
 		ComPtr<ID3D11PixelShader>         m_pPSGeometry;
+		ComPtr<ID3D11PixelShader>         m_pPSGeometryAlphaStippled;
 		ComPtr<ID3D11PixelShader>         m_pPSDecals;
 		ComPtr<ID3D11SamplerState>        m_pGSampler;
 		ComPtr<ID3D11Buffer>              m_pCBScene;
 		ComPtr<ID3D11Buffer>              m_pCBObject;
+		ComPtr<ID3D11Buffer>              m_pCBSkin;
 		ComPtr<ID3D11DepthStencilState>   m_pGBufferDepthStencilState;
 		ComPtr<ID3D11DepthStencilState>   m_pLightingDepthStencilState;
 		ComPtr<ID3D11DepthStencilState>   m_pDecalsDepthStencilState;

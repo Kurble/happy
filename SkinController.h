@@ -17,6 +17,7 @@ namespace happy
 	struct SkinRenderItem
 	{
 		RenderSkin m_Skin;
+		float m_Alpha;
 		Mat4  m_World;
 		StencilMask m_Groups;
 		unsigned m_AnimationCount;
@@ -31,6 +32,7 @@ namespace happy
 	public:
 		void setSkin(RenderSkin &skin);
 		void setRenderGroups(StencilMask &groups);
+		void setAlpha(float alpha);
 
 		int addAnimation(string name, Animation animation);
 		int getAnimationIndex(string name);

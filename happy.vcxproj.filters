@@ -130,6 +130,9 @@
     <FxCompile Include="DecalsPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="GeometryAlphaStippledPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeferredRenderer.cpp">

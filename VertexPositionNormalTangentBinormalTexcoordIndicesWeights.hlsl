@@ -1,11 +1,11 @@
 #include "GBufferCommon.h"
 
-cbuffer CBufferBindPose    : register(b2 ) { float4x4 bindpose[64]; };
-cbuffer CBufferAnim0Frame0 : register(b3 ) { float4x4 pose0[64]; }
-cbuffer CBufferAnim0Frame1 : register(b4 ) { float4x4 pose1[64]; }
-cbuffer CBufferAnim1Frame0 : register(b5 ) { float4x4 pose2[64]; }
-cbuffer CBufferAnim1Frame1 : register(b6 ) { float4x4 pose3[64]; }
-cbuffer CBufferAnim2Frame0 : register(b7 ) { float4x4 pose4[64]; }
+cbuffer CBufferBindPose    : register(b3 ) { float4x4 bindpose[64]; };
+cbuffer CBufferAnim0Frame0 : register(b4 ) { float4x4 pose0[64]; }
+cbuffer CBufferAnim0Frame1 : register(b5 ) { float4x4 pose1[64]; }
+cbuffer CBufferAnim1Frame0 : register(b6 ) { float4x4 pose2[64]; }
+cbuffer CBufferAnim1Frame1 : register(b7 ) { float4x4 pose3[64]; }
+cbuffer CBufferAnim2Frame0 : register(b8 ) { float4x4 pose4[64]; }
 cbuffer CBufferAnim2Frame1 : register(b9 ) { float4x4 pose5[64]; }
 cbuffer CBufferAnim3Frame0 : register(b10) { float4x4 pose6[64]; }
 cbuffer CBufferAnim3Frame1 : register(b11) { float4x4 pose7[64]; }

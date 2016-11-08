@@ -13,6 +13,7 @@
 #include "CompiledShaders\VertexPositionNormalTangentBinormalTexcoord.h"
 #include "CompiledShaders\VertexPositionNormalTangentBinormalTexcoordIndicesWeights.h"
 #include "CompiledShaders\GeometryPS.h"
+#include "CompiledShaders\GeometryAlphaStippledPS.h"
 #include "CompiledShaders\DecalsPS.h"
 //----------------------------------------------------------------------
 
@@ -44,6 +45,11 @@ namespace happy
 	{
 		Mat4 world;
 		Mat4 worldInverse;
+		float alpha;
+	};
+
+	struct CBufferSkin
+	{
 		float blendAnim[4];
 		float blendFrame[4];
 		unsigned int animationCount;
@@ -148,6 +154,17 @@ namespace happy
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBObject));
 		}
 
+		// Per skin CB
+		{
+			D3D11_BUFFER_DESC bufferDesc;
+			bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+			bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			bufferDesc.MiscFlags = 0;
+			bufferDesc.ByteWidth = (UINT)((sizeof(CBufferSkin) + 15) / 16) * 16;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBSkin));
+		}
+
 		// Per pointlight CB
 		{
 			D3D11_BUFFER_DESC bufferDesc;
@@ -213,6 +230,7 @@ namespace happy
 		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoord>(pRenderContext->getDevice(), m_pVSPositionNormalTangentBinormalTexcoord, m_pILPositionNormalTangentBinormalTexcoord, g_shVertexPositionNormalTangentBinormalTexcoord);
 		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoordIndicesWeights>(pRenderContext->getDevice(), m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights, m_pILPositionNormalTangentBinormalTexcoordIndicesWeights, g_shVertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSGeometry, g_shGeometryPS);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSGeometryAlphaStippled, g_shGeometryAlphaStippledPS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSDecals, g_shDecalsPS);
 		
 		// Rendering shaders
@@ -557,6 +575,10 @@ namespace happy
 		m_GeometryPositionNormalTexcoord.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoord.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.clear();
+		m_GeometryPositionTexcoordTransparent.clear();
+		m_GeometryPositionNormalTexcoordTransparent.clear();
+		m_GeometryPositionNormalTangentBinormalTexcoordTransparent.clear();
+		m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent.clear();
 		m_Decals.clear();
 		m_PointLights.clear();
 		m_PostProcessItems.clear();
@@ -564,21 +586,41 @@ namespace happy
 
 	void DeferredRenderer::pushSkinRenderItem(const SkinRenderItem &skin)
 	{
-		m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.push_back(skin);
+		if (skin.m_Alpha < 1.0f)
+			m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent.push_back(skin);
+		else
+			m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.push_back(skin);
 	}
 
-	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform, const StencilMask groups)
+	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform, const StencilMask group)
 	{
 		switch (mesh.getVertexType())
 		{
 		case VertexType::VertexPositionTexcoord:
-			m_GeometryPositionTexcoord.emplace_back(mesh, transform, groups);
+			m_GeometryPositionTexcoord.emplace_back(mesh, 1.0f, transform, group);
 			break;
 		case VertexType::VertexPositionNormalTexcoord:
-			m_GeometryPositionNormalTexcoord.emplace_back(mesh, transform, groups);
+			m_GeometryPositionNormalTexcoord.emplace_back(mesh, 1.0f, transform, group);
 			break;
 		case VertexType::VertexPositionNormalTangentBinormalTexcoord:
-			m_GeometryPositionNormalTangentBinormalTexcoord.emplace_back(mesh, transform, groups);
+			m_GeometryPositionNormalTangentBinormalTexcoord.emplace_back(mesh, 1.0f, transform, group);
+			break;
+		}
+	}
+
+	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, float alpha, const Mat4 &transform, const StencilMask group)
+	{
+		if (alpha >= 1.0f) pushRenderMesh(mesh, transform, group);
+		else switch (mesh.getVertexType())
+		{
+		case VertexType::VertexPositionTexcoord:
+			m_GeometryPositionTexcoordTransparent.emplace_back(mesh, alpha, transform, group);
+			break;
+		case VertexType::VertexPositionNormalTexcoord:
+			m_GeometryPositionNormalTexcoordTransparent.emplace_back(mesh, alpha, transform, group);
+			break;
+		case VertexType::VertexPositionNormalTangentBinormalTexcoord:
+			m_GeometryPositionNormalTangentBinormalTexcoordTransparent.emplace_back(mesh, alpha, transform, group);
 			break;
 		}
 	}
@@ -620,6 +662,15 @@ namespace happy
 		m_Config = config;
 	}
 
+	template <typename T>
+	void DeferredRenderer::updateConstantBuffer(ID3D11DeviceContext *context, ID3D11Buffer *buffer, const T &value) const
+	{
+		D3D11_MAPPED_SUBRESOURCE msr;
+		THROW_ON_FAIL(context->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+		memcpy(msr.pData, (void*)&value, ((sizeof(T) + 15) / 16) * 16);
+		context->Unmap(buffer, 0);
+	}
+
 	void DeferredRenderer::render() const
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
@@ -637,25 +688,16 @@ namespace happy
 		sceneCB.height = (float)m_pRenderContext->getHeight();
 		sceneCB.convolutionStages = m_Environment.getCubemapArrayLength();
 		sceneCB.aoEnabled = m_Config.m_AOEnabled ? 1 : 0;
-
-		D3D11_MAPPED_SUBRESOURCE msr;
-		THROW_ON_FAIL(context.Map(m_pCBScene.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-		memcpy(msr.pData, (void*)&sceneCB, ((sizeof(CBufferScene) + 15) / 16) * 16);
-		context.Unmap(m_pCBScene.Get(), 0);
-
+		updateConstantBuffer<CBufferScene>(&context, m_pCBScene.Get(), sceneCB);
+		
 		CBufferEffects effectsCB;
 		effectsCB.occlusionRadius = m_Config.m_AOOcclusionRadius;
 		effectsCB.occlusionMaxDistance = m_Config.m_AOOcclusionMaxDistance;
 		effectsCB.samples = m_Config.m_AOSamples;
-
 		for (int i = 0; i < 2; ++i)
 		{
 			effectsCB.blurDir = i ? Vec2(0, 1) : Vec2(1, 0);
-
-			D3D11_MAPPED_SUBRESOURCE msr;
-			THROW_ON_FAIL(context.Map(m_pCBEffects[i].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&effectsCB, ((sizeof(CBufferEffects) + 15) / 16) * 16);
-			context.Unmap(m_pCBEffects[i].Get(), 0);
+			updateConstantBuffer(&context, m_pCBEffects[i].Get(), effectsCB);
 		}
 
 		renderGeometryToGBuffer();
@@ -666,19 +708,16 @@ namespace happy
 	void DeferredRenderer::renderStaticMeshList(const vector<MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
-
-
+		
 		context.IASetInputLayout(layout);
 		context.VSSetShader(shader, nullptr, 0);
-		context.VSSetConstantBuffers(0, 2, constBuffers);
+		context.VSSetConstantBuffers(0, 3, constBuffers);
 		for (const auto &elem : renderList)
 		{
 			CBufferObject objectCB;
 			objectCB.world = elem.m_Transform;
-			D3D11_MAPPED_SUBRESOURCE msr;
-			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
-			context.Unmap(m_pCBObject.Get(), 0);
+			objectCB.alpha = elem.m_Alpha;
+			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
 
 			UINT stride = sizeof(T);
 			UINT offset = 0;
@@ -714,37 +753,40 @@ namespace happy
 		ID3D11Buffer* constBuffers[] =
 		{
 			m_pCBScene.Get(),
-			m_pCBObject.Get()
+			m_pCBObject.Get(),
+			m_pCBSkin.Get(),
 		};
 
 		context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		context.PSSetShader(m_pPSGeometry.Get(), nullptr, 0);
 		context.PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
-		context.PSSetConstantBuffers(0, 2, constBuffers);
+		context.PSSetConstantBuffers(0, 3, constBuffers);
 
 		//-------------------------------------------------------------
-		// Render Static Meshes
+		// Render Static Meshes, opaque
 		#define RENDER_STATIC_MESH_LIST(X) renderStaticMeshList<Vertex##X>(m_Geometry##X, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
 		RENDER_STATIC_MESH_LIST(PositionTexcoord);
 		RENDER_STATIC_MESH_LIST(PositionNormalTexcoord);
 		RENDER_STATIC_MESH_LIST(PositionNormalTangentBinormalTexcoord);
+		#undef RENDER_STATIC_MESH_LIST
 
 		//-------------------------------------------------------------
-		// Render Skins
+		// Render Skins, opaque
 		context.IASetInputLayout(m_pILPositionNormalTangentBinormalTexcoordIndicesWeights.Get());
 		context.VSSetShader(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights.Get(), nullptr, 0);
-		context.VSSetConstantBuffers(0, 2, constBuffers);
+		context.VSSetConstantBuffers(0, 3, constBuffers);
 		for (const auto &elem : m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights)
 		{
 			CBufferObject objectCB;
 			objectCB.world = elem.m_World;
-			objectCB.animationCount = elem.m_AnimationCount;
-			for (int i = 0; i < 4; ++i) objectCB.blendAnim[i] = (&elem.m_BlendAnimation.x)[i];
-			for (int i = 0; i < 4; ++i) objectCB.blendFrame[i] = (&elem.m_BlendFrame.x)[i];
-			D3D11_MAPPED_SUBRESOURCE msr;
-			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
-			context.Unmap(m_pCBObject.Get(), 0);
+			objectCB.alpha = elem.m_Alpha;
+			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
+
+			CBufferSkin skinCB;
+			skinCB.animationCount = elem.m_AnimationCount;
+			for (int i = 0; i < 4; ++i) skinCB.blendAnim[i] = (&elem.m_BlendAnimation.x)[i];
+			for (int i = 0; i < 4; ++i) skinCB.blendFrame[i] = (&elem.m_BlendFrame.x)[i];
+			updateConstantBuffer(&context, m_pCBSkin.Get(), skinCB);
 
 			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 			UINT offset = 0;
@@ -764,7 +806,62 @@ namespace happy
 			for (unsigned i = 0; i < elem.m_AnimationCount * 2; ++i) buffers.push_back(elem.m_Frames[i]);
 
 			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Groups);
-			context.VSSetConstantBuffers(2, (UINT)buffers.size(), &buffers[0]);
+			context.VSSetConstantBuffers(3, (UINT)buffers.size(), &buffers[0]);
+			context.PSSetShaderResources(0, 2, textures);
+			context.IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
+			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+			context.DrawIndexed((UINT)elem.m_Skin.getIndexCount(), 0, 0);
+		}
+
+		context.PSSetShader(m_pPSGeometryAlphaStippled.Get(), nullptr, 0);
+		context.PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
+		context.PSSetConstantBuffers(0, 3, constBuffers);
+
+		//-------------------------------------------------------------
+		// Render Static Meshes, transparent
+		#define RENDER_STATIC_MESH_LIST(X) renderStaticMeshList<Vertex##X>(m_Geometry##X##Transparent, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
+		RENDER_STATIC_MESH_LIST(PositionTexcoord);
+		RENDER_STATIC_MESH_LIST(PositionNormalTexcoord);
+		RENDER_STATIC_MESH_LIST(PositionNormalTangentBinormalTexcoord);
+		#undef RENDER_STATIC_MESH_LIST
+
+		//-------------------------------------------------------------
+		// Render Skins, transparent
+		context.IASetInputLayout(m_pILPositionNormalTangentBinormalTexcoordIndicesWeights.Get());
+		context.VSSetShader(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights.Get(), nullptr, 0);
+		context.VSSetConstantBuffers(0, 3, constBuffers);
+		for (const auto &elem : m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent)
+		{
+			CBufferObject objectCB;
+			objectCB.world = elem.m_World;
+			objectCB.alpha = elem.m_Alpha;
+			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
+
+			CBufferSkin skinCB;
+			skinCB.animationCount = elem.m_AnimationCount;
+			for (int i = 0; i < 4; ++i) skinCB.blendAnim[i] = (&elem.m_BlendAnimation.x)[i];
+			for (int i = 0; i < 4; ++i) skinCB.blendFrame[i] = (&elem.m_BlendFrame.x)[i];
+			updateConstantBuffer(&context, m_pCBSkin.Get(), skinCB);
+
+			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoordIndicesWeights);
+			UINT offset = 0;
+			ID3D11Buffer* buffer = elem.m_Skin.getVtxBuffer();
+
+			ID3D11ShaderResourceView* textures[] =
+			{
+				elem.m_Skin.getAlbedoRoughnessMap(),
+				elem.m_Skin.getNormalMetallicMap()
+			};
+
+			vector<ID3D11Buffer*> buffers =
+			{
+				elem.m_Skin.getBindPoseBuffer()
+			};
+
+			for (unsigned i = 0; i < elem.m_AnimationCount * 2; ++i) buffers.push_back(elem.m_Frames[i]);
+
+			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Groups);
+			context.VSSetConstantBuffers(3, (UINT)buffers.size(), &buffers[0]);
 			context.PSSetShaderResources(0, 2, textures);
 			context.IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
 			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
@@ -777,7 +874,7 @@ namespace happy
 		context.OMSetBlendState(m_pDecalBlendState.Get(), nullptr, 0xffffffff);
 		context.IASetInputLayout(m_pILPositionTexcoord.Get());
 		context.VSSetShader(m_pVSPositionTexcoord.Get(), nullptr, 0);
-		context.VSSetConstantBuffers(0, 2, constBuffers);
+		context.VSSetConstantBuffers(0, 3, constBuffers);
 		context.PSSetShader(m_pPSDecals.Get(), nullptr, 0);
 		for (const auto &elem : m_Decals)
 		{
@@ -785,10 +882,8 @@ namespace happy
 			objectCB.world = elem.m_Transform;
 			objectCB.worldInverse = elem.m_Transform;
 			objectCB.worldInverse.inverse();
-			D3D11_MAPPED_SUBRESOURCE msr;
-			THROW_ON_FAIL(context.Map(m_pCBObject.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-			memcpy(msr.pData, (void*)&objectCB, ((sizeof(CBufferObject) + 15) / 16) * 16);
-			context.Unmap(m_pCBObject.Get(), 0);
+			objectCB.alpha = 1.0f;
+			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
 
 			UINT stride = sizeof(VertexPositionTexcoord);
 			UINT offset = 0;

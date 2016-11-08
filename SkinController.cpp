@@ -20,12 +20,18 @@ namespace happy
 	{
 		m_RenderItem.m_Skin = skin;
 
+		m_RenderItem.m_Alpha = 1.0f;
 		m_RenderItem.m_AnimationCount = 1;
 		m_RenderItem.m_World.identity();
 		m_RenderItem.m_World.scale(Vec3(1, 1, 1) * 0.5f);
 		m_RenderItem.m_Groups = 0x00;
 		m_RenderItem.m_BlendAnimation = Vec4(1, 0, 0, 0);
 		m_RenderItem.m_BlendFrame = Vec4(0, 0, 0, 0);
+	}
+
+	void SkinController::setAlpha(float alpha)
+	{
+		m_RenderItem.m_Alpha = alpha;
 	}
 
 	void SkinController::setRenderGroups(StencilMask &groups)

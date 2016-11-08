@@ -14,7 +14,12 @@ cbuffer CBufferObject : register(b1)
 {
 	float4x4 world;
 	float4x4 worldInverse;
+	float alpha;
+};
+
+cbuffer CBufferSkin : register(b2)
+{
 	float4 animationBlend;
 	float4 frameBlend;
 	uint animationCount;
-};
+}
