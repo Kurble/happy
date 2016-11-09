@@ -22,5 +22,14 @@ namespace happy
 	ComPtr<ID3D11ShaderResourceView> loadCubemapWICFolder(RenderingContext *pRenderContext, fs::path folderPath, std::string format);
 
 	ComPtr<ID3D11ShaderResourceView> loadTextureWIC(RenderingContext *pRenderContext, fs::path filePath);
+	
+	struct TextureWithFilter
+	{
+		fs::path m_path;
+		unsigned m_mask;
+		int m_shift;
+	};
+
+	ComPtr<ID3D11ShaderResourceView> loadTextureCombinedWIC(RenderingContext *pRenderContext, unsigned defaultPixel, vector<TextureWithFilter> files);
 
 }

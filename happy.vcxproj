@@ -208,6 +208,7 @@
     <ClInclude Include="Resources.h" />
     <ClInclude Include="SkinController.h" />
     <ClInclude Include="Sphere.h" />
+    <ClInclude Include="stb_image.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TextureHandle.h" />
     <ClInclude Include="Vector.h" />
@@ -377,7 +378,7 @@
     <ClCompile Include="SkinController.cpp" />
     <ClCompile Include="SkinLoader.cpp" />
     <ClCompile Include="VertexTypes.cpp" />
-    <ClCompile Include="WICLoader.cpp" />
+    <ClCompile Include="ImageLoader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

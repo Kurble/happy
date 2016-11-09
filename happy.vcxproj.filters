@@ -77,6 +77,9 @@
     <ClInclude Include="Cube.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
@@ -159,9 +162,6 @@
     <ClCompile Include="VertexTypes.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="WICLoader.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Resources.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -187,6 +187,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="PostProcessItem.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageLoader.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
