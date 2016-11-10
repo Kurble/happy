@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <cctype>
+#include <vector>
 
 namespace bb
 {
@@ -14,7 +15,7 @@ namespace bb
 		load(stream);
 	}
 
-	store::store(const string &file)
+	store::store(const fs::path &file)
 	{
 		load(file);
 	}
@@ -73,7 +74,7 @@ namespace bb
 			s.ignore();
 			std::string lit = takeLiteral(s);
 			char *p;
-			int i = strtol(lit.c_str(), &p, 16);
+			int64_t i = strtoll(lit.c_str(), &p, 16);
 
 			if (*p) throw exception("malformed hex literal");
 
@@ -84,7 +85,7 @@ namespace bb
 			std::string lit = takeLiteral(s);
 
 			char* p;
-			int i = strtol(lit.c_str(), &p, 10);
+			int64_t i = strtoll(lit.c_str(), &p, 10);
 			if (*p)
 			{
 				float f = strtof(lit.c_str(), &p);
@@ -178,7 +179,7 @@ namespace bb
 		}
 		else throw exception("error in store: expected field not found");
 	}
-	int store::getFieldI(const string &key) const
+	int64_t store::getFieldI(const string &key) const
 	{
 		auto i = m_Data.find(key);
 		if (i != m_Data.end())
@@ -243,7 +244,7 @@ namespace bb
 	{
 		m_Data.emplace(key, val);
 	}
-	void store::setFieldI(const string &key, const int &val)
+	void store::setFieldI(const string &key, const int64_t &val)
 	{
 		m_Data.emplace(key, val);
 	}

@@ -11,9 +11,9 @@ namespace fs = std::experimental::filesystem;
 namespace happy
 {
 	
-	RenderMesh loadRenderMeshFromObj(RenderingContext *pRenderContext, fs::path objPath, fs::path albedoRoughnessPath, fs::path normalMetallicPath);
+	RenderMesh loadRenderMeshFromObj(RenderingContext *pRenderContext, fs::path objPath);
 
-	RenderSkin loadSkinFromFile(RenderingContext *pRenderContext, fs::path skinPath, fs::path albedoRoughnessPath, fs::path normalMetallicPath);
+	RenderSkin loadSkinFromFile(RenderingContext *pRenderContext, fs::path skinPath);
 
 	Animation loadAnimFromFile(RenderingContext *pRenderContext, fs::path animPath);
 

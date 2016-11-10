@@ -14,7 +14,7 @@ namespace happy
 		return m_pRenderContext;
 	}
 
-	RenderMesh Resources::getRenderMesh(fs::path objPath, fs::path albedoRoughness, fs::path normalMetallic)
+	RenderMesh Resources::getRenderMesh(const fs::path &objPath, const fs::path &multitextureDef)
 	{
 		RenderMesh result;
 		bool found = false;
@@ -31,15 +31,19 @@ namespace happy
 
 		if (!found)
 		{
-			result = loadRenderMeshFromObj(m_pRenderContext, m_BasePath / objPath, "", "");
+			result = loadRenderMeshFromObj(m_pRenderContext, m_BasePath / objPath);
 			m_CachedRenderMeshes.emplace_back(objPath, result);
 		}
-		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.empty() ? nullptr : getTexture(albedoRoughness).m_Handle);
-		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.empty() ? nullptr : getTexture(normalMetallic).m_Handle);
+		
+		if (!multitextureDef.empty())
+		{
+			result.setMultiTexture(getMultiTexture(multitextureDef));
+		}
+
 		return result;
 	}
 
-	RenderSkin Resources::getSkin(fs::path skinPath, fs::path albedoRoughness, fs::path normalMetallic)
+	RenderSkin Resources::getSkin(const fs::path &skinPath, const fs::path &multitextureDef)
 	{
 		RenderSkin result;
 		bool found = false;
@@ -56,15 +60,19 @@ namespace happy
 
 		if (!found)
 		{
-			result = loadSkinFromFile(m_pRenderContext, m_BasePath / skinPath, "", "");
+			result = loadSkinFromFile(m_pRenderContext, m_BasePath / skinPath);
 			m_CachedRenderSkins.emplace_back(skinPath, result);
 		}
-		result.setAlbedoRoughnessMap(m_pRenderContext, albedoRoughness.empty() ? nullptr : getTexture(albedoRoughness).m_Handle);
-		result.setNormalMetallicMap(m_pRenderContext, normalMetallic.empty() ? nullptr : getTexture(normalMetallic).m_Handle);
+
+		if (!multitextureDef.empty())
+		{
+			result.setMultiTexture(getMultiTexture(multitextureDef));
+		}
+		
 		return result;
 	}
 
-	Animation Resources::getAnimation(fs::path animPath)
+	Animation Resources::getAnimation(const fs::path &animPath)
 	{
 		Animation result;
 		bool found = false;
@@ -87,7 +95,7 @@ namespace happy
 		return result;
 	}
 
-	TextureHandle Resources::getTexture(fs::path filePath)
+	TextureHandle Resources::getTexture(const fs::path &filePath)
 	{
 		ComPtr<ID3D11ShaderResourceView> result;
 		for (auto it = m_CachedTextures.begin(); it != m_CachedTextures.end(); ++it)
@@ -104,7 +112,7 @@ namespace happy
 		return{ result };
 	}
 
-	MultiTexture Resources::getMultiTexture(fs::path descFilePath)
+	MultiTexture Resources::getMultiTexture(const fs::path &descFilePath)
 	{
 		for (auto it = m_CachedMultiTextures.begin(); it != m_CachedMultiTextures.end(); ++it)
 		{
@@ -117,8 +125,10 @@ namespace happy
 
 		MultiTexture result;
 		
-		bb::store desc;
-		auto load_channel = [&](std::string name, ComPtr<ID3D11ShaderResourceView> &target)
+		fs::path fileBase = m_BasePath / descFilePath.parent_path();
+		bb::store desc = m_BasePath / descFilePath;
+
+		auto load_channel = [&](std::string name, unsigned channel)
 		{
 			if (desc.exists(name))
 			{
@@ -132,34 +142,37 @@ namespace happy
 					auto &source = v.d;
 					sources.push_back(TextureLayer());
 					
-					sources.back().m_path = source.getFieldS("file");
+					sources.back().m_path = fileBase / source.getFieldS("file");
 
 					std::string type = source.getFieldS("type");
 					if      (type == "rgb")  sources.back().type = TextureLayer::rgb;
 					else if (type == "gray") sources.back().type = TextureLayer::gray;
 					else throw exception("invalid source type");
 
-					std::string target = source.getFieldS("target");
-					if      (target == "r") sources.back().target = TextureLayer::r;
-					else if (target == "g") sources.back().target = TextureLayer::g;
-					else if (target == "b") sources.back().target = TextureLayer::b;
-					else if (target == "a") sources.back().target = TextureLayer::a;
-					else throw exception("invalid source type");
+					if (type == "gray")
+					{
+						std::string target = source.getFieldS("target");
+						if (target == "r") sources.back().target = TextureLayer::r;
+						else if (target == "g") sources.back().target = TextureLayer::g;
+						else if (target == "b") sources.back().target = TextureLayer::b;
+						else if (target == "a") sources.back().target = TextureLayer::a;
+						else throw exception("invalid source target");
+					}
 				}
 
-				target = loadCombinedTexture(m_pRenderContext, default, sources);
+				result.setChannel(channel, loadCombinedTexture(m_pRenderContext, default, sources));
 			}
 		};
 
-		load_channel("channel0", result.m_Channels[0]);
-		load_channel("channel1", result.m_Channels[1]);
-		load_channel("channel2", result.m_Channels[2]);
+		load_channel("channel0", 0);
+		load_channel("channel1", 1);
+		load_channel("channel2", 2);
 
 		m_CachedMultiTextures.emplace_back(descFilePath, result);
 		return result;
 	}
 
-	TextureHandle Resources::getCubemap(fs::path filePath[6])
+	TextureHandle Resources::getCubemap(const fs::path filePath[6])
 	{
 		fs::path id = filePath[0];
 
@@ -188,7 +201,7 @@ namespace happy
 		return{ result };
 	}
 
-	TextureHandle Resources::getCubemapFolder(fs::path filePath, std::string format)
+	TextureHandle Resources::getCubemapFolder(const fs::path &filePath, const std::string &format)
 	{
 		fs::path files[] =
 		{
@@ -203,7 +216,7 @@ namespace happy
 		return getCubemap(files);
 	}
 
-	fs::path Resources::getFilePath(fs::path localPath)
+	fs::path Resources::getFilePath(const fs::path &localPath)
 	{
 		return m_BasePath / localPath;
 	}

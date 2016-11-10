@@ -2,6 +2,7 @@
 
 #include "RenderingContext.h"
 #include "VertexTypes.h"
+#include "MultiTexture.h"
 
 namespace happy
 {
@@ -33,15 +34,13 @@ namespace happy
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&idxDesc, &idxData, m_pIdx.GetAddressOf()));
 		}
 		
-		void setAlbedoRoughnessMap(const RenderingContext *pRenderContext, ComPtr<ID3D11ShaderResourceView> &texture);
-		void setNormalMetallicMap(const RenderingContext *pRenderContext, ComPtr<ID3D11ShaderResourceView> &texture);
+		void setMultiTexture(MultiTexture &texture);
 
 		VertexType getVertexType() const;
 		ID3D11Buffer* getVtxBuffer() const;
 		ID3D11Buffer* getIdxBuffer() const;
 		size_t getIndexCount() const;
-		ID3D11ShaderResourceView* getAlbedoRoughnessMap() const;
-		ID3D11ShaderResourceView* getNormalMetallicMap() const;
+		ID3D11ShaderResourceView** getTextures() const;
 
 	private:
 		friend class Resources;
@@ -50,7 +49,6 @@ namespace happy
 		ComPtr<ID3D11Buffer> m_pVtx;
 		ComPtr<ID3D11Buffer> m_pIdx;
 		size_t m_IndexCount;
-		ComPtr<ID3D11ShaderResourceView> m_pAlbedoRoughness;
-		ComPtr<ID3D11ShaderResourceView> m_pNormalMetallic;
+		MultiTexture m_Textures;
 	};
 }

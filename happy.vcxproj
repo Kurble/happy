@@ -363,6 +363,7 @@
     <ClCompile Include="AnimationLoader.cpp" />
     <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="DeferredRenderer.cpp" />
+    <ClCompile Include="MultiTexture.cpp" />
     <ClCompile Include="ObjLoader.cpp" />
     <ClCompile Include="PBREnvironment.cpp" />
     <ClCompile Include="PostProcessItem.cpp" />

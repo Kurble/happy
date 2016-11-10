@@ -723,14 +723,8 @@ namespace happy
 			UINT offset = 0;
 			ID3D11Buffer* buffer = elem.m_Mesh.getVtxBuffer();
 
-			ID3D11ShaderResourceView* textures[] =
-			{
-				elem.m_Mesh.getAlbedoRoughnessMap(),
-				elem.m_Mesh.getNormalMetallicMap()
-			};
-
 			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Group);
-			context.PSSetShaderResources(0, 2, textures);
+			context.PSSetShaderResources(0, 3, elem.m_Mesh.getTextures());
 			context.IASetIndexBuffer(elem.m_Mesh.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
 			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
 			context.DrawIndexed((UINT)elem.m_Mesh.getIndexCount(), 0, 0);
@@ -791,13 +785,7 @@ namespace happy
 			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 			UINT offset = 0;
 			ID3D11Buffer* buffer = elem.m_Skin.getVtxBuffer();
-
-			ID3D11ShaderResourceView* textures[] =
-			{
-				elem.m_Skin.getAlbedoRoughnessMap(),
-				elem.m_Skin.getNormalMetallicMap()
-			};
-
+			
 			vector<ID3D11Buffer*> buffers = 
 			{
 				elem.m_Skin.getBindPoseBuffer()
@@ -807,7 +795,7 @@ namespace happy
 
 			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Groups);
 			context.VSSetConstantBuffers(3, (UINT)buffers.size(), &buffers[0]);
-			context.PSSetShaderResources(0, 2, textures);
+			context.PSSetShaderResources(0, 3, elem.m_Skin.getTextures());
 			context.IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
 			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
 			context.DrawIndexed((UINT)elem.m_Skin.getIndexCount(), 0, 0);
@@ -846,13 +834,7 @@ namespace happy
 			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 			UINT offset = 0;
 			ID3D11Buffer* buffer = elem.m_Skin.getVtxBuffer();
-
-			ID3D11ShaderResourceView* textures[] =
-			{
-				elem.m_Skin.getAlbedoRoughnessMap(),
-				elem.m_Skin.getNormalMetallicMap()
-			};
-
+			
 			vector<ID3D11Buffer*> buffers =
 			{
 				elem.m_Skin.getBindPoseBuffer()
@@ -862,7 +844,7 @@ namespace happy
 
 			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Groups);
 			context.VSSetConstantBuffers(3, (UINT)buffers.size(), &buffers[0]);
-			context.PSSetShaderResources(0, 2, textures);
+			context.PSSetShaderResources(0, 3, elem.m_Skin.getTextures());
 			context.IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
 			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
 			context.DrawIndexed((UINT)elem.m_Skin.getIndexCount(), 0, 0);

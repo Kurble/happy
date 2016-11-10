@@ -33,21 +33,21 @@ namespace happy
 
 		RenderingContext* getContext() const;
 
-		RenderMesh getRenderMesh(fs::path objPath, fs::path albedoRoughnessPath, fs::path normalMetallicPath);
+		RenderMesh getRenderMesh(const fs::path &objPath, const fs::path &multitextureDef);
 
-		RenderSkin getSkin(fs::path skinPath, fs::path albedoRoughnessPath, fs::path normalMetallicPath);
+		RenderSkin getSkin(const fs::path &skinPath, const fs::path &multitextureDef);
 
-		Animation getAnimation(fs::path animationPath);
+		Animation getAnimation(const fs::path &animationPath);
 
-		TextureHandle getCubemap(fs::path filePath[6]);
+		TextureHandle getCubemap(const fs::path filePath[6]);
 
-		TextureHandle getCubemapFolder(fs::path folderPath, std::string format);
+		TextureHandle getCubemapFolder(const fs::path &folderPath, const std::string &format);
 
-		TextureHandle getTexture(fs::path filePath);
+		TextureHandle getTexture(const fs::path &filePath);
 
-		MultiTexture getMultiTexture(fs::path descFilePath);
+		MultiTexture getMultiTexture(const fs::path &descFilePath);
 
-		fs::path getFilePath(fs::path localPath);
+		fs::path getFilePath(const fs::path &localPath);
 
 		template<size_t Length>
 		PostProcessItem createPostProcess(const BYTE(&shaderByteCode)[Length])

@@ -4,8 +4,17 @@
 
 namespace happy
 {
-	struct MultiTexture
+	class MultiTexture
 	{
-		ComPtr<ID3D11ShaderResourceView> m_Channels[3];
+	public:
+		MultiTexture();
+
+		void setChannel(unsigned channel, ComPtr<ID3D11ShaderResourceView> &texture);
+
+		ID3D11ShaderResourceView** getTextures() const;
+
+	private:
+		ComPtr<ID3D11ShaderResourceView> m_pChannels[3];
+		ID3D11ShaderResourceView *m_ppChannels[3];
 	};
 }

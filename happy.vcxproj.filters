@@ -177,5 +177,8 @@
     <ClCompile Include="ImageLoader.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="MultiTexture.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

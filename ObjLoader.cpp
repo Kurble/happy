@@ -3,7 +3,7 @@
 
 namespace happy
 {
-	RenderMesh loadRenderMeshFromObj(RenderingContext *pRenderContext, fs::path objPath, fs::path albedoMetallicPath, fs::path normalRougnessPath)
+	RenderMesh loadRenderMeshFromObj(RenderingContext *pRenderContext, fs::path objPath)
 	{
 		ifstream fin(objPath.c_str());
 
@@ -187,8 +187,6 @@ namespace happy
 			vertices.data(), vertices.size(), 
 			indices.data(),  indices.size()
 		);
-		if (!albedoMetallicPath.empty()) mesh.setAlbedoRoughnessMap(pRenderContext, loadTexture(pRenderContext, albedoMetallicPath));
-		if (!normalRougnessPath.empty()) mesh.setNormalMetallicMap( pRenderContext, loadTexture(pRenderContext, normalRougnessPath));
 		return mesh;
 	}
 }

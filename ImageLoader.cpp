@@ -145,44 +145,45 @@ namespace happy
 
 	ComPtr<ID3D11ShaderResourceView> loadCombinedTexture(RenderingContext *pRenderContext, unsigned defaultPixel, vector<TextureLayer> files)
 	{
-		vector<Image> images;
-		images.reserve(files.size());
-		
-		for (auto &entry : files)
-			images.emplace_back(entry.m_path);
-
-		unsigned width = images.size() ? images[0].getWidth() : 1;
-		unsigned height = images.size() ? images[0].getHeight() : 1;
+		unsigned width = 1;
+		unsigned height = 1;
 
 		vector<unsigned> combinedImageData;
-		combinedImageData.resize(width * height, defaultPixel);
+		combinedImageData.resize(width * height, bb::swap_endian(defaultPixel));
 		
-		for (unsigned i = 0; i < images.size(); ++i)
+		for (unsigned i = 0; i < files.size(); ++i)
 		{
-			auto &image = images[i];
+			Image image = files[i].m_path;
 
+			if (i == 0)
+			{
+				width = image.getWidth();
+				height = image.getHeight();
+				combinedImageData.resize(width * height, bb::swap_endian(defaultPixel));
+			}
+			
 			if (image.getWidth() != width || image.getHeight() != height)
 				throw exception("images must be same size");
 
 			unsigned *srcdata = reinterpret_cast<unsigned*>(image.getData());
 			unsigned *dstdata = combinedImageData.data();
-			unsigned length = combinedImageData.size();
+			unsigned length = (unsigned)combinedImageData.size();
 			switch (files[i].type)
 			{
 			case TextureLayer::rgb:
 				for (unsigned pixel = 0; pixel < length; ++pixel)
 				{
-					dstdata[pixel] |= (srcdata[pixel] & 0xffffff00);
+					dstdata[pixel] |= (srcdata[pixel] & 0x00ffffff);
 				}
 				break;
 
 			case TextureLayer::gray:
 				switch (files[i].target)
 				{
-				case TextureLayer::r: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0xff000000); break;
-				case TextureLayer::g: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0xff000000) >> 8; break;
-				case TextureLayer::b: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0xff000000) >> 16; break;
-				case TextureLayer::a: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0xff000000) >> 24; break;
+				case TextureLayer::r: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0x000000ff); break;
+				case TextureLayer::g: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0x000000ff) << 8; break;
+				case TextureLayer::b: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0x000000ff) << 16; break;
+				case TextureLayer::a: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0x000000ff) << 24; break;
 				}
 				break;
 			}
@@ -192,8 +193,8 @@ namespace happy
 		{
 			D3D11_TEXTURE2D_DESC desc;
 			ZeroMemory(&desc, sizeof(desc));
-			desc.Width = images[0].getWidth();
-			desc.Height = images[0].getHeight();
+			desc.Width = width;
+			desc.Height = height;
 			desc.MipLevels = 0;
 			desc.ArraySize = 1;
 			desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;

@@ -3,14 +3,9 @@
 
 namespace happy
 {
-	void RenderMesh::setAlbedoRoughnessMap(const RenderingContext *pRenderContext, ComPtr<ID3D11ShaderResourceView>& texture)
+	void RenderMesh::setMultiTexture(MultiTexture &texture)
 	{
-		m_pAlbedoRoughness = texture;
-	}
-
-	void RenderMesh::setNormalMetallicMap(const RenderingContext *pRenderContext, ComPtr<ID3D11ShaderResourceView>& texture)
-	{
-		m_pNormalMetallic = texture;
+		m_Textures = texture;
 	}
 
 	VertexType RenderMesh::getVertexType() const
@@ -33,13 +28,8 @@ namespace happy
 		return m_IndexCount;
 	}
 
-	ID3D11ShaderResourceView * RenderMesh::getAlbedoRoughnessMap() const
+	ID3D11ShaderResourceView** RenderMesh::getTextures() const
 	{
-		return m_pAlbedoRoughness.Get();
-	}
-
-	ID3D11ShaderResourceView * RenderMesh::getNormalMetallicMap() const
-	{
-		return m_pNormalMetallic.Get();
+		return m_Textures.getTextures();
 	}
 }
