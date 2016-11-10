@@ -1,5 +1,8 @@
 #include "../stdafx.h"
-#include "../Vector.h"
+#include "../bb_lib/vec2.h"
+#include "../bb_lib/vec3.h"
+#include "../bb_lib/vec4.h"
+#include "../bb_lib/mat4.h"
 #include "happy_importer.h"
 
 #include <locale>

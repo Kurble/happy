@@ -18,14 +18,14 @@ namespace happy
 		uint32_t frameCount = read<uint32_t>(fin);
 		uint32_t boneCount = read<uint32_t>(fin);
 
-		vector<Mat4> animation;
+		vector<bb::mat4> animation;
 		animation.reserve(frameCount * boneCount);
 
 		for (unsigned f = 0; f < frameCount; ++f)
 		{
 			for (unsigned b = 0; b < boneCount; ++b)
 			{
-				Mat4 pose = read<Mat4>(fin);
+				bb::mat4 pose = read<bb::mat4>(fin);
 				//pose.swapHandedness();
 				animation.push_back(pose);
 			}

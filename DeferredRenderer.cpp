@@ -31,10 +31,10 @@ namespace happy
 {
 	struct CBufferScene
 	{
-		Mat4 view;
-		Mat4 projection;
-		Mat4 viewInverse;
-		Mat4 projectionInverse;
+		bb::mat4 view;
+		bb::mat4 projection;
+		bb::mat4 viewInverse;
+		bb::mat4 projectionInverse;
 		float width;
 		float height;
 		unsigned int convolutionStages;
@@ -43,8 +43,8 @@ namespace happy
 
 	struct CBufferObject
 	{
-		Mat4 world;
-		Mat4 worldInverse;
+		bb::mat4 world;
+		bb::mat4 worldInverse;
 		float alpha;
 	};
 
@@ -57,8 +57,8 @@ namespace happy
 
 	struct CBufferPointLight
 	{
-		Vec4 position;
-		Vec4 color;
+		bb::vec4 position;
+		bb::vec4 color;
 		float scale;
 		float falloff;
 	};
@@ -67,14 +67,14 @@ namespace happy
 	{
 		float occlusionRadius = 0.1f;
 		float occlusionMaxDistance = 10.2f;
-		Vec2  blurDir;
+		bb::vec2  blurDir;
 
 		int   samples = 128;
 	};
 
 	struct CBufferRandom
 	{
-		Vec2 random_points[512];
+		bb::vec2 random_points[512];
 	};
 
 	DeferredRenderer::DeferredRenderer(const RenderingContext* pRenderContext)
@@ -368,12 +368,12 @@ namespace happy
 		{
 			VertexPositionTexcoord quad[] =
 			{
-				quad[0] = { Vec4(-1, -1,  1,  1), Vec2(0, 1) },
-				quad[1] = { Vec4( 1,  1,  1,  1), Vec2(1, 0) },
-				quad[2] = { Vec4( 1, -1,  1,  1), Vec2(1, 1) },
-				quad[3] = { Vec4(-1, -1,  1,  1), Vec2(0, 1) },
-				quad[4] = { Vec4(-1,  1,  1,  1), Vec2(0, 0) },
-				quad[5] = { Vec4( 1,  1,  1,  1), Vec2(1, 0) },
+				quad[0] = { bb::vec4(-1, -1,  1,  1), bb::vec2(0, 1) },
+				quad[1] = { bb::vec4( 1,  1,  1,  1), bb::vec2(1, 0) },
+				quad[2] = { bb::vec4( 1, -1,  1,  1), bb::vec2(1, 1) },
+				quad[3] = { bb::vec4(-1, -1,  1,  1), bb::vec2(0, 1) },
+				quad[4] = { bb::vec4(-1,  1,  1,  1), bb::vec2(0, 0) },
+				quad[5] = { bb::vec4( 1,  1,  1,  1), bb::vec2(1, 0) },
 			};
 
 			D3D11_BUFFER_DESC desc;
@@ -455,9 +455,9 @@ namespace happy
 		return m_pRenderContext;
 	}
 
-	const Mat4 DeferredRenderer::getViewProj() const
+	const bb::mat4 DeferredRenderer::getViewProj() const
 	{
-		Mat4 viewproj;
+		bb::mat4 viewproj;
 		viewproj.identity();
 		viewproj.multiply(m_Projection);
 		viewproj.multiply(m_View);
@@ -592,7 +592,7 @@ namespace happy
 			m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.push_back(skin);
 	}
 
-	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, const Mat4 &transform, const StencilMask group)
+	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, const bb::mat4 &transform, const StencilMask group)
 	{
 		switch (mesh.getVertexType())
 		{
@@ -608,7 +608,7 @@ namespace happy
 		}
 	}
 
-	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, float alpha, const Mat4 &transform, const StencilMask group)
+	void DeferredRenderer::pushRenderMesh(const RenderMesh &mesh, float alpha, const bb::mat4 &transform, const StencilMask group)
 	{
 		if (alpha >= 1.0f) pushRenderMesh(mesh, transform, group);
 		else switch (mesh.getVertexType())
@@ -625,18 +625,18 @@ namespace happy
 		}
 	}
 
-	void DeferredRenderer::pushLight(const Vec3 &position, const Vec3 &color, float radius, float falloff)
+	void DeferredRenderer::pushLight(const bb::vec3 &position, const bb::vec3 &color, float radius, float falloff)
 	{
 		m_PointLights.emplace_back(position, color, radius, falloff);
 	}
 
-	void DeferredRenderer::pushDecal(const TextureHandle &texture, const Mat4 &transform, const StencilMask filter)
+	void DeferredRenderer::pushDecal(const TextureHandle &texture, const bb::mat4 &transform, const StencilMask filter)
 	{
 		TextureHandle emptyHandle;
 		m_Decals.emplace_back(texture, emptyHandle, transform, filter);
 	}
 
-	void DeferredRenderer::pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const Mat4 &transform, const StencilMask filter)
+	void DeferredRenderer::pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const bb::mat4 &transform, const StencilMask filter)
 	{
 		m_Decals.emplace_back(texture, normalMap, transform, filter);
 	}
@@ -651,7 +651,7 @@ namespace happy
 		m_Environment = environment;
 	}
 
-	void DeferredRenderer::setCamera(const Mat4 &view, const Mat4 &projection)
+	void DeferredRenderer::setCamera(const bb::mat4 &view, const bb::mat4 &projection)
 	{
 		m_View = view;
 		m_Projection = projection;
@@ -696,7 +696,7 @@ namespace happy
 		effectsCB.samples = m_Config.m_AOSamples;
 		for (int i = 0; i < 2; ++i)
 		{
-			effectsCB.blurDir = i ? Vec2(0, 1) : Vec2(1, 0);
+			effectsCB.blurDir = i ? bb::vec2(0, 1) : bb::vec2(1, 0);
 			updateConstantBuffer(&context, m_pCBEffects[i].Get(), effectsCB);
 		}
 
@@ -1009,8 +1009,8 @@ namespace happy
 			for (auto &light : m_PointLights)
 			{
 				CBufferPointLight cbuf;
-				cbuf.position = Vec4(light.m_Position.x, light.m_Position.y, light.m_Position.z, 0.0f);
-				cbuf.color    = Vec4(light.m_Color.x, light.m_Color.y, light.m_Color.z, 0.0f);
+				cbuf.position = bb::vec4(light.m_Position.x, light.m_Position.y, light.m_Position.z, 0.0f);
+				cbuf.color    = bb::vec4(light.m_Color.x, light.m_Color.y, light.m_Color.z, 0.0f);
 				cbuf.scale    = light.m_Radius;
 				cbuf.falloff  = light.m_FaloffExponent;
 

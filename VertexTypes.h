@@ -2,8 +2,12 @@
 
 #include <inttypes.h>
 
-#include "Vector.h"
-#include "Matrix.h"
+#include "bb_lib\vec2.h"
+#include "bb_lib\vec3.h"
+#include "bb_lib\vec4.h"
+#include "bb_lib\mat3.h"
+#include "bb_lib\mat4.h"
+#include "bb_lib\math_util.h"
 
 namespace happy
 {
@@ -21,8 +25,8 @@ namespace happy
 
 	struct VertexPositionColor
 	{
-		Vec4 pos;
-		Vec4 color;
+		bb::vec4 pos;
+		bb::vec4 color;
 
 		static const D3D11_INPUT_ELEMENT_DESC Elements[2];
 		static const UINT ElementCount = 2;
@@ -31,8 +35,8 @@ namespace happy
 
 	struct VertexPositionTexcoord
 	{
-		Vec4 pos;
-		Vec2 texcoord;
+		bb::vec4 pos;
+		bb::vec2 texcoord;
 
 		static const D3D11_INPUT_ELEMENT_DESC Elements[2];
 		static const UINT ElementCount = 2;
@@ -41,9 +45,9 @@ namespace happy
 
 	struct VertexPositionNormalTexcoord
 	{
-		Vec4 pos;
-		Vec3 normal;
-		Vec2 texcoord;
+		bb::vec4 pos;
+		bb::vec3 normal;
+		bb::vec2 texcoord;
 
 		static const D3D11_INPUT_ELEMENT_DESC Elements[3];
 		static const UINT ElementCount = 3;
@@ -52,11 +56,11 @@ namespace happy
 
 	struct VertexPositionNormalTangentBinormalTexcoord
 	{
-		Vec4 pos;
-		Vec3 normal;
-		Vec3 tangent;
-		Vec3 binormal;
-		Vec2 texcoord;
+		bb::vec4 pos;
+		bb::vec3 normal;
+		bb::vec3 tangent;
+		bb::vec3 binormal;
+		bb::vec2 texcoord;
 
 		static const D3D11_INPUT_ELEMENT_DESC Elements[5];
 		static const UINT ElementCount = 5;
@@ -65,13 +69,13 @@ namespace happy
 
 	struct VertexPositionNormalTangentBinormalTexcoordIndicesWeights
 	{
-		Vec4 pos;
-		Vec3 normal;
-		Vec3 tangent;
-		Vec3 binormal;
-		Vec2 texcoord;
+		bb::vec4 pos;
+		bb::vec3 normal;
+		bb::vec3 tangent;
+		bb::vec3 binormal;
+		bb::vec2 texcoord;
 		Index16 indices[4];
-		Vec4 weights;
+		bb::vec4 weights;
 
 		static const D3D11_INPUT_ELEMENT_DESC Elements[7];
 		static const UINT ElementCount = 7;

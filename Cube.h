@@ -5,14 +5,14 @@
 #define FACE3(a, b, c) a-1, b-1, c-1
 
 static const happy::VertexPositionTexcoord g_CubeVertices[] = {
-	{ Vec4( 1.0f,  1.0f, -1.0f,  1.0f), Vec2(.0f, .0f) },
-	{ Vec4( 1.0f, -1.0f, -1.0f,  1.0f), Vec2(.0f, .0f) },
-	{ Vec4(-1.0f, -1.0f, -1.0f,  1.0f), Vec2(.0f, .0f) },
-	{ Vec4(-1.0f,  1.0f, -1.0f,  1.0f), Vec2(.0f, .0f) },
-	{ Vec4( 1.0f,  1.0f,  1.0f,  1.0f), Vec2(.0f, .0f) },
-	{ Vec4( 1.0f, -1.0f,  1.0f,  1.0f), Vec2(.0f, .0f) },
-	{ Vec4(-1.0f, -1.0f,  1.0f,  1.0f), Vec2(.0f, .0f) },
-	{ Vec4(-1.0f,  1.0f,  1.0f,  1.0f), Vec2(.0f, .0f) },
+	{ bb::vec4( 1.0f,  1.0f, -1.0f,  1.0f), bb::vec2(.0f, .0f) },
+	{ bb::vec4( 1.0f, -1.0f, -1.0f,  1.0f), bb::vec2(.0f, .0f) },
+	{ bb::vec4(-1.0f, -1.0f, -1.0f,  1.0f), bb::vec2(.0f, .0f) },
+	{ bb::vec4(-1.0f,  1.0f, -1.0f,  1.0f), bb::vec2(.0f, .0f) },
+	{ bb::vec4( 1.0f,  1.0f,  1.0f,  1.0f), bb::vec2(.0f, .0f) },
+	{ bb::vec4( 1.0f, -1.0f,  1.0f,  1.0f), bb::vec2(.0f, .0f) },
+	{ bb::vec4(-1.0f, -1.0f,  1.0f,  1.0f), bb::vec2(.0f, .0f) },
+	{ bb::vec4(-1.0f,  1.0f,  1.0f,  1.0f), bb::vec2(.0f, .0f) },
 };
 
 

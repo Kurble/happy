@@ -29,7 +29,7 @@ namespace happy
 		unsigned char* m_Data;
 	};
 
-	ComPtr<ID3D11ShaderResourceView> loadCubemapWIC(RenderingContext *pRenderContext, fs::path filePath[6])
+	ComPtr<ID3D11ShaderResourceView> loadCubemap(RenderingContext *pRenderContext, fs::path filePath[6])
 	{
 		ComPtr<ID3D11Texture2D> pCubemap;
 		{
@@ -84,7 +84,7 @@ namespace happy
 		return pSRV;
 	}
 
-	ComPtr<ID3D11ShaderResourceView> loadCubemapWICFolder(RenderingContext *pRenderContext, fs::path folderPath, std::string format)
+	ComPtr<ID3D11ShaderResourceView> loadCubemapFolder(RenderingContext *pRenderContext, fs::path folderPath, std::string format)
 	{
 		fs::path files[] =
 		{
@@ -95,10 +95,10 @@ namespace happy
 			folderPath / ("posz." + format),
 			folderPath / ("negz." + format),
 		};
-		return loadCubemapWIC(pRenderContext, files);
+		return loadCubemap(pRenderContext, files);
 	}
 
-	ComPtr<ID3D11ShaderResourceView> loadTextureWIC(RenderingContext *pRenderContext, fs::path filePath)
+	ComPtr<ID3D11ShaderResourceView> loadTexture(RenderingContext *pRenderContext, fs::path filePath)
 	{
 		Image image = filePath;
 
@@ -143,7 +143,7 @@ namespace happy
 		return pSRV;
 	}
 
-	ComPtr<ID3D11ShaderResourceView> loadTextureCombinedWIC(RenderingContext *pRenderContext, unsigned defaultPixel, vector<TextureWithFilter> files)
+	ComPtr<ID3D11ShaderResourceView> loadCombinedTexture(RenderingContext *pRenderContext, unsigned defaultPixel, vector<TextureLayer> files)
 	{
 		vector<Image> images;
 		images.reserve(files.size());
@@ -151,38 +151,40 @@ namespace happy
 		for (auto &entry : files)
 			images.emplace_back(entry.m_path);
 
-		unsigned width = images[0].getWidth();
-		unsigned height = images[0].getHeight();
+		unsigned width = images.size() ? images[0].getWidth() : 1;
+		unsigned height = images.size() ? images[0].getHeight() : 1;
 
 		vector<unsigned> combinedImageData;
 		combinedImageData.resize(width * height, defaultPixel);
 		
-		for (unsigned _image = 0; _image < images.size(); ++_image)
+		for (unsigned i = 0; i < images.size(); ++i)
 		{
-			auto &image = images[_image];
+			auto &image = images[i];
 
 			if (image.getWidth() != width || image.getHeight() != height)
 				throw exception("images must be same size");
 
-			unsigned mask = files[_image].m_mask;
-			unsigned shift = abs(files[_image].m_shift);
 			unsigned *srcdata = reinterpret_cast<unsigned*>(image.getData());
 			unsigned *dstdata = combinedImageData.data();
 			unsigned length = combinedImageData.size();
+			switch (files[i].type)
+			{
+			case TextureLayer::rgb:
+				for (unsigned pixel = 0; pixel < length; ++pixel)
+				{
+					dstdata[pixel] |= (srcdata[pixel] & 0xffffff00);
+				}
+				break;
 
-			if (files[_image].m_shift >= 0)
-			{
-				for (unsigned pixel = 0; pixel < length; ++pixel)
+			case TextureLayer::gray:
+				switch (files[i].target)
 				{
-					dstdata[pixel] += (srcdata[pixel] & mask) >> shift;
+				case TextureLayer::r: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0xff000000); break;
+				case TextureLayer::g: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0xff000000) >> 8; break;
+				case TextureLayer::b: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0xff000000) >> 16; break;
+				case TextureLayer::a: for (unsigned pixel = 0; pixel < length; ++pixel) dstdata[pixel] |= (srcdata[pixel] & 0xff000000) >> 24; break;
 				}
-			}
-			else
-			{
-				for (unsigned pixel = 0; pixel < length; ++pixel)
-				{
-					dstdata[pixel] += (srcdata[pixel] & mask) << shift;
-				}
+				break;
 			}
 		}
 

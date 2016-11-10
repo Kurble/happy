@@ -15,11 +15,11 @@ namespace happy
 		std::ifstream fin(skinPath.c_str(), std::ios::in | std::ios::binary);
 
 		uint32_t boneCount = read<uint32_t>(fin);
-		vector<Mat4> bindPose;
+		vector<bb::mat4> bindPose;
 		bindPose.reserve(boneCount);
 		for (unsigned b = 0; b < boneCount; ++b)
 		{
-			Mat4 bind = read<Mat4>(fin);
+			bb::mat4 bind = read<bb::mat4>(fin);
 			bind.inverse();
 			bindPose.push_back(bind);
 		}
@@ -30,16 +30,16 @@ namespace happy
 		for (unsigned v = 0; v < vertexCount; ++v)
 		{
 			VertexPositionNormalTangentBinormalTexcoordIndicesWeights vertex;
-			vertex.pos        = read<Vec4>(fin);
-			vertex.normal     = read<Vec3>(fin);
-			vertex.tangent    = read<Vec3>(fin);
-			vertex.binormal   = read<Vec3>(fin);
-			vertex.texcoord   = read<Vec2>(fin);
+			vertex.pos        = read<bb::vec4>(fin);
+			vertex.normal     = read<bb::vec3>(fin);
+			vertex.tangent    = read<bb::vec3>(fin);
+			vertex.binormal   = read<bb::vec3>(fin);
+			vertex.texcoord   = read<bb::vec2>(fin);
 			vertex.indices[0] = read<Index16>(fin);
 			vertex.indices[1] = read<Index16>(fin);
 			vertex.indices[2] = read<Index16>(fin);
 			vertex.indices[3] = read<Index16>(fin);
-			vertex.weights    = read<Vec4>(fin);
+			vertex.weights    = read<bb::vec4>(fin);
 
 			vertex.weights = vertex.weights * (1.0f/(vertex.weights.x+vertex.weights.y+vertex.weights.z+vertex.weights.w));
 			vertices.push_back(vertex);
@@ -62,8 +62,8 @@ namespace happy
 		mesh.setBindPose(
 			pRenderContext,
 			bindPose);
-		if (!albedoMetallicPath.empty()) mesh.setAlbedoRoughnessMap(pRenderContext, loadTextureWIC(pRenderContext, albedoMetallicPath));
-		if (!normalRougnessPath.empty()) mesh.setNormalMetallicMap(pRenderContext, loadTextureWIC(pRenderContext, normalRougnessPath));
+		if (!albedoMetallicPath.empty()) mesh.setAlbedoRoughnessMap(pRenderContext, loadTexture(pRenderContext, albedoMetallicPath));
+		if (!normalRougnessPath.empty()) mesh.setNormalMetallicMap(pRenderContext, loadTexture(pRenderContext, normalRougnessPath));
 		return mesh;
 	}
 }

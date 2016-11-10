@@ -11,7 +11,7 @@ namespace happy
 		if (duration && source != target)
 		{
 			std::chrono::duration<float, std::ratio<1, 1>> offset(current - start);
-			return lerp(source, target, fminf(1.0f, offset.count() / duration));
+			return bb::lerp(source, target, fminf(1.0f, offset.count() / duration));
 		}
 		return target;
 	}
@@ -23,10 +23,10 @@ namespace happy
 		m_RenderItem.m_Alpha = 1.0f;
 		m_RenderItem.m_AnimationCount = 1;
 		m_RenderItem.m_World.identity();
-		m_RenderItem.m_World.scale(Vec3(1, 1, 1) * 0.5f);
+		m_RenderItem.m_World.scale(bb::vec3(1, 1, 1) * 0.5f);
 		m_RenderItem.m_Groups = 0x00;
-		m_RenderItem.m_BlendAnimation = Vec4(1, 0, 0, 0);
-		m_RenderItem.m_BlendFrame = Vec4(0, 0, 0, 0);
+		m_RenderItem.m_BlendAnimation = bb::vec4(1, 0, 0, 0);
+		m_RenderItem.m_BlendFrame = bb::vec4(0, 0, 0, 0);
 	}
 
 	void SkinController::setAlpha(float alpha)
@@ -97,7 +97,7 @@ namespace happy
 		}
 	}
 
-	Mat4 &SkinController::worldMatrix()
+	bb::mat4 &SkinController::worldMatrix()
 	{
 		return m_RenderItem.m_World;
 	}

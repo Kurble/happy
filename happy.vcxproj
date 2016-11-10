@@ -197,8 +197,7 @@
     <ClInclude Include="DSSDO_Kernel.h" />
     <ClInclude Include="GBufferCommon.h" />
     <ClInclude Include="happy.h" />
-    <ClInclude Include="Intersection.h" />
-    <ClInclude Include="Matrix.h" />
+    <ClInclude Include="MultiTexture.h" />
     <ClInclude Include="PBREnvironment.h" />
     <ClInclude Include="PostProcessItem.h" />
     <ClInclude Include="RendererCommon.h" />
@@ -211,7 +210,6 @@
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TextureHandle.h" />
-    <ClInclude Include="Vector.h" />
     <ClInclude Include="VertexTypes.h" />
   </ItemGroup>
   <ItemGroup>
@@ -365,9 +363,6 @@
     <ClCompile Include="AnimationLoader.cpp" />
     <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="DeferredRenderer.cpp" />
-    <ClCompile Include="Intersection.cpp" />
-    <ClCompile Include="Mat3.cpp" />
-    <ClCompile Include="Mat4.cpp" />
     <ClCompile Include="ObjLoader.cpp" />
     <ClCompile Include="PBREnvironment.cpp" />
     <ClCompile Include="PostProcessItem.cpp" />

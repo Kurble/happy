@@ -8,7 +8,7 @@ namespace happy
 	class Animation
 	{
 	public:
-		void setAnimation(const RenderingContext *pRenderContext, const vector<Mat4> &animation, const unsigned bones, const unsigned frames, const float framerate);
+		void setAnimation(const RenderingContext *pRenderContext, const vector<bb::mat4> &animation, const unsigned bones, const unsigned frames, const float framerate);
 		void setLooping(bool looping);
 
 		ID3D11Buffer* getFrame0(float time) const;

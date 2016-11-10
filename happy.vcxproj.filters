@@ -24,9 +24,6 @@
     <ClInclude Include="DeferredRenderer.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="Matrix.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="PBREnvironment.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -37,9 +34,6 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="RenderMesh.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Vector.h">
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="VertexTypes.h">
@@ -65,9 +59,6 @@
     <ClInclude Include="TextureHandle.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="Intersection.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="Canvas.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -78,6 +69,9 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="stb_image.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiTexture.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
@@ -141,12 +135,6 @@
     <ClCompile Include="DeferredRenderer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Mat3.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Mat4.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="ObjLoader.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -178,9 +166,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="SkinController.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Intersection.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Canvas.cpp">

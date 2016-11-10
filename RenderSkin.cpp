@@ -3,12 +3,12 @@
 
 namespace happy
 {
-	void RenderSkin::setBindPose(const RenderingContext *pRenderContext, const vector<Mat4>& pose)
+	void RenderSkin::setBindPose(const RenderingContext *pRenderContext, const vector<bb::mat4>& pose)
 	{
 		D3D11_BUFFER_DESC poseDesc;
 		ZeroMemory(&poseDesc, sizeof(poseDesc));
 
-		poseDesc.ByteWidth = (UINT)pose.size() * sizeof(Mat4);
+		poseDesc.ByteWidth = (UINT)pose.size() * sizeof(bb::mat4);
 		poseDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		poseDesc.Usage = D3D11_USAGE_IMMUTABLE;
 

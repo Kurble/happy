@@ -7,9 +7,9 @@ namespace happy
 	{
 		ifstream fin(objPath.c_str());
 
-		vector<Vec4>                         positions;
-		vector<Vec2>                         texcoords;
-		vector<Vec3>                         normals;
+		vector<bb::vec4>                         positions;
+		vector<bb::vec2>                         texcoords;
+		vector<bb::vec3>                         normals;
 		vector<VertexPositionNormalTangentBinormalTexcoord> vertices;
 		vector<Index16>                      indices;
 
@@ -25,7 +25,7 @@ namespace happy
 				{
 				case ' ':
 				{
-					Vec4 v;
+					bb::vec4 v;
 
 					fin >> v.x >> v.y >> v.z;
 					fin.ignore(512, '\n');
@@ -37,7 +37,7 @@ namespace happy
 
 				case 't':
 				{
-					Vec2 vt;
+					bb::vec2 vt;
 					
 					fin >> vt.x;
 					if (fin.peek() != '\n')
@@ -60,7 +60,7 @@ namespace happy
 
 				case 'n':
 				{
-					Vec3 vn;
+					bb::vec3 vn;
 
 					fin >> vn.x >> vn.y >> vn.z;
 					fin.ignore(512, '\n');
@@ -120,11 +120,11 @@ namespace happy
 				}
 
 
-				Vec2 uv1 = (vertices[baseIndex+1].texcoord - vertices[baseIndex].texcoord);
-				if (uv1.mag() > 0) uv1 = uv1.normalized() * Vec2(1, -1);
+				bb::vec2 uv1 = (vertices[baseIndex+1].texcoord - vertices[baseIndex].texcoord);
+				if (uv1.mag() > 0) uv1 = uv1.normalized() * bb::vec2(1, -1);
 
-				Vec2 uv2 = (vertices[baseIndex+2].texcoord - vertices[baseIndex].texcoord);
-				if (uv2.mag() > 0) uv2 = uv2.normalized() * Vec2(1, -1);
+				bb::vec2 uv2 = (vertices[baseIndex+2].texcoord - vertices[baseIndex].texcoord);
+				if (uv2.mag() > 0) uv2 = uv2.normalized() * bb::vec2(1, -1);
 
 				float uvMatrix[] = 
 				{
@@ -133,8 +133,8 @@ namespace happy
 				};
 				float det = 1.0f / ((uv1.x * uv2.y) - (uv2.x * uv1.y));
 
-				Vec4 pos1 = vertices[baseIndex + 1].pos + (vertices[baseIndex + 0].pos*-1);
-				Vec4 pos2 = vertices[baseIndex + 2].pos + (vertices[baseIndex + 0].pos*-1);
+				bb::vec4 pos1 = vertices[baseIndex + 1].pos + (vertices[baseIndex + 0].pos*-1);
+				bb::vec4 pos2 = vertices[baseIndex + 2].pos + (vertices[baseIndex + 0].pos*-1);
 
 				float posMatrix[] = 
 				{
@@ -142,11 +142,11 @@ namespace happy
 					pos2.x, pos2.y, pos2.z
 				};
 
-				Vec3 tangent = Vec3(
+				bb::vec3 tangent = bb::vec3(
 					det * (uvMatrix[0] * posMatrix[0] + uvMatrix[1] * posMatrix[3]),
 					det * (uvMatrix[0] * posMatrix[1] + uvMatrix[1] * posMatrix[4]),
 					det * (uvMatrix[0] * posMatrix[2] + uvMatrix[1] * posMatrix[5]));
-				Vec3 binormal = Vec3(
+				bb::vec3 binormal = bb::vec3(
 					det * (uvMatrix[2] * posMatrix[0] + uvMatrix[3] * posMatrix[3]),
 					det * (uvMatrix[2] * posMatrix[1] + uvMatrix[3] * posMatrix[4]),
 					det * (uvMatrix[2] * posMatrix[2] + uvMatrix[3] * posMatrix[5]));
@@ -187,8 +187,8 @@ namespace happy
 			vertices.data(), vertices.size(), 
 			indices.data(),  indices.size()
 		);
-		if (!albedoMetallicPath.empty()) mesh.setAlbedoRoughnessMap(pRenderContext, loadTextureWIC(pRenderContext, albedoMetallicPath));
-		if (!normalRougnessPath.empty()) mesh.setNormalMetallicMap( pRenderContext, loadTextureWIC(pRenderContext, normalRougnessPath));
+		if (!albedoMetallicPath.empty()) mesh.setAlbedoRoughnessMap(pRenderContext, loadTexture(pRenderContext, albedoMetallicPath));
+		if (!normalRougnessPath.empty()) mesh.setNormalMetallicMap( pRenderContext, loadTexture(pRenderContext, normalRougnessPath));
 		return mesh;
 	}
 }

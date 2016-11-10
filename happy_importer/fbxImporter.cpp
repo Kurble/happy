@@ -7,25 +7,25 @@
 
 using namespace std;
 
-static Vec4 toVec4(const FbxVector4 &fbx)
+static bb::vec4 toVec4(const FbxVector4 &fbx)
 {
-	return Vec4((float)fbx.mData[0], (float)fbx.mData[1], (float)fbx.mData[2], (float)fbx.mData[3]);
+	return bb::vec4((float)fbx.mData[0], (float)fbx.mData[1], (float)fbx.mData[2], (float)fbx.mData[3]);
 }
 
-static Vec3 toVec3(const FbxVector4 &fbx)
+static bb::vec3 toVec3(const FbxVector4 &fbx)
 {
-	return Vec3((float)fbx.mData[0], (float)fbx.mData[1], (float)fbx.mData[2]);
+	return bb::vec3((float)fbx.mData[0], (float)fbx.mData[1], (float)fbx.mData[2]);
 }
 
-static Vec2 toVec2(const FbxVector2 &fbx)
+static bb::vec2 toVec2(const FbxVector2 &fbx)
 {
-	return Vec2((float)fbx.mData[0], (float)fbx.mData[1]);
+	return bb::vec2((float)fbx.mData[0], (float)fbx.mData[1]);
 }
 
 void calculateTangents(happy::VertexPositionNormalTangentBinormalTexcoordIndicesWeights *vertices, unsigned count)
 {
-	Vec2 uv1 = (vertices[1].texcoord - vertices[0].texcoord).normalized() * Vec2(1, -1);
-	Vec2 uv2 = (vertices[2].texcoord - vertices[0].texcoord).normalized() * Vec2(1, -1);
+	bb::vec2 uv1 = (vertices[1].texcoord - vertices[0].texcoord).normalized() * bb::vec2(1, -1);
+	bb::vec2 uv2 = (vertices[2].texcoord - vertices[0].texcoord).normalized() * bb::vec2(1, -1);
 
 	float uvMatrix[] =
 	{
@@ -34,8 +34,8 @@ void calculateTangents(happy::VertexPositionNormalTangentBinormalTexcoordIndices
 	};
 	float det = 1.0f / ((uv1.x * uv2.y) - (uv2.x * uv1.y));
 
-	Vec4 pos1 = vertices[1].pos + (vertices[0].pos*-1);
-	Vec4 pos2 = vertices[2].pos + (vertices[0].pos*-1);
+	bb::vec4 pos1 = vertices[1].pos + (vertices[0].pos*-1);
+	bb::vec4 pos2 = vertices[2].pos + (vertices[0].pos*-1);
 
 	float posMatrix[] =
 	{
@@ -43,11 +43,11 @@ void calculateTangents(happy::VertexPositionNormalTangentBinormalTexcoordIndices
 		pos2.x, pos2.y, pos2.z
 	};
 
-	Vec3 tangent = Vec3(
+	bb::vec3 tangent = bb::vec3(
 		det * (uvMatrix[0] * posMatrix[0] + uvMatrix[1] * posMatrix[3]),
 		det * (uvMatrix[0] * posMatrix[1] + uvMatrix[1] * posMatrix[4]),
 		det * (uvMatrix[0] * posMatrix[2] + uvMatrix[1] * posMatrix[5]));
-	Vec3 binormal = Vec3(
+	bb::vec3 binormal = bb::vec3(
 		det * (uvMatrix[2] * posMatrix[0] + uvMatrix[3] * posMatrix[3]),
 		det * (uvMatrix[2] * posMatrix[1] + uvMatrix[3] * posMatrix[4]),
 		det * (uvMatrix[2] * posMatrix[2] + uvMatrix[3] * posMatrix[5]));
@@ -71,15 +71,15 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 		happy::VertexPositionNormalTangentBinormalTexcoordIndicesWeights v;
 		v.pos = toVec4(mesh->GetControlPointAt(cp));
 		v.pos.w = 1.0f;
-		v.normal = Vec3(0, 0, 0);
-		v.tangent = Vec3(0, 0, 0);
-		v.binormal = Vec3(0, 0, 0);
-		v.texcoord = Vec2(0, 0);
+		v.normal = bb::vec3(0, 0, 0);
+		v.tangent = bb::vec3(0, 0, 0);
+		v.binormal = bb::vec3(0, 0, 0);
+		v.texcoord = bb::vec2(0, 0);
 		v.indices[0] = (happy::Index16) - 1;
 		v.indices[1] = (happy::Index16) - 1;
 		v.indices[2] = (happy::Index16) - 1;
 		v.indices[3] = (happy::Index16) - 1;
-		v.weights = Vec4(0, 0, 0, 0);
+		v.weights = bb::vec4(0, 0, 0, 0);
 		uniqueVertices.push_back(v);
 	}
 
@@ -104,7 +104,7 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 			{
 				FbxAMatrix bindPoseMatrix;
 				cluster->GetTransformLinkMatrix(bindPoseMatrix);
-				Mat4 m;
+				bb::mat4 m;
 				for (int i = 0; i < 16; ++i) m.m[i] = (float)((double*)bindPoseMatrix)[i];
 
 				fout.write((const char*)m.m, sizeof(float) * 16);
@@ -197,16 +197,16 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 	fout.write((const char*)&exportVertexCount, sizeof(uint32_t));
 	for (unsigned v = 0; v < exportVertexCount; ++v)
 	{
-		fout.write((const char*)&meshVertices[v].pos, sizeof(Vec4));
-		fout.write((const char*)&meshVertices[v].normal, sizeof(Vec3));
-		fout.write((const char*)&meshVertices[v].tangent, sizeof(Vec3));
-		fout.write((const char*)&meshVertices[v].binormal, sizeof(Vec3));
-		fout.write((const char*)&meshVertices[v].texcoord, sizeof(Vec2));
+		fout.write((const char*)&meshVertices[v].pos, sizeof(bb::vec4));
+		fout.write((const char*)&meshVertices[v].normal, sizeof(bb::vec3));
+		fout.write((const char*)&meshVertices[v].tangent, sizeof(bb::vec3));
+		fout.write((const char*)&meshVertices[v].binormal, sizeof(bb::vec3));
+		fout.write((const char*)&meshVertices[v].texcoord, sizeof(bb::vec2));
 		fout.write((const char*)&meshVertices[v].indices[0], sizeof(happy::Index16));
 		fout.write((const char*)&meshVertices[v].indices[1], sizeof(happy::Index16));
 		fout.write((const char*)&meshVertices[v].indices[2], sizeof(happy::Index16));
 		fout.write((const char*)&meshVertices[v].indices[3], sizeof(happy::Index16));
-		fout.write((const char*)&meshVertices[v].weights, sizeof(Vec4));
+		fout.write((const char*)&meshVertices[v].weights, sizeof(bb::vec4));
 	}
 
 	fout.write((const char*)&exportIndexCount, sizeof(uint32_t));
@@ -258,11 +258,11 @@ void loadAnim(FbxScene *scene, FbxMesh *mesh, string &animOut)
 
 			for (unsigned boneIndex = 0; boneIndex < boneCount; ++boneIndex)
 			{
-				Mat4 m;
+				bb::mat4 m;
 				FbxAMatrix mat = bones[boneIndex]->EvaluateGlobalTransform(time);
 				for (int i = 0; i < 16; ++i) m.m[i] = (float)(((double*)mat)[i]);
 
-				fout.write((const char*)&m.m, sizeof(Mat4));
+				fout.write((const char*)&m.m, sizeof(bb::mat4));
 			}
 		}
 	}

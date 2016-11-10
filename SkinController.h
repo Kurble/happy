@@ -18,11 +18,11 @@ namespace happy
 	{
 		RenderSkin m_Skin;
 		float m_Alpha;
-		Mat4  m_World;
+		bb::mat4  m_World;
 		StencilMask m_Groups;
 		unsigned m_AnimationCount;
-		Vec4 m_BlendFrame;
-		Vec4 m_BlendAnimation;
+		bb::vec4 m_BlendFrame;
+		bb::vec4 m_BlendAnimation;
 
 		ID3D11Buffer* m_Frames[8];
 	};
@@ -41,7 +41,7 @@ namespace happy
 		void setAnimationBlend(int id, float blend, system_clock::time_point start, float duration = 0);
 		void setAnimationSpeed(int id, float multiplier);
 		void resetAllAnimationBlends(system_clock::time_point start, float duration = 0);
-		Mat4 &worldMatrix();
+		bb::mat4 &worldMatrix();
 
 		void update(system_clock::time_point time);
 

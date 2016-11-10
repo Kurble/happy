@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Resources.h"
 #include "AssetLoaders.h"
+#include "bb_lib\store.h"
 
 namespace happy
 {
@@ -98,9 +99,64 @@ namespace happy
 			}
 		}
 
-		result = loadTextureWIC(m_pRenderContext, m_BasePath / filePath);
+		result = loadTexture(m_pRenderContext, m_BasePath / filePath);
 		m_CachedTextures.emplace_back(filePath, result);
 		return{ result };
+	}
+
+	MultiTexture Resources::getMultiTexture(fs::path descFilePath)
+	{
+		for (auto it = m_CachedMultiTextures.begin(); it != m_CachedMultiTextures.end(); ++it)
+		{
+			auto &cached = *it;
+			if (cached.first == descFilePath)
+			{
+				return cached.second;
+			}
+		}
+
+		MultiTexture result;
+		
+		bb::store desc;
+		auto load_channel = [&](std::string name, ComPtr<ID3D11ShaderResourceView> &target)
+		{
+			if (desc.exists(name))
+			{
+				auto &table = desc.getFieldD(name);
+				unsigned default = (unsigned)table.getFieldI("default");
+				
+				vector<TextureLayer> sources;
+
+				if (table.exists("sources")) for (auto &v : table.getFieldL("sources"))
+				{
+					auto &source = v.d;
+					sources.push_back(TextureLayer());
+					
+					sources.back().m_path = source.getFieldS("file");
+
+					std::string type = source.getFieldS("type");
+					if      (type == "rgb")  sources.back().type = TextureLayer::rgb;
+					else if (type == "gray") sources.back().type = TextureLayer::gray;
+					else throw exception("invalid source type");
+
+					std::string target = source.getFieldS("target");
+					if      (target == "r") sources.back().target = TextureLayer::r;
+					else if (target == "g") sources.back().target = TextureLayer::g;
+					else if (target == "b") sources.back().target = TextureLayer::b;
+					else if (target == "a") sources.back().target = TextureLayer::a;
+					else throw exception("invalid source type");
+				}
+
+				target = loadCombinedTexture(m_pRenderContext, default, sources);
+			}
+		};
+
+		load_channel("channel0", result.m_Channels[0]);
+		load_channel("channel1", result.m_Channels[1]);
+		load_channel("channel2", result.m_Channels[2]);
+
+		m_CachedMultiTextures.emplace_back(descFilePath, result);
+		return result;
 	}
 
 	TextureHandle Resources::getCubemap(fs::path filePath[6])
@@ -127,7 +183,7 @@ namespace happy
 			m_BasePath / filePath[5]
 		};
 
-		result = loadCubemapWIC(m_pRenderContext, files);
+		result = loadCubemap(m_pRenderContext, files);
 		m_CachedCubemaps.emplace_back(id, result);
 		return{ result };
 	}

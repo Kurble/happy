@@ -9,7 +9,7 @@ namespace happy
 	class RenderSkin : public RenderMesh
 	{
 	public:
-		void setBindPose(const RenderingContext *pRenderContext, const vector<Mat4> &pose);
+		void setBindPose(const RenderingContext *pRenderContext, const vector<bb::mat4> &pose);
 
 		ID3D11Buffer* getBindPoseBuffer() const;
 

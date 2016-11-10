@@ -45,7 +45,7 @@ namespace happy
 
 		struct
 		{
-			Mat4 side;
+			bb::mat4 side;
 			float exponent;
 
 			float size;
@@ -75,12 +75,12 @@ namespace happy
 		{
 			VertexPositionTexcoord quad[] =
 			{
-				quad[0] = { Vec4(-1, -1,  1,  1), Vec2(-1, -1) },
-				quad[1] = { Vec4( 1,  1,  1,  1), Vec2( 1,  1) },
-				quad[2] = { Vec4( 1, -1,  1,  1), Vec2( 1, -1) },
-				quad[3] = { Vec4(-1, -1,  1,  1), Vec2(-1, -1) },
-				quad[4] = { Vec4(-1,  1,  1,  1), Vec2(-1,  1) },
-				quad[5] = { Vec4( 1,  1,  1,  1), Vec2( 1,  1) },
+				quad[0] = { bb::vec4(-1, -1,  1,  1), bb::vec2(-1, -1) },
+				quad[1] = { bb::vec4( 1,  1,  1,  1), bb::vec2( 1,  1) },
+				quad[2] = { bb::vec4( 1, -1,  1,  1), bb::vec2( 1, -1) },
+				quad[3] = { bb::vec4(-1, -1,  1,  1), bb::vec2(-1, -1) },
+				quad[4] = { bb::vec4(-1,  1,  1,  1), bb::vec2(-1,  1) },
+				quad[5] = { bb::vec4( 1,  1,  1,  1), bb::vec2( 1,  1) },
 			};
 
 			stride = sizeof(VertexPositionTexcoord);
@@ -218,38 +218,38 @@ namespace happy
 
 			for (unsigned side = 0; side < 6; ++side)
 			{
-				cb.side.setRow(3, Vec4(0, 0, 0, 0));
+				cb.side.setRow(3, bb::vec4(0, 0, 0, 0));
 				switch (side)
 				{
 					case D3D11_TEXTURECUBE_FACE_POSITIVE_Z: 
-						cb.side.setRow(0, Vec4( 1,  0,  0,  0));
-						cb.side.setRow(1, Vec4( 0,  1,  0,  0));
-						cb.side.setRow(2, Vec4( 0,  0,  1,  0));
+						cb.side.setRow(0, bb::vec4( 1,  0,  0,  0));
+						cb.side.setRow(1, bb::vec4( 0,  1,  0,  0));
+						cb.side.setRow(2, bb::vec4( 0,  0,  1,  0));
 						break;
 					case D3D11_TEXTURECUBE_FACE_NEGATIVE_Z:
-						cb.side.setRow(0, Vec4(-1,  0,  0,  0));
-						cb.side.setRow(1, Vec4( 0,  1,  0,  0));
-						cb.side.setRow(2, Vec4( 0,  0, -1,  0));
+						cb.side.setRow(0, bb::vec4(-1,  0,  0,  0));
+						cb.side.setRow(1, bb::vec4( 0,  1,  0,  0));
+						cb.side.setRow(2, bb::vec4( 0,  0, -1,  0));
 						break;
 					case D3D11_TEXTURECUBE_FACE_POSITIVE_X: 
-						cb.side.setRow(0, Vec4( 0,  0, -1,  0));
-						cb.side.setRow(1, Vec4( 0,  1,  0,  0));
-						cb.side.setRow(2, Vec4( 1,  0,  0,  0));
+						cb.side.setRow(0, bb::vec4( 0,  0, -1,  0));
+						cb.side.setRow(1, bb::vec4( 0,  1,  0,  0));
+						cb.side.setRow(2, bb::vec4( 1,  0,  0,  0));
 						break;
 					case D3D11_TEXTURECUBE_FACE_NEGATIVE_X:
-						cb.side.setRow(0, Vec4( 0,  0,  1,  0));
-						cb.side.setRow(1, Vec4( 0,  1,  0,  0));
-						cb.side.setRow(2, Vec4(-1,  0,  0,  0));
+						cb.side.setRow(0, bb::vec4( 0,  0,  1,  0));
+						cb.side.setRow(1, bb::vec4( 0,  1,  0,  0));
+						cb.side.setRow(2, bb::vec4(-1,  0,  0,  0));
 						break;
 					case D3D11_TEXTURECUBE_FACE_POSITIVE_Y: 
-						cb.side.setRow(0, Vec4( 1,  0,  0,  0));
-						cb.side.setRow(1, Vec4( 0,  0, -1,  0));
-						cb.side.setRow(2, Vec4( 0,  1,  0,  0));
+						cb.side.setRow(0, bb::vec4( 1,  0,  0,  0));
+						cb.side.setRow(1, bb::vec4( 0,  0, -1,  0));
+						cb.side.setRow(2, bb::vec4( 0,  1,  0,  0));
 						break;
 					case D3D11_TEXTURECUBE_FACE_NEGATIVE_Y: 
-						cb.side.setRow(0, Vec4( 1,  0,  0,  0));
-						cb.side.setRow(1, Vec4( 0,  0,  1,  0));
-						cb.side.setRow(2, Vec4( 0, -1,  0,  0));
+						cb.side.setRow(0, bb::vec4( 1,  0,  0,  0));
+						cb.side.setRow(1, bb::vec4( 0,  0,  1,  0));
+						cb.side.setRow(2, bb::vec4( 0, -1,  0,  0));
 						break;
 					
 				}

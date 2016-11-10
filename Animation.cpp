@@ -3,7 +3,7 @@
 
 namespace happy
 {
-	void Animation::setAnimation(const RenderingContext *pRenderContext, const vector<Mat4> &animation, const unsigned bones, const unsigned frames, const float framerate)
+	void Animation::setAnimation(const RenderingContext *pRenderContext, const vector<bb::mat4> &animation, const unsigned bones, const unsigned frames, const float framerate)
 	{
 		m_FrameRate = framerate;
 		m_Looping = true;
@@ -12,7 +12,7 @@ namespace happy
 		D3D11_BUFFER_DESC poseDesc;
 		ZeroMemory(&poseDesc, sizeof(poseDesc));
 
-		poseDesc.ByteWidth = (UINT)bones * sizeof(Mat4);
+		poseDesc.ByteWidth = (UINT)bones * sizeof(bb::mat4);
 		poseDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		poseDesc.Usage = D3D11_USAGE_IMMUTABLE;
 
@@ -32,9 +32,9 @@ namespace happy
 
 		if (frames == 0)
 		{
-			Mat4 identity;
+			bb::mat4 identity;
 			identity.identity();
-			vector<Mat4> stillFrame;
+			vector<bb::mat4> stillFrame;
 			stillFrame.resize(bones, identity);
 
 			D3D11_SUBRESOURCE_DATA poseData;

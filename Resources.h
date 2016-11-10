@@ -4,6 +4,7 @@
 #include "RenderSkin.h"
 #include "Animation.h"
 #include "TextureHandle.h"
+#include "MultiTexture.h"
 #include "PostProcessItem.h"
 #include "Canvas.h"
 
@@ -43,6 +44,8 @@ namespace happy
 		TextureHandle getCubemapFolder(fs::path folderPath, std::string format);
 
 		TextureHandle getTexture(fs::path filePath);
+
+		MultiTexture getMultiTexture(fs::path descFilePath);
 
 		fs::path getFilePath(fs::path localPath);
 
@@ -96,6 +99,7 @@ namespace happy
 
 		vector<pair<fs::path, ComPtr<ID3D11ShaderResourceView>>> m_CachedCubemaps;
 		vector<pair<fs::path, ComPtr<ID3D11ShaderResourceView>>> m_CachedTextures;
+		vector<pair<fs::path, MultiTexture>> m_CachedMultiTextures;
 		vector<pair<fs::path, RenderMesh>> m_CachedRenderMeshes;
 		vector<pair<fs::path, RenderSkin>> m_CachedRenderSkins;
 		vector<pair<fs::path, Animation>> m_CachedAnimations;

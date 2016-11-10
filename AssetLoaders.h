@@ -17,19 +17,20 @@ namespace happy
 
 	Animation loadAnimFromFile(RenderingContext *pRenderContext, fs::path animPath);
 
-	ComPtr<ID3D11ShaderResourceView> loadCubemapWIC(RenderingContext *pRenderContext, fs::path filePath[6]);
+	ComPtr<ID3D11ShaderResourceView> loadCubemap(RenderingContext *pRenderContext, fs::path filePath[6]);
 
-	ComPtr<ID3D11ShaderResourceView> loadCubemapWICFolder(RenderingContext *pRenderContext, fs::path folderPath, std::string format);
+	ComPtr<ID3D11ShaderResourceView> loadCubemapFolder(RenderingContext *pRenderContext, fs::path folderPath, std::string format);
 
-	ComPtr<ID3D11ShaderResourceView> loadTextureWIC(RenderingContext *pRenderContext, fs::path filePath);
+	ComPtr<ID3D11ShaderResourceView> loadTexture(RenderingContext *pRenderContext, fs::path filePath);
 	
-	struct TextureWithFilter
+	struct TextureLayer
 	{
 		fs::path m_path;
-		unsigned m_mask;
-		int m_shift;
+
+		enum { rgb, gray } type;
+		enum { r, g, b, a } target;
 	};
 
-	ComPtr<ID3D11ShaderResourceView> loadTextureCombinedWIC(RenderingContext *pRenderContext, unsigned defaultPixel, vector<TextureWithFilter> files);
+	ComPtr<ID3D11ShaderResourceView> loadCombinedTexture(RenderingContext *pRenderContext, unsigned defaultPixel, vector<TextureLayer> files);
 
 }

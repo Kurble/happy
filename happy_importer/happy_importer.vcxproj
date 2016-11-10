@@ -194,6 +194,9 @@
     <ClCompile Include="texImporter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\bb_lib\bb_lib.vcxproj">
+      <Project>{b317c68b-3bfa-4160-a902-a32ab6bac4f8}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\happy.vcxproj">
       <Project>{d4fd92ce-2d7b-4c31-a5c3-f149ab24301f}</Project>
     </ProjectReference>
