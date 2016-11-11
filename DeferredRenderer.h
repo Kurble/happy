@@ -11,6 +11,11 @@ namespace happy
 {
 	using StencilMask = uint8_t;
 
+	enum class Quality
+	{
+		Low, Normal, High, Extreme,
+	};
+
 	struct RendererConfiguration
 	{
 		bool     m_AOEnabled     = true;
@@ -18,12 +23,24 @@ namespace happy
 		float    m_AOOcclusionRadius = 0.13f;
 		float    m_AOOcclusionMaxDistance = 1.3f;
 		bool     m_AOHiRes       = true;
+		
+				/* extreme: parallax occlusion *
+				/* high:    pbr + ao maps */
+				/* normal:  roughness mapping */
+				/* low:     only N dot L */
+		Quality m_LightingQuality = Quality::Extreme;
+
+				/* extreme: dssdo *
+				/* high:    no post effects */
+				/* normal:  no post effects */
+				/* low:     no post effects */
+		Quality m_PostEffectQuality = Quality::Extreme;
 	};
 
 	class DeferredRenderer
 	{
 	public:
-		DeferredRenderer(const RenderingContext* pRenderContext);
+		DeferredRenderer(const RenderingContext* pRenderContext, const RendererConfiguration config = RendererConfiguration());
 
 		const RenderingContext* getContext() const;
 		const bb::mat4 getViewProj() const;
@@ -56,7 +73,7 @@ namespace happy
 
 			RenderMesh    m_Mesh;
 			float         m_Alpha;
-			bb::mat4          m_Transform;
+			bb::mat4      m_Transform;
 			StencilMask   m_Group;
 		};
 
@@ -68,7 +85,7 @@ namespace happy
 
 			TextureHandle m_Texture;
 			TextureHandle m_NormalMap;
-			bb::mat4          m_Transform;
+			bb::mat4      m_Transform;
 			StencilMask   m_Filter;
 		};
 
@@ -78,8 +95,8 @@ namespace happy
 				: m_Position(position), m_Color(color), m_Radius(radius), m_FaloffExponent(faloff) 
 			{}
 
-			bb::vec3          m_Position;
-			bb::vec3          m_Color;
+			bb::vec3      m_Position;
+			bb::vec3      m_Color;
 			float         m_Radius;
 			float         m_FaloffExponent;
 		};
@@ -89,8 +106,8 @@ namespace happy
 		RendererConfiguration             m_Config;
 		D3D11_VIEWPORT                    m_ViewPort;
 		D3D11_VIEWPORT                    m_BlurViewPort;
-		bb::mat4                              m_View;
-		bb::mat4                              m_Projection;
+		bb::mat4                          m_View;
+		bb::mat4                          m_Projection;
 		PBREnvironment                    m_Environment;
 		vector<MeshItem>                  m_GeometryPositionTexcoord;
 		vector<MeshItem>                  m_GeometryPositionNormalTexcoord;
@@ -116,13 +133,14 @@ namespace happy
 		//--------------------------------------------------------------------
 		// D3D11 Objects
 		// G-Buffer content:
-		// 0:   color buffer
-		// 1:   normal buffer
-		// 2-3: directional occlusion double buffer
-		// 4:   depth buffer
-		ComPtr<ID3D11Texture2D>           m_pGBuffer[5];
-		ComPtr<ID3D11RenderTargetView>    m_pGBufferTarget[5];
-		ComPtr<ID3D11ShaderResourceView>  m_pGBufferView[5];
+		// 0:   (albedo.rgb, emissive factor)
+		// 1:   (normal.xy, heightmap, gloss)
+		// 2:   (specular.rgb, cavity)
+		// 3-4: directional occlusion double buffer
+		// 5:   depth buffer
+		ComPtr<ID3D11Texture2D>           m_pGBuffer[6];
+		ComPtr<ID3D11RenderTargetView>    m_pGBufferTarget[6];
+		ComPtr<ID3D11ShaderResourceView>  m_pGBufferView[6];
 		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferView;
 		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferViewReadOnly;
 		ComPtr<ID3D11RasterizerState>     m_pRasterState;

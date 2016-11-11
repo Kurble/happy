@@ -19,8 +19,9 @@ SamplerState g_TextureSampler : register(s1);
 
 Texture2D<float4> g_AlbedoRoughnessBuffer    : register(t0);
 Texture2D<float4> g_NormalMetallicBuffer     : register(t1);
-Texture2D<float4> g_OcclusionBuffer          : register(t2);
-Texture2D<float>  g_DepthBuffer              : register(t3);
+Texture2D<float4> g_SpecularBuffer           : register(t2);
+Texture2D<float4> g_OcclusionBuffer          : register(t3);
+Texture2D<float>  g_DepthBuffer              : register(t4);
 
 float3 samplePosition(float2 tex)
 {

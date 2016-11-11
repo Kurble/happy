@@ -4,13 +4,15 @@ struct GBufferOut
 {
 	float4 albedoRoughness  : SV_Target0;
 	float4 normalMetallic : SV_Target1;
+	float4 specular : SV_Target2;
 };
 
 SamplerState g_TextureSampler : register(s0);
 
 Texture2D<float4> g_AlbedoRoughnessMap : register(t0);
 Texture2D<float4> g_NormalMetallicMap  : register(t1);
-Texture2D<float>  g_DepthBuffer        : register(t2);
+Texture2D<float4> g_SpecularMap        : register(t2);
+Texture2D<float>  g_DepthBuffer        : register(t3);
 
 float3 samplePosition(float2 tex)
 {
@@ -43,11 +45,13 @@ GBufferOut main(VSOut input)
 	{
 		output.albedoRoughness = g_AlbedoRoughnessMap.Sample(g_TextureSampler, 0.5f+cubePos.xy*0.5f);
 		output.normalMetallic = g_NormalMetallicMap.Sample(g_TextureSampler, 0.5f+cubePos.xy*0.5f);
+		output.specular = float4(0, 0, 0, 0);
 	}
 	else
 	{
 		output.albedoRoughness = float4(0, 0, 0, 0);
 		output.normalMetallic = float4(0, 0, 0, 0);
+		output.specular = float4(0, 0, 0, 0);
 	}
 
 	return output;

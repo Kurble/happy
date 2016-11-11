@@ -18,7 +18,6 @@ static const float2 g_NoiseTextureSize = float2(4, 4);
 
 SamplerState g_ScreenSampler  : register(s0);
 
-Texture2D<float4> g_AlbedoRoughnessBuffer    : register(t0);
 Texture2D<float4> g_NormalMetallicBuffer     : register(t1);
 Texture2D<float>  g_DepthBuffer              : register(t3);
 Texture2D<float4> g_Noise                    : register(t4);

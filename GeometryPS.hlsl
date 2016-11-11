@@ -4,6 +4,7 @@ struct GBufferOut
 {
 	float4 albedoRoughness  : SV_Target0;
 	float4 normalMetallic : SV_Target1;
+	float4 specular : SV_Target2;
 };
 
 SamplerState g_TextureSampler : register(s0);
@@ -26,6 +27,7 @@ GBufferOut main(VSOut input)
 	float3 normal = normalize(mul(2.0f*normalMetallic.xyz-1.0f, normalMatrix));
 	float  metallic = normalMetallic.w;
 	output.normalMetallic = float4(normal.x*0.5f+0.5f, normal.y*0.5f + 0.5f, normal.z*0.5f + 0.5f, metallic);
+	output.specular = float4(0, 0, 0, 0);
 
 	return output;
 }

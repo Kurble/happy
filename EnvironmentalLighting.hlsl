@@ -6,10 +6,11 @@ SamplerState g_TextureSampler : register(s1);
 Texture2D<float4> g_AlbedoRoughnessBuffer    : register(t0);
 Texture2D<float4> g_NormalMetallicBuffer     : register(t1);
 Texture2D<float4> g_OcclusionBuffer          : register(t2);
-Texture2D<float>  g_DepthBuffer              : register(t3);
+Texture2D<float4> g_SpecularBuffer           : register(t3);
+Texture2D<float>  g_DepthBuffer              : register(t4);
 
-TextureCubeArray<float4> g_Lighting          : register(t4);
-TextureCube<float4>      g_Environment       : register(t5);
+TextureCubeArray<float4> g_Lighting          : register(t5);
+TextureCube<float4>      g_Environment       : register(t6);
 
 float3 sampleEnv(float3 normal, float index)
 {
