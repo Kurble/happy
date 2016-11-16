@@ -254,8 +254,8 @@ namespace happy
 					
 				}
 				
-				float roughness = (float)step / (float)(steps-1);
-				cb.exponent = pow(2.0f, roundf((1.0f - roughness) * 12.0f));
+				float gloss = (float)step / (float)(steps-1);
+				cb.exponent = pow(2.0f, roundf(gloss * 12.0f));
 
 				D3D11_MAPPED_SUBRESOURCE msr;
 				THROW_ON_FAIL(context.Map(pConstBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));

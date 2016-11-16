@@ -23,8 +23,15 @@
 #include "CompiledShaders\SphereVS.h"
 #include "CompiledShaders\DeferredDirectionalOcclusion.h"
 #include "CompiledShaders\EdgePreserveBlur.h"
-#include "CompiledShaders\EnvironmentalLighting.h"
 #include "CompiledShaders\PointLighting.h"
+#include "CompiledShaders\DeferredShadingPBR_ao_extreme.h"
+#include "CompiledShaders\DeferredShadingPBR_ao_high.h"
+#include "CompiledShaders\DeferredShadingPBR_ao_normal.h"
+#include "CompiledShaders\DeferredShadingPBR_ao_low.h"
+#include "CompiledShaders\DeferredShadingPBR_extreme.h"
+#include "CompiledShaders\DeferredShadingPBR_high.h"
+#include "CompiledShaders\DeferredShadingPBR_normal.h"
+#include "CompiledShaders\DeferredShadingPBR_low.h"
 //----------------------------------------------------------------------
 
 namespace happy
@@ -239,8 +246,21 @@ namespace happy
 		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSPointLighting, m_pILPointLighting, g_shSphereVS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSDSSDO, g_shDeferredDirectionalOcclusion);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSBlur, g_shEdgePreserveBlur);
-		CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shEnvironmentalLighting);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSPointLighting, g_shPointLighting);
+		if (m_Config.m_PostEffectQuality >= Quality::Extreme) switch (m_Config.m_LightingQuality)
+		{
+			case Quality::Extreme: CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shDeferredShadingPBR_ao_extreme); break;
+			case Quality::High:    CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shDeferredShadingPBR_ao_high);    break;
+			case Quality::Normal:  CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shDeferredShadingPBR_ao_normal);  break;
+			case Quality::Low:     CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shDeferredShadingPBR_ao_low);     break;
+		}
+		else switch (m_Config.m_LightingQuality)
+		{
+			case Quality::Extreme: CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shDeferredShadingPBR_extreme);    break;
+			case Quality::High:    CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shDeferredShadingPBR_high);       break;
+			case Quality::Normal:  CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shDeferredShadingPBR_normal);     break;
+			case Quality::Low:     CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shDeferredShadingPBR_low);        break;
+		}
 
 		// Noise texture
 		{
@@ -502,9 +522,9 @@ namespace happy
 		data.pSysMem = texture.data();
 		data.SysMemPitch = width * 4;
 
-		for (unsigned int i = 0; i < 5; ++i)
+		for (unsigned int i = 0; i < 6; ++i)
 		{
-			if ((i == 3 || i == 4) && !m_Config.m_AOHiRes)
+			if ((i == 4 || i == 5) && !m_Config.m_AOHiRes)
 			{
 				texDesc.Width = width / 2;
 				texDesc.Height = height / 2;
@@ -524,7 +544,7 @@ namespace happy
 		texDesc.Height = height;
 		texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
 		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-		THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &m_pGBuffer[5]));
+		THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &m_pGBuffer[6]));
 
 		// depth-stencil buffer object
 		{
@@ -533,7 +553,7 @@ namespace happy
 			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 			dsvDesc.Texture2D.MipSlice = 0;
 			dsvDesc.Flags = 0;
-			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[5].Get(), &dsvDesc, m_pDepthBufferView.GetAddressOf()));
+			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[6].Get(), &dsvDesc, m_pDepthBufferView.GetAddressOf()));
 		}
 
 		// depth-stencil buffer object (read only)
@@ -543,7 +563,7 @@ namespace happy
 			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 			dsvDesc.Texture2D.MipSlice = 0;
 			dsvDesc.Flags = D3D11_DSV_READ_ONLY_DEPTH | D3D11_DSV_READ_ONLY_STENCIL;
-			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[5].Get(), &dsvDesc, m_pDepthBufferViewReadOnly.GetAddressOf()));
+			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[6].Get(), &dsvDesc, m_pDepthBufferViewReadOnly.GetAddressOf()));
 		}
 
 		// depth buffer view
@@ -553,7 +573,7 @@ namespace happy
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			srvDesc.Texture2D.MostDetailedMip = 0;
 			srvDesc.Texture2D.MipLevels = -1;
-			THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[5].Get(), &srvDesc, m_pGBufferView[5].GetAddressOf()));
+			THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[6].Get(), &srvDesc, m_pGBufferView[6].GetAddressOf()));
 		}
 
 		for (unsigned int i = 0; i < 2; ++i)
@@ -736,8 +756,8 @@ namespace happy
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
 
-		ID3D11RenderTargetView* rtvs[] = { m_pGBufferTarget[0].Get(), m_pGBufferTarget[1].Get(), m_pGBufferTarget[2].Get() };
-		context.OMSetRenderTargets(3, rtvs, m_pDepthBufferView.Get());
+		ID3D11RenderTargetView* rtvs[] = { m_pGBufferTarget[0].Get(), m_pGBufferTarget[1].Get(), m_pGBufferTarget[2].Get(), m_pGBufferTarget[3].Get() };
+		context.OMSetRenderTargets(4, rtvs, m_pDepthBufferView.Get());
 		context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
 		context.OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
@@ -877,11 +897,13 @@ namespace happy
 				elem.m_Texture.m_Handle.Get(),
 				elem.m_NormalMap.m_Handle.Get(),
 				nullptr,
-				m_pGBufferView[5].Get(),
+				nullptr,
+				nullptr,
+				m_pGBufferView[6].Get(),
 			};
 
 			context.OMSetDepthStencilState(m_pDecalsDepthStencilState.Get(), elem.m_Filter);
-			context.PSSetShaderResources(0, 4, textures);
+			context.PSSetShaderResources(0, 6, textures);
 			context.IASetIndexBuffer(m_pCubeIBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 			context.IASetVertexBuffers(0, 1, m_pCubeVBuffer.GetAddressOf(), &stride, &offset);
 			context.DrawIndexed(36, 0, 0);
@@ -891,7 +913,7 @@ namespace happy
 	void DeferredRenderer::renderGBufferToBackBuffer() const
 	{
 		float clearColor[] = { 0, 0, 0, 0 };
-		ID3D11ShaderResourceView* srvs[] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+		ID3D11ShaderResourceView* srvs[] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 		ID3D11ShaderResourceView* nullSRV = nullptr;
 
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
@@ -937,14 +959,14 @@ namespace happy
 			context.PSSetConstantBuffers(2, 2, constBuffers);
 
 			srvs[1] = m_pGBufferView[1].Get();
-			srvs[3] = m_pGBufferView[5].Get();
+			srvs[3] = m_pGBufferView[6].Get();
 			srvs[4] = m_pNoiseTexture.Get();
-			context.PSSetShaderResources(0, 6, srvs);
+			context.PSSetShaderResources(0, 8, srvs);
 
 			context.Draw(6, 0);
 
-			int target = 4;
-			int view = 3;
+			int target = 5;
+			int view = 4;
 
 			// Shader 2+3: BLUR H+V
 			context.PSSetShader(m_pPSBlur.Get(), nullptr, 0);
@@ -954,7 +976,7 @@ namespace happy
 				context.OMSetRenderTargets(1, m_pGBufferTarget[target].GetAddressOf(), nullptr);
 
 				srvs[2] = m_pGBufferView[view].Get();
-				context.PSSetShaderResources(0, 7, srvs);
+				context.PSSetShaderResources(0, 8, srvs);
 
 				constBuffers[0] = m_pCBEffects[t].Get();
 				context.PSSetConstantBuffers(2, 2, constBuffers);
@@ -973,9 +995,10 @@ namespace happy
 		srvs[1] = m_pGBufferView[1].Get();
 		srvs[2] = m_pGBufferView[2].Get();
 		srvs[3] = m_pGBufferView[3].Get();
-		srvs[4] = m_pGBufferView[5].Get();
-		srvs[5] = m_Environment.getLightingSRV();
-		srvs[6] = m_Environment.getEnvironmentSRV();
+		srvs[4] = m_pGBufferView[4].Get();
+		srvs[5] = m_pGBufferView[6].Get();
+		srvs[6] = m_Environment.getLightingSRV();
+		srvs[7] = m_Environment.getEnvironmentSRV();
 
 		//--------------------------------------------------------------------
 		// Render lighting
@@ -983,14 +1006,16 @@ namespace happy
 			ID3D11RenderTargetView* rtvs[] = { m_PostProcessItems.size() > 0 ? m_pPostProcessRT[0].Get() : m_pRenderContext->getBackBuffer() };
 			context.OMSetRenderTargets(1, rtvs, nullptr);
 			context.OMSetBlendState(m_pRenderBlendState.Get(), nullptr, 0xffffffff);
-			context.PSSetShaderResources(0, 7, srvs);
+			context.PSSetShaderResources(0, 8, srvs);
 
 			// Render environmental lighting
 			context.PSSetShader(m_pPSGlobalLighting.Get(), nullptr, 0);
 			context.Draw(6, 0);
 
 			// Render point lights
-			context.VSSetShader(m_pVSPointLighting.Get(), nullptr, 0);
+			// no overdraw pls, put the lights in the pbr shader
+
+			/*context.VSSetShader(m_pVSPointLighting.Get(), nullptr, 0);
 			context.IASetInputLayout(m_pILPointLighting.Get());
 			context.IASetVertexBuffers(0, 1, m_pSphereVBuffer.GetAddressOf(), &stride, &offset);
 			context.IASetIndexBuffer(m_pSphereIBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
@@ -1010,7 +1035,7 @@ namespace happy
 				context.Unmap(m_pCBPointLighting.Get(), 0);
 
 				context.DrawIndexed(sizeof(g_SphereIndices) / sizeof(uint16_t), 0, 0);
-			}
+			}*/
 		}
 
 		//--------------------------------------------------------------------
@@ -1046,7 +1071,7 @@ namespace happy
 				if (process->m_SceneInputSlot < 10) 
 					pp_srvs[process->m_SceneInputSlot] = m_pPostProcessView[view].Get();
 				if (process->m_DepthInputSlot < 10) 
-					pp_srvs[process->m_DepthInputSlot] = m_pGBufferView[5].Get();
+					pp_srvs[process->m_DepthInputSlot] = m_pGBufferView[6].Get();
 				for (auto &slot : process->m_InputSlots)
 					pp_srvs[slot.first] = (ID3D11ShaderResourceView*)slot.second;
 
@@ -1079,7 +1104,7 @@ namespace happy
 		}
 
 		// Reset SRVs since we need them as output next frame
-		for (int i = 0; i < 7; ++i) srvs[i] = nullptr;
-		context.PSSetShaderResources(0, 7, srvs);
+		for (int i = 0; i < 8; ++i) srvs[i] = nullptr;
+		context.PSSetShaderResources(0, 8, srvs);
 	}
 }

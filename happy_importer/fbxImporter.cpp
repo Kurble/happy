@@ -170,8 +170,6 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 
 			mesh->GetPolygonVertexNormal(p, v, v4);
 			meshVertex.normal = toVec3(v4);
-			meshVertex.normal.x *= -1;
-			meshVertex.normal.y *= -1;
 			if (uvSetName)
 			{
 				mesh->GetPolygonVertexUV(p, v, uvSetName, v2, um);

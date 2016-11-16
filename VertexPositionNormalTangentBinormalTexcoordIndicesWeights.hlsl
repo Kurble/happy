@@ -47,7 +47,7 @@ VSOut main(VSIn input)
 		input.weights.z * resolveBoneMatrix(input.indices.z) +
 		input.weights.w * resolveBoneMatrix(input.indices.w);
 
-	float3x3 normalTransform = mul((float3x3)skinTransform, (float3x3)world);
+	float3x3 normalTransform = mul((float3x3)world, (float3x3)skinTransform);
 
 	output.position =  mul(skinTransform,   input.position);
 	output.position  = mul(world,           output.position);

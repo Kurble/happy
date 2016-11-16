@@ -2,17 +2,17 @@
 
 struct GBufferOut
 {
-	float4 albedoRoughness  : SV_Target0;
-	float4 normalMetallic : SV_Target1;
-	float4 specular : SV_Target2;
+	float4 graphicsBuffer0 : SV_Target0;
+	float4 graphicsBuffer1 : SV_Target1;
+	float4 graphicsBuffer2 : SV_Target2;
 };
 
 SamplerState g_TextureSampler : register(s0);
 
-Texture2D<float4> g_AlbedoRoughnessMap : register(t0);
-Texture2D<float4> g_NormalMetallicMap  : register(t1);
-Texture2D<float4> g_SpecularMap        : register(t2);
-Texture2D<float>  g_DepthBuffer        : register(t3);
+Texture2D<float4> g_MultiTexture0 : register(t0);
+Texture2D<float4> g_MultiTexture1 : register(t1);
+Texture2D<float4> g_MultiTexture2 : register(t2);
+Texture2D<float>  g_DepthBuffer     : register(t5);
 
 float3 samplePosition(float2 tex)
 {
@@ -43,15 +43,15 @@ GBufferOut main(VSOut input)
 		checkPos.y < 1 &&
 		checkPos.z < 1)
 	{
-		output.albedoRoughness = g_AlbedoRoughnessMap.Sample(g_TextureSampler, 0.5f+cubePos.xy*0.5f);
-		output.normalMetallic = g_NormalMetallicMap.Sample(g_TextureSampler, 0.5f+cubePos.xy*0.5f);
-		output.specular = float4(0, 0, 0, 0);
+		output.graphicsBuffer0 = g_MultiTexture0.Sample(g_TextureSampler, 0.5f+cubePos.xy*0.5f);
+		output.graphicsBuffer1 = g_MultiTexture1.Sample(g_TextureSampler, 0.5f+cubePos.xy*0.5f);
+		output.graphicsBuffer2 = g_MultiTexture2.Sample(g_TextureSampler, 0.5f+cubePos.xy*0.5f);
 	}
 	else
 	{
-		output.albedoRoughness = float4(0, 0, 0, 0);
-		output.normalMetallic = float4(0, 0, 0, 0);
-		output.specular = float4(0, 0, 0, 0);
+		output.graphicsBuffer0 = float4(0, 0, 0, 0);
+		output.graphicsBuffer1 = float4(0, 0, 0, 0);
+		output.graphicsBuffer2 = float4(0, 0, 0, 0);
 	}
 
 	return output;

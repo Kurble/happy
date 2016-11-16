@@ -132,15 +132,17 @@ namespace happy
 
 		//--------------------------------------------------------------------
 		// D3D11 Objects
+		
 		// G-Buffer content:
 		// 0:   (albedo.rgb, emissive factor)
-		// 1:   (normal.xy, heightmap, gloss)
+		// 1:   (normal.xyz, gloss)
 		// 2:   (specular.rgb, cavity)
-		// 3-4: directional occlusion double buffer
-		// 5:   depth buffer
-		ComPtr<ID3D11Texture2D>           m_pGBuffer[6];
-		ComPtr<ID3D11RenderTargetView>    m_pGBufferTarget[6];
-		ComPtr<ID3D11ShaderResourceView>  m_pGBufferView[6];
+		// 3:   (heightmap)
+		// 4-5: directional occlusion double buffer
+		// 6:   depth buffer
+		ComPtr<ID3D11Texture2D>           m_pGBuffer[7];
+		ComPtr<ID3D11RenderTargetView>    m_pGBufferTarget[7];
+		ComPtr<ID3D11ShaderResourceView>  m_pGBufferView[7];
 		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferView;
 		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferViewReadOnly;
 		ComPtr<ID3D11RasterizerState>     m_pRasterState;

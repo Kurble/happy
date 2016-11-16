@@ -12,7 +12,7 @@ cbuffer Convolution : register(b0)
 struct VSOut
 {
 	float4 position : SV_Position;
-	float3 coord : NORMAL;
+	float3 coord : TEXCOORD0;
 };
 
 VSOut main(float4 position : POSITION)

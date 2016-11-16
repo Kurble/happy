@@ -2,19 +2,20 @@
 
 SamplerState             g_ScreenSampler   : register(s0);
 SamplerState             g_TextureSampler  : register(s1);
-								           
+
 Texture2D<float4>        g_GraphicsBuffer0 : register(t0);
 Texture2D<float4>        g_GraphicsBuffer1 : register(t1);
 Texture2D<float4>        g_GraphicsBuffer2 : register(t2);
-Texture2D<float4>        g_OcclusionBuffer : register(t3);
-Texture2D<float>         g_DepthBuffer     : register(t4);
+Texture2D<float>         g_GraphicsBuffer3 : register(t3);
+Texture2D<float4>        g_OcclusionBuffer : register(t4);
+Texture2D<float>         g_DepthBuffer     : register(t5);
 
-TextureCubeArray<float4> g_CubeLighting    : register(t5);
-TextureCube<float4>      g_CubeEnvironment : register(t6);
+TextureCubeArray<float4> g_CubeLighting    : register(t6);
+TextureCube<float4>      g_CubeEnvironment : register(t7);
 
 float3 sampleEnv(float3 normal, float gloss)
 {
-	return g_CubeLighting.Sample(g_TextureSampler, float4(normal.x, normal.z, normal.y, round((convolutionStages - 1) * gloss))).xyz;
+	return g_CubeLighting.Sample(g_TextureSampler, float4(normal.xyz, round((convolutionStages - 1) * gloss))).rgb;
 }
 
 float4 main(VSOut input) : SV_TARGET
@@ -24,42 +25,48 @@ float4 main(VSOut input) : SV_TARGET
 	float4 channel0  = g_GraphicsBuffer0.Sample(g_ScreenSampler, input.tex);
 	float4 channel1  = g_GraphicsBuffer1.Sample(g_ScreenSampler, input.tex);
 	float4 channel2  = g_GraphicsBuffer2.Sample(g_ScreenSampler, input.tex);
+	float  channel3  = g_GraphicsBuffer3.Sample(g_ScreenSampler, input.tex);
 	float4 occlusion = g_OcclusionBuffer.Sample(g_ScreenSampler, input.tex) * 2.0f - 1.0f;
-	float  depth     = g_DepthBuffer.    Sample(g_ScreenSampler, input.tex);
+	float  depth     = g_DepthBuffer.Sample(g_ScreenSampler, input.tex);
 
 	//------------------------------------------------------------------------------------
 	// Unpack data from samples
 	// 0:   (albedo.rgb, emissive factor)
-	// 1:   (normal.xy, heightmap, gloss)
+	// 1:   (normal.xyz, gloss)
 	// 2:   (specular.rgb, cavity)
+	// 3:   (heightmap)
 	float3 albedo   = channel0.rgb;
 	float  emissive = channel0.a;
-	float3 normal   = float3(channel1.rg * 2.0f - 1.0f, 0.0f); 
-	       normal.z = sqrt(1.0f - normal.x*normal.x - normal.y*normal.y);
-	float  height   = channel1.b;
+	float3 normal   = channel1.rgb * 2.0f - 1.0f;
 	float  gloss    = channel1.a;
 	float3 specular = channel2.rgb;
 	float  cavity   = channel2.a;
+	float  bump     = channel3.r;
 
 	//------------------------------------------------------------------------------------
 	// Prepare more data
 	float3 screenNormal = float3(
-		(input.tex.x - .5) * 2 * (width / height),
-		(input.tex.y - .5) * -2,
-		-projection[0][0] * 2);
-	float3 viewNormal = normalize(mul(screenNormal, (float3x3)view));
+		(input.tex.x - 0.5f) *  2.0f * (width / height),
+		(input.tex.y - 0.5f) * -2.0f,
+		-projection[0][0] * 2.0f);
+	float3 viewNormal = normalize(mul(screenNormal, (float3x3)viewInverse));
 
 	//------------------------------------------------------------------------------------
 	// Perform shading
 	if (depth < 1)
 	{
+		float  schlick = pow((1 - dot(normal, -viewNormal)), 5.0f);
+
 		// calculate diffuse part
-		float3 diffuseResult = sampleEnv(normal, 0) * albedo;
+		float3 diffuseContrib = (1.0f - schlick) * albedo;
+		float3 diffuseResult = sampleEnv(normal, 0) * diffuseContrib;
 
 		// calculate specular part
-		float3 specularResult = sampleEnv(reflect(viewNormal, normal), gloss) * specular;
+		float3 specularContrib = (specular + (1.0f - specular) * schlick);
+		float3 specularResult = sampleEnv(reflect(viewNormal, normal), gloss) * specularContrib;
 
-		return float4(diffuseResult + specularResult, 1.0f);
+		//return float4(diffuseResult + specularResult, 1.0f);
+		return float4(0.5f + normal * 0.5f, 1.0f);
 	}
 	else
 	{
