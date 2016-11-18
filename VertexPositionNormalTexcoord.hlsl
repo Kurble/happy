@@ -3,8 +3,8 @@
 struct VSIn
 {
 	float4 position : POSITION;
-	float3 normal : NORMAL;
-	float2 texcoord : TEXCOORD0;
+	float3 normal   : TEXCOORD0;
+	float2 texcoord : TEXCOORD1;
 };
 
 VSOut main(VSIn input)
@@ -14,7 +14,7 @@ VSOut main(VSIn input)
 	output.position  = mul(world,      input.position);
 	output.position  = mul(view,       output.position);
 	output.position  = mul(projection, output.position);
-	output.normal    = mul((float3x3)world, input.normal);
+	output.normal    = normalize(mul((float3x3)world, input.normal));
 	output.tangent   = 0;
 	output.binormal  = 0;
 	output.texcoord0 = input.texcoord;

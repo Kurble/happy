@@ -19,15 +19,11 @@ GBufferOut main(VSOut input)
 {
 	GBufferOut output;
 
-	float3x3 normalMatrix = float3x3(
-		input.tangent,
-		input.binormal,
-		input.normal
-	);
+	float3x3 normalTransform = float3x3(input.tangent, input.binormal, input.normal);
 
 	output.graphicsBuffer0 = g_MultiTexture0.Sample(g_TextureSampler, input.texcoord0);
 	float4 multi1 = g_MultiTexture1.Sample(g_TextureSampler, input.texcoord0);
-	float3 normal = normalize(mul(2.0f*multi1.xyz-1.0f, normalMatrix));
+	float3 normal = normalize(mul(multi1.xyz*2.0f-1.0f, normalTransform));
 	float  gloss  = multi1.w;
 	output.graphicsBuffer1 = float4(normal.xyz*0.5f+0.5f, gloss);
 	output.graphicsBuffer2 = g_MultiTexture2.Sample(g_TextureSampler, input.texcoord0);

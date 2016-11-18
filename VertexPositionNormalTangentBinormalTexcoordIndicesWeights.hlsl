@@ -13,12 +13,12 @@ cbuffer CBufferAnim3Frame1 : register(b11) { float4x4 pose7[64]; }
 struct VSIn
 {
 	float4 position : POSITION;
-	float3 normal : NORMAL;
-	float3 tangent : TANGENT0;
-	float3 binormal : TANGENT1;
-	float2 texcoord : TEXCOORD;
-	uint4  indices : TEXCOORD1;
-	float4 weights : TEXCOORD2;
+	float3 normal :   TEXCOORD0;
+	float3 tangent :  TEXCOORD1;
+	float3 binormal : TEXCOORD2;
+	float2 texcoord : TEXCOORD3;
+	uint4  indices :  TEXCOORD4;
+	float4 weights :  TEXCOORD5;
 };
 
 float4x4 resolveBoneMatrix(uint bone)
@@ -35,6 +35,14 @@ float4x4 resolveBoneMatrix(uint bone)
 		if (animationCount > 3) animation += animationBlend.w * lerp(pose6[bone], pose7[bone], frameBlend.w);
 		return mul(animation, bindpose[bone]);
 	}
+}
+
+float3 transformNormal(float3 normal, float4x4 skinTransform)
+{
+	float4 normal4 = float4(normal, 0.0f);
+	//normal4 = mul(skinTransform, normal4);
+	normal4 = mul(world,         normal4);
+	return normal4.xyz;
 }
 
 VSOut main(VSIn input)
