@@ -7,7 +7,7 @@ Texture2D<float4>        g_GraphicsBuffer0 : register(t0);
 Texture2D<float4>        g_GraphicsBuffer1 : register(t1);
 Texture2D<float4>        g_GraphicsBuffer2 : register(t2);
 Texture2D<float>         g_GraphicsBuffer3 : register(t3);
-Texture2D<float4>        g_OcclusionBuffer : register(t4);
+Texture2D<float>         g_OcclusionBuffer : register(t4);
 Texture2D<float>         g_DepthBuffer     : register(t5);
 
 TextureCubeArray<float4> g_CubeLighting    : register(t6);
@@ -26,7 +26,7 @@ float4 main(VSOut input) : SV_TARGET
 	float4 channel1  = g_GraphicsBuffer1.Sample(g_ScreenSampler, input.tex);
 	float4 channel2  = g_GraphicsBuffer2.Sample(g_ScreenSampler, input.tex);
 	float  channel3  = g_GraphicsBuffer3.Sample(g_ScreenSampler, input.tex);
-	float4 occlusion = g_OcclusionBuffer.Sample(g_ScreenSampler, input.tex) * 2.0f - 1.0f;
+	float  occlusion = g_OcclusionBuffer.Sample(g_ScreenSampler, input.tex);
 	float  depth     = g_DepthBuffer.Sample(g_ScreenSampler, input.tex);
 
 	//------------------------------------------------------------------------------------
@@ -57,8 +57,8 @@ float4 main(VSOut input) : SV_TARGET
 		float  schlick = pow(1 - max(0, dot(normal, -viewNormal)), 5.0f);
 
 		// calculate diffuse part
-		float3 diffContrib = (1.0f - schlick) * albedo;
-		float3 diffResult = sampleEnv(normal, 0) * diffContrib;
+		float3 diffContrib = (1.0f - schlick) * albedo * occlusion;
+		float3 diffResult = sampleEnv(normal, 0) * 2.0f * diffContrib;
 
 		// calculate specular part
 		float3 specContrib = (specular + (1.0f - specular) * schlick);

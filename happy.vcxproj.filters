@@ -112,9 +112,6 @@
     <FxCompile Include="VertexPositionNormalTangentBinormalTexcoordIndicesWeights.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="EdgePreserveBlur.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="CanvasVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
@@ -152,6 +149,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="DeferredShadingPBR_normal.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="SSAO.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
@@ -207,6 +207,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="DeferredShadingPBR.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Utils.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="SSAOBlur.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

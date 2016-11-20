@@ -21,7 +21,6 @@ namespace happy
 		bool     m_AOEnabled     = true;
 		unsigned m_AOSamples     = 32;
 		float    m_AOOcclusionRadius = 0.13f;
-		float    m_AOOcclusionMaxDistance = 1.3f;
 		bool     m_AOHiRes       = true;
 		
 				/* extreme: parallax occlusion *
@@ -173,10 +172,9 @@ namespace happy
 		ComPtr<ID3D11VertexShader>        m_pVSScreenQuad;
 		ComPtr<ID3D11InputLayout>         m_pILScreenQuad;
 		ComPtr<ID3D11PixelShader>         m_pPSGlobalLighting;
-		ComPtr<ID3D11PixelShader>         m_pPSDSSDO;
-		ComPtr<ID3D11PixelShader>         m_pPSBlur;
-		ComPtr<ID3D11Buffer>              m_pCBEffects[2];
-		ComPtr<ID3D11Buffer>              m_pCBRandom;
+		ComPtr<ID3D11PixelShader>         m_pPSSSAO;
+		ComPtr<ID3D11PixelShader>         m_pPSSSAOBlur;
+		ComPtr<ID3D11Buffer>              m_pCBSSAO;
 		ComPtr<ID3D11Buffer>              m_pSphereVBuffer;
 		ComPtr<ID3D11Buffer>              m_pSphereIBuffer;
 		ComPtr<ID3D11Buffer>              m_pCubeVBuffer;
