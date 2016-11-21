@@ -12,9 +12,6 @@
     <ClInclude Include="CBuffers.h">
       <Filter>Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="DSSDO_Kernel.h">
-      <Filter>Shaders</Filter>
-    </ClInclude>
     <ClInclude Include="GBufferCommon.h">
       <Filter>Shaders</Filter>
     </ClInclude>
@@ -80,9 +77,6 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="ConvolutionVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredDirectionalOcclusion.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="EnvironmentalLighting.hlsl">
@@ -154,6 +148,9 @@
     <FxCompile Include="SSAO.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="SSAOBlur.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeferredRenderer.cpp">
@@ -210,9 +207,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Utils.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="SSAOBlur.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

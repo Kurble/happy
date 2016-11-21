@@ -34,10 +34,10 @@ float4 getsample(float3x3 side, float3 eyedir, float3 base_ray)
 {
 	float3 ray = mul(base_ray, side);
 
-	float lambert = max(0.0, pow(dot(ray, eyedir), g_Exponent));
+	float lambert = max(0.0, pow(abs(dot(ray, eyedir)), g_Exponent));
 
 	float4 hdr = g_Source.Sample(g_TextureSampler, ray);
-	float3 col = pow(hdr.rgb, 2.2f);
+	float3 col = pow(abs(hdr.rgb), 2.2f);
 
 	return float4(col*lambert, lambert);
 }
