@@ -460,6 +460,11 @@ namespace happy
 		return viewproj;
 	}
 
+	const RendererConfiguration& DeferredRenderer::getConfig() const
+	{
+		return m_Config;
+	}
+
 	void DeferredRenderer::resize(unsigned int width, unsigned int height)
 	{
 		ID3D11Device& device = *m_pRenderContext->getDevice();
@@ -479,15 +484,12 @@ namespace happy
 		}
 
 		// Create G-Buffer
-		vector<unsigned char> texture(width * height * 4, 0);
+		vector<unsigned char> texture(width * height * 8, 0);
 		D3D11_TEXTURE2D_DESC texDesc;
-		texDesc.Width = width;
-		texDesc.Height = height;
 		texDesc.MipLevels = 1;
 		texDesc.ArraySize = 1;
 		texDesc.SampleDesc.Count = 1;
 		texDesc.SampleDesc.Quality = 0;
-		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		texDesc.Usage = D3D11_USAGE_DEFAULT;
 		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 		texDesc.CPUAccessFlags = 0;
@@ -495,24 +497,31 @@ namespace happy
 
 		D3D11_SUBRESOURCE_DATA data;
 		data.pSysMem = texture.data();
-		data.SysMemPitch = width * 4;
+		data.SysMemPitch = width * 8;
 
-		for (unsigned int i = 0; i < 6; ++i)
+		for (size_t i = 0; i < GBuf_ChannelCount; ++i)
 		{
-			if ((i == 4 || i == 5))
+			texDesc.Width = width;
+			texDesc.Height = height;
+			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+
+			if (i == GBuf_DepthStencilIdx)
+			{
+				continue;
+			}
+			else if (i == GBuf_Occlusion0Idx || i == GBuf_Occlusion1Idx)
 			{
 				if (!m_Config.m_AOHiRes)
 				{
 					texDesc.Width = width / 2;
 					texDesc.Height = height / 2;
 				}
-				texDesc.Format = DXGI_FORMAT_R8_UNORM;
+				texDesc.Format = DXGI_FORMAT_R16_UNORM;
 			}
-			else
+			else if (i == GBuf_Graphics1Idx)
 			{
-				texDesc.Width = width;
-				texDesc.Height = height;
-				texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				texDesc.Format = DXGI_FORMAT_R11G11B10_FLOAT;
 			}
 
 			THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &m_pGBuffer[i]));
@@ -524,7 +533,7 @@ namespace happy
 		texDesc.Height = height;
 		texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
 		texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-		THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &m_pGBuffer[6]));
+		THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &m_pGBuffer[GBuf_DepthStencilIdx]));
 
 		// depth-stencil buffer object
 		{
@@ -533,7 +542,7 @@ namespace happy
 			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 			dsvDesc.Texture2D.MipSlice = 0;
 			dsvDesc.Flags = 0;
-			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[6].Get(), &dsvDesc, m_pDepthBufferView.GetAddressOf()));
+			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[GBuf_DepthStencilIdx].Get(), &dsvDesc, m_pDepthBufferView.GetAddressOf()));
 		}
 
 		// depth-stencil buffer object (read only)
@@ -543,7 +552,7 @@ namespace happy
 			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 			dsvDesc.Texture2D.MipSlice = 0;
 			dsvDesc.Flags = D3D11_DSV_READ_ONLY_DEPTH | D3D11_DSV_READ_ONLY_STENCIL;
-			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[6].Get(), &dsvDesc, m_pDepthBufferViewReadOnly.GetAddressOf()));
+			THROW_ON_FAIL(device.CreateDepthStencilView(m_pGBuffer[GBuf_DepthStencilIdx].Get(), &dsvDesc, m_pDepthBufferViewReadOnly.GetAddressOf()));
 		}
 
 		// depth buffer view
@@ -553,7 +562,7 @@ namespace happy
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			srvDesc.Texture2D.MostDetailedMip = 0;
 			srvDesc.Texture2D.MipLevels = -1;
-			THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[6].Get(), &srvDesc, m_pGBufferView[6].GetAddressOf()));
+			THROW_ON_FAIL(device.CreateShaderResourceView(m_pGBuffer[GBuf_DepthStencilIdx].Get(), &srvDesc, m_pGBufferView[GBuf_DepthStencilIdx].GetAddressOf()));
 		}
 
 		for (unsigned int i = 0; i < 2; ++i)
@@ -702,7 +711,7 @@ namespace happy
 		sceneCB.width = (float)m_pRenderContext->getWidth();
 		sceneCB.height = (float)m_pRenderContext->getHeight();
 		sceneCB.convolutionStages = m_Environment.getCubemapArrayLength();
-		sceneCB.aoEnabled = m_Config.m_AOEnabled ? 1 : 0;
+		sceneCB.aoEnabled = m_Config.m_PostEffectQuality >= Quality::Normal ? 1 : 0;
 		updateConstantBuffer<CBufferScene>(&context, m_pCBScene.Get(), sceneCB);
 
 		renderGeometryToGBuffer();
@@ -740,8 +749,8 @@ namespace happy
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
 
-		ID3D11RenderTargetView* rtvs[] = { m_pGBufferTarget[0].Get(), m_pGBufferTarget[1].Get(), m_pGBufferTarget[2].Get(), m_pGBufferTarget[3].Get() };
-		context.OMSetRenderTargets(4, rtvs, m_pDepthBufferView.Get());
+		ID3D11RenderTargetView* rtvs[] = { m_pGBufferTarget[0].Get(), m_pGBufferTarget[1].Get(), m_pGBufferTarget[2].Get() };
+		context.OMSetRenderTargets(3, rtvs, m_pDepthBufferView.Get());
 		context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
 		context.OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
@@ -883,7 +892,7 @@ namespace happy
 				nullptr,
 				nullptr,
 				nullptr,
-				m_pGBufferView[6].Get(),
+				m_pGBufferView[GBuf_DepthStencilIdx].Get(),
 			};
 
 			context.OMSetDepthStencilState(m_pDecalsDepthStencilState.Get(), elem.m_Filter);
@@ -927,7 +936,7 @@ namespace happy
 		
 		//--------------------------------------------------------------------
 		// Generate SSAO buffer
-		if (m_Config.m_PostEffectQuality >= Quality::Extreme)
+		if (m_Config.m_PostEffectQuality >= Quality::Normal)
 		{
 			ID3D11Buffer* constBuffers[] =
 			{
@@ -939,20 +948,20 @@ namespace happy
 			context.RSSetViewports(1, &m_BlurViewPort);
 
 			// Shader 1: SSAO
-			context.OMSetRenderTargets(1, m_pGBufferTarget[4].GetAddressOf(), nullptr);
+			context.OMSetRenderTargets(1, m_pGBufferTarget[GBuf_Occlusion0Idx].GetAddressOf(), nullptr);
 			context.PSSetShader(m_pPSSSAO.Get(), nullptr, 0);
 			context.PSSetConstantBuffers(0, 3, constBuffers);
 			context.PSSetSamplers(0, 2, samplers);
 
-			srvs[1] = m_pGBufferView[1].Get();
-			srvs[5] = m_pGBufferView[6].Get();
+			srvs[1] = m_pGBufferView[GBuf_Graphics1Idx].Get();
+			srvs[5] = m_pGBufferView[GBuf_DepthStencilIdx].Get();
 			srvs[6] = m_pNoiseTexture.Get();
 			context.PSSetShaderResources(0, 8, srvs);
 
 			context.Draw(6, 0);
 
-			int target = 5;
-			int view = 4;
+			int target = GBuf_Occlusion1Idx;
+			int view = GBuf_Occlusion0Idx;
 
 			// Shader 2+3: BLUR H+V
 			for (int t = 0; t < 1; ++t)
@@ -974,12 +983,12 @@ namespace happy
 
 		//--------------------------------------------------------------------
 		// SRVs State
-		srvs[0] = m_pGBufferView[0].Get();
-		srvs[1] = m_pGBufferView[1].Get();
-		srvs[2] = m_pGBufferView[2].Get();
-		srvs[3] = m_pGBufferView[3].Get();
-		srvs[4] = m_pGBufferView[5].Get();
-		srvs[5] = m_pGBufferView[6].Get();
+		srvs[0] = m_pGBufferView[GBuf_Graphics0Idx].Get();
+		srvs[1] = m_pGBufferView[GBuf_Graphics1Idx].Get();
+		srvs[2] = m_pGBufferView[GBuf_Graphics2Idx].Get();
+		srvs[3] = nullptr;
+		srvs[4] = m_pGBufferView[GBuf_Occlusion1Idx].Get();
+		srvs[5] = m_pGBufferView[GBuf_DepthStencilIdx].Get();
 		srvs[6] = m_Environment.getLightingSRV();
 		srvs[7] = m_Environment.getEnvironmentSRV();
 
@@ -1054,7 +1063,7 @@ namespace happy
 				if (process->m_SceneInputSlot < 10) 
 					pp_srvs[process->m_SceneInputSlot] = m_pPostProcessView[view].Get();
 				if (process->m_DepthInputSlot < 10) 
-					pp_srvs[process->m_DepthInputSlot] = m_pGBufferView[6].Get();
+					pp_srvs[process->m_DepthInputSlot] = m_pGBufferView[GBuf_DepthStencilIdx].Get();
 				for (auto &slot : process->m_InputSlots)
 					pp_srvs[slot.first] = (ID3D11ShaderResourceView*)slot.second;
 

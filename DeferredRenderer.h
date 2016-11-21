@@ -43,6 +43,7 @@ namespace happy
 
 		const RenderingContext* getContext() const;
 		const bb::mat4 getViewProj() const;
+		const RendererConfiguration& getConfig() const;
 
 		void resize(unsigned int width, unsigned int height);
 		void clear();
@@ -132,16 +133,23 @@ namespace happy
 		//--------------------------------------------------------------------
 		// D3D11 Objects
 		
+		// GBuffer content:
+		static const size_t GBuf_Graphics0Idx    = 0;
+		static const size_t GBuf_Graphics1Idx    = 1;
+		static const size_t GBuf_Graphics2Idx    = 2;
+		static const size_t GBuf_Occlusion0Idx   = 3;
+		static const size_t GBuf_Occlusion1Idx   = 4;
+		static const size_t GBuf_DepthStencilIdx = 5;
+		static const size_t GBuf_ChannelCount    = 6;
 		// G-Buffer content:
 		// 0:   (albedo.rgb, emissive factor)
 		// 1:   (normal.xyz, gloss)
 		// 2:   (specular.rgb, cavity)
-		// 3:   (heightmap)
-		// 4-5: directional occlusion double buffer
-		// 6:   depth buffer
-		ComPtr<ID3D11Texture2D>           m_pGBuffer[7];
-		ComPtr<ID3D11RenderTargetView>    m_pGBufferTarget[7];
-		ComPtr<ID3D11ShaderResourceView>  m_pGBufferView[7];
+		// 3-4: (ssao.r)
+		// 5:   (depth.r stencil.g)
+		ComPtr<ID3D11Texture2D>           m_pGBuffer[GBuf_ChannelCount];
+		ComPtr<ID3D11RenderTargetView>    m_pGBufferTarget[GBuf_ChannelCount];
+		ComPtr<ID3D11ShaderResourceView>  m_pGBufferView[GBuf_ChannelCount];
 		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferView;
 		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferViewReadOnly;
 		ComPtr<ID3D11RasterizerState>     m_pRasterState;

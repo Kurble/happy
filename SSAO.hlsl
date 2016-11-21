@@ -64,5 +64,5 @@ float main(VSOut input) : SV_TARGET
 		occlusion += (sampleDepth <= originDepth ? 1.0 : 0.0) * rangeCheck;
 	}
 
-	return 1.0f - (occlusion / (float)g_Samples);
+	return (occlusion / (float)g_Samples);
 }

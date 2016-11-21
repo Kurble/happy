@@ -10,7 +10,7 @@ namespace happy
 		PBREnvironment();
 		PBREnvironment(ComPtr<ID3D11ShaderResourceView> &environment);
 
-		void convolute(RenderingContext *pRenderContext, float resolution = 32.0f, unsigned int steps=8);
+		void convolute(RenderingContext *pRenderContext, float resolution = 64.0f, unsigned int steps=4);
 
 		UINT getCubemapArrayLength() const;
 		ID3D11ShaderResourceView* getEnvironmentSRV() const;
