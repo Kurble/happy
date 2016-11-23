@@ -209,5 +209,8 @@
     <None Include="Utils.hlsli">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="BRDFModels.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

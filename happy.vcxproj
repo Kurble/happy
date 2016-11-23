@@ -128,26 +128,37 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeader>Create</PrecompiledHeader>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <FxCompile>
       <ShaderModel>4.1</ShaderModel>
       <VariableName>g_sh%(Filename)</VariableName>
       <HeaderFileOutput>CompiledShaders\%(Filename).h</HeaderFileOutput>
     </FxCompile>
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='FastDebug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PreprocessorDefinitions>_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <FxCompile>
       <ShaderModel>4.1</ShaderModel>
       <VariableName>g_sh%(Filename)</VariableName>
       <HeaderFileOutput>CompiledShaders\%(Filename).h</HeaderFileOutput>
     </FxCompile>
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -176,10 +187,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeader>Create</PrecompiledHeader>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
     </Link>
     <FxCompile>
       <ShaderModel>4.1</ShaderModel>
@@ -441,8 +455,14 @@
     <ClCompile Include="ImageLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="BRDFModels.hlsli" />
     <None Include="DeferredShadingPBR.hlsli" />
     <None Include="Utils.hlsli" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="bb_lib\bb_lib.vcxproj">
+      <Project>{b317c68b-3bfa-4160-a902-a32ab6bac4f8}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
