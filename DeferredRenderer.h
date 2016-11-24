@@ -19,7 +19,7 @@ namespace happy
 	struct RendererConfiguration
 	{
 		bool     m_AOEnabled     = true;
-		unsigned m_AOSamples     = 32;
+		unsigned m_AOSamples     = 8;
 		float    m_AOOcclusionRadius = 0.13f;
 		bool     m_AOHiRes       = true;
 		

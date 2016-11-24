@@ -47,6 +47,7 @@ float main(VSOut input) : SV_TARGET
 	{
 		// calculate samplePosition
 		float3 samplePosition = mul(g_SampleKernel[i], tbn);
+		float  tangentialCheck = dot(normalize(samplePosition), normal) > 0.15f ? 1.0f : 0.0f;
 		samplePosition = originPosition + samplePosition * g_OcclusionRadius;
 
 		// project samplePosition (so we know where to sample)
@@ -61,8 +62,9 @@ float main(VSOut input) : SV_TARGET
 
 		// range check and accumulate
 		float rangeCheck = abs(originLinearDepth - sampleLinearDepth) < g_OcclusionRadius ? 1.0 : 0.0;
-		occlusion += (sampleDepth <= originDepth ? 1.0 : 0.0) * rangeCheck;
+		float depthCheck = sampleDepth <= originDepth ? 1.0f : 0.0;
+		occlusion += depthCheck * rangeCheck * tangentialCheck;
 	}
 
-	return (occlusion / (float)g_Samples);
+	return occlusion * g_InvSamples;
 }

@@ -49,7 +49,7 @@ float4 main(VSOut input) : SV_TARGET
 	// Perform shading
 	if (depth < 1)
 	{
-		float  schlick = 0;// pow(1 - max(0, dot(normal, -viewNormal)), 5.0f);
+		float  schlick = 0;//pow(1 - max(0, dot(normal, -viewNormal)), 5.0f);
 
 		// calculate diffuse part
 		float3 diffContrib = (1.0f - schlick) * albedo * (1.0f - occlusion);
