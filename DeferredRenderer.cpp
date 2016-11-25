@@ -315,32 +315,6 @@ namespace happy
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateDepthStencilState(&desc, &m_pLightingDepthStencilState));
 		}
 
-		// Lighting blending state
-		{
-			D3D11_BLEND_DESC desc;
-			ZeroMemory(&desc, sizeof(desc));
-			desc.RenderTarget[0].BlendEnable = true;
-			desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-			desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-			desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
-			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-			desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-			desc.RenderTarget[0].RenderTargetWriteMask = 
-				D3D11_COLOR_WRITE_ENABLE_RED |
-				D3D11_COLOR_WRITE_ENABLE_GREEN | 
-				D3D11_COLOR_WRITE_ENABLE_BLUE;
-			desc.IndependentBlendEnable = false;
-			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBlendState(&desc, &m_pRenderBlendState));
-
-			desc.RenderTarget[0].BlendEnable = false;
-			desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-			desc.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
-			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBlendState(&desc, &m_pDefaultBlendState));
-		}
-
 		// Decals blending state
 		{
 			D3D11_BLEND_DESC desc;
@@ -714,8 +688,9 @@ namespace happy
 		sceneCB.aoEnabled = m_Config.m_PostEffectQuality >= Quality::Normal ? 1 : 0;
 		updateConstantBuffer<CBufferScene>(&context, m_pCBScene.Get(), sceneCB);
 
-		renderGeometryToGBuffer();
-		renderGBufferToBackBuffer();
+		renderGeometry();
+
+		renderDeferred();
 	}
 
 	template<typename T>
@@ -745,7 +720,7 @@ namespace happy
 		}
 	}
 
-	void DeferredRenderer::renderGeometryToGBuffer() const
+	void DeferredRenderer::renderGeometry() const
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
 
@@ -753,9 +728,6 @@ namespace happy
 		context.OMSetRenderTargets(3, rtvs, m_pDepthBufferView.Get());
 		context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
 		context.OMSetBlendState(nullptr, nullptr, 0xffffffff);
-
-		float cc[4] = { 0, 0, 0, 0 };
-		context.ClearRenderTargetView(m_pGBufferTarget[0].Get(), cc);
 		context.ClearDepthStencilView(m_pDepthBufferView.Get(), D3D11_CLEAR_DEPTH, 1, 0);
 
 		ID3D11Buffer* constBuffers[] =
@@ -903,7 +875,7 @@ namespace happy
 		}
 	}
 
-	void DeferredRenderer::renderGBufferToBackBuffer() const
+	void DeferredRenderer::renderDeferred() const
 	{
 		float clearColor[] = { 0, 0, 0, 0 };
 		ID3D11ShaderResourceView* srvs[] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
@@ -912,9 +884,6 @@ namespace happy
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
 		context.OMSetDepthStencilState(m_pLightingDepthStencilState.Get(), 0);
 		context.OMSetBlendState(nullptr, nullptr, 0xffffffff);
-		context.ClearRenderTargetView(m_pRenderContext->getBackBuffer(), clearColor);
-		context.ClearRenderTargetView(m_pPostProcessRT[0].Get(), clearColor);
-		context.ClearRenderTargetView(m_pPostProcessRT[1].Get(), clearColor);
 
 		ID3D11SamplerState* samplers[] = { m_pScreenSampler.Get(), m_pGSampler.Get() };
 
@@ -997,7 +966,6 @@ namespace happy
 		{
 			ID3D11RenderTargetView* rtvs[] = { m_PostProcessItems.size() > 0 ? m_pPostProcessRT[0].Get() : m_pRenderContext->getBackBuffer() };
 			context.OMSetRenderTargets(1, rtvs, nullptr);
-			context.OMSetBlendState(m_pRenderBlendState.Get(), nullptr, 0xffffffff);
 			context.PSSetShaderResources(0, 8, srvs);
 
 			// Render environmental lighting
@@ -1039,7 +1007,6 @@ namespace happy
 				nullptr,
 			};
 
-			context.OMSetBlendState(m_pDefaultBlendState.Get(), nullptr, 0xffffffff);
 			context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			context.IASetInputLayout(m_pILScreenQuad.Get());
 			context.VSSetShader(m_pVSScreenQuad.Get(), nullptr, 0);

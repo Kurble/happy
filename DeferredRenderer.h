@@ -123,8 +123,8 @@ namespace happy
 
 		//--------------------------------------------------------------------
 		// Private functions
-		void renderGeometryToGBuffer() const;
-		void renderGBufferToBackBuffer() const;
+		void renderGeometry() const;
+		void renderDeferred() const;
 		template<typename T>
 		void renderStaticMeshList(const vector<MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
 		template<typename T>
@@ -172,8 +172,6 @@ namespace happy
 		ComPtr<ID3D11DepthStencilState>   m_pLightingDepthStencilState;
 		ComPtr<ID3D11DepthStencilState>   m_pDecalsDepthStencilState;
 		ComPtr<ID3D11BlendState>          m_pDecalBlendState;
-		ComPtr<ID3D11BlendState>          m_pRenderBlendState;
-		ComPtr<ID3D11BlendState>          m_pDefaultBlendState;
 		ComPtr<ID3D11SamplerState>        m_pScreenSampler;
 		ComPtr<ID3D11Buffer>              m_pScreenQuadBuffer;
 		ComPtr<ID3D11ShaderResourceView>  m_pNoiseTexture;

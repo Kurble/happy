@@ -216,6 +216,7 @@
     <ClInclude Include="RendererCommon.h" />
     <ClInclude Include="RenderingContext.h" />
     <ClInclude Include="RenderMesh.h" />
+    <ClInclude Include="RenderQueue.h" />
     <ClInclude Include="RenderSkin.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="SkinController.h" />
