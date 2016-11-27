@@ -19,6 +19,7 @@ namespace bb
 	bool rayCircleIntersection(const vec2 &p0, const vec2 &p1, const vec2 &center, const float &radius, vec2 &result);
 	bool lineCircleIntersection(const vec2 &p0, const vec2 &p1, const vec2 &center, const float &radius, vec2 &result);
 	bool pointsCollinear(const vec2 &a, const vec2 &b, const vec2 &c);
+	bool rectCircleIntersection(const vec2 &aa, const vec2 &bb, const vec2 &center, const float &radius, vec2 *result);
 
 	//--------------------------------------------------------------------------------------------------------------------------
 	// 3D intersections

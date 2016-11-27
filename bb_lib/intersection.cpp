@@ -153,6 +153,52 @@ namespace bb
 		return false;
 	}
 
+	bool rectCircleIntersection(const vec2 &aa, const vec2 &bb, const vec2 &center, const float &radius, vec2 *result)
+	{
+		vec2 circleDistance = center - ((aa + bb)*0.5f);
+		vec2 halfSize = (bb - aa) * 0.5f;
+		vec2 sign = vec2(circleDistance.x >= .0f ? 1.f : -1.f, circleDistance.y >= .0f ? 1.f : -1.f);
+		circleDistance.x = fabsf(circleDistance.x);
+		circleDistance.y = fabsf(circleDistance.y);
+
+		auto calcPenetration = [&]
+		{
+			if (result)
+			{
+				if ((circleDistance.x <= halfSize.x) && (circleDistance.y <= halfSize.y))
+				{
+					//vec2 nearestRectPos;
+					//vec2 nearestCirclePos;
+					//bool yRoute = (fabsf(halfSize.y - circleDistance.y) < fabsf(halfSize.x - circleDistance.x));
+					//if (yRoute) nearestRectPos = vec2(circleDistance.x, halfSize.y);
+					//else        nearestRectPos = vec2(halfSize.x, circleDistance.y);
+					//nearestCirclePos = (circleDistance - nearestRectPos).normalized() * radius;
+					//result = (nearestCirclePos - nearestRectPos) * sign;
+					*result = vec2(0, 0);
+					return false; // for now
+				}
+				else
+				{
+					vec2 nearestRectPos = vec2(fminf(halfSize.x, circleDistance.x), fminf(halfSize.y, circleDistance.y));
+					vec2 nearestCirclePos = circleDistance + (nearestRectPos - circleDistance).normalized() * radius;
+					*result = (nearestRectPos - nearestCirclePos) * sign;
+				}
+			}
+			return true;
+		};
+		
+		if (circleDistance.x >  halfSize.x + radius) return false;
+		if (circleDistance.y >  halfSize.y + radius) return false;
+		if (circleDistance.x <= halfSize.x) return calcPenetration();
+		if (circleDistance.y <= halfSize.y) return calcPenetration();
+
+		float cornerDistanceSquared = (circleDistance - halfSize).dot(circleDistance - halfSize);
+		if (cornerDistanceSquared <= (radius * radius))
+			return calcPenetration();
+		else
+			return false;
+	}
+
 	bool pointsCollinear(const vec2 &a, const vec2 &b, const vec2 &c)
 	{
 		return fabsf(
