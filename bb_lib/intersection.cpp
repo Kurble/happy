@@ -165,24 +165,25 @@ namespace bb
 		{
 			if (result)
 			{
+				vec2 nearestRectPos;
+				vec2 nearestCirclePos;
+
 				if ((circleDistance.x <= halfSize.x) && (circleDistance.y <= halfSize.y))
 				{
-					//vec2 nearestRectPos;
-					//vec2 nearestCirclePos;
-					//bool yRoute = (fabsf(halfSize.y - circleDistance.y) < fabsf(halfSize.x - circleDistance.x));
-					//if (yRoute) nearestRectPos = vec2(circleDistance.x, halfSize.y);
-					//else        nearestRectPos = vec2(halfSize.x, circleDistance.y);
-					//nearestCirclePos = (circleDistance - nearestRectPos).normalized() * radius;
-					//result = (nearestCirclePos - nearestRectPos) * sign;
-					*result = vec2(0, 0);
-					return false; // for now
+					if (halfSize.y - circleDistance.y < halfSize.x - circleDistance.x)
+						nearestRectPos = vec2(circleDistance.x, halfSize.y);
+					else 
+						nearestRectPos = vec2(halfSize.x, circleDistance.y);
+
+					nearestCirclePos = circleDistance - (nearestRectPos - circleDistance).normalized() * radius;
 				}
 				else
 				{
-					vec2 nearestRectPos = vec2(fminf(halfSize.x, circleDistance.x), fminf(halfSize.y, circleDistance.y));
-					vec2 nearestCirclePos = circleDistance + (nearestRectPos - circleDistance).normalized() * radius;
-					*result = (nearestRectPos - nearestCirclePos) * sign;
+					nearestRectPos = vec2(fminf(halfSize.x, circleDistance.x), fminf(halfSize.y, circleDistance.y));
+					nearestCirclePos = circleDistance + (nearestRectPos - circleDistance).normalized() * radius;
 				}
+
+				*result = (nearestRectPos - nearestCirclePos) * sign;
 			}
 			return true;
 		};
