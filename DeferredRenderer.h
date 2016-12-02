@@ -143,8 +143,8 @@ namespace happy
 		static const size_t GBuf_ChannelCount    = 6;
 		// G-Buffer content:
 		// 0:   (albedo.rgb, emissive factor)
-		// 1:   (normal.xyz, gloss)
-		// 2:   (specular.rgb, cavity)
+		// 1:   (normal.xyz)
+		// 2:   (specular.rgb, gloss)
 		// 3-4: (ssao.r)
 		// 5:   (depth.r stencil.g)
 		ComPtr<ID3D11Texture2D>           m_pGBuffer[GBuf_ChannelCount];

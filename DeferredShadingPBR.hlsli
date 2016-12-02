@@ -59,7 +59,7 @@ float4 main(VSOut input) : SV_TARGET
 		float3 specContrib = (specular + (1.0f - specular) * schlick);
 		float3 specResult = sampleEnv(reflect(viewNormal, normal), gloss) * specContrib;
 
-		return float4(diffResult + specResult, 1.0f);
+		return float4(lerp(diffResult, albedo, emissive) + specResult, 1.0f);
 		//return float4(normal * 0.5f + 0.5f, 1.0f);
 	}
 	else
