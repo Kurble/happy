@@ -174,6 +174,7 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 			{
 				mesh->GetPolygonVertexUV(p, v, uvSetName, v2, um);
 				meshVertex.texcoord = toVec2(v2);
+				meshVertex.texcoord.y = 1.0f - meshVertex.texcoord.y;
 			}
 
 			meshVertices.push_back(meshVertex);
