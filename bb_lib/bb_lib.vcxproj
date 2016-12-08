@@ -156,6 +156,7 @@
     <ClInclude Include="mat4.h" />
     <ClInclude Include="math_util.h" />
     <ClInclude Include="ray.h" />
+    <ClInclude Include="spatial_hash_map.h" />
     <ClInclude Include="store.h" />
     <ClInclude Include="intersection.h" />
     <ClInclude Include="vec2.h" />
@@ -165,6 +166,7 @@
   <ItemGroup>
     <ClCompile Include="mat3.cpp" />
     <ClCompile Include="mat4.cpp" />
+    <ClCompile Include="spatial_hash_map.cpp" />
     <ClCompile Include="store.cpp" />
     <ClCompile Include="intersection.cpp" />
     <ClCompile Include="vec2.cpp" />
