@@ -156,7 +156,7 @@ namespace bb
 		//
 	}
 
-	void store::visit(std::function<void(const std::string &key, const val &elem)> &visitor) const
+	void store::visit(std::function<void(const std::string &key, const val &elem)> visitor) const
 	{
 		for (const auto &elem : m_Data)
 		{

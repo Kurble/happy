@@ -25,7 +25,7 @@ namespace bb
 		
 		struct val;
 
-		void visit(std::function<void(const std::string &key, const val &elem)> &visitor) const;
+		void visit(std::function<void(const std::string &key, const val &elem)> visitor) const;
 
 		bool exists(const std::string &key) const;
 
