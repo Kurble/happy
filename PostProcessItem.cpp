@@ -4,6 +4,18 @@
 
 namespace happy
 {
+	void PostProcessItem::setInputSlot(Slot buffer, unsigned slot)
+	{
+		switch (buffer)
+		{
+		case Frame: m_SceneInputSlot = slot;  break;
+		case PreviousFrame: m_PreviousFrameInputSlot = slot; break;
+		case Depth: m_DepthInputSlot = slot;  break;
+		case Normals: m_NormalsInputSlot = slot; break;
+		case Velocity: m_VelocityInputSlot = slot;  break;
+		}
+	}
+
 	void PostProcessItem::setSceneInputSlot(unsigned slot)
 	{
 		m_SceneInputSlot = slot;

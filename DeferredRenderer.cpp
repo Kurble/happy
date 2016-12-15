@@ -83,8 +83,6 @@ namespace happy
 		: m_pRenderContext(pRenderContext)
 		, m_Config(config)
 	{
-		m_TAA_Jitter.set(-0.33f, -0.33f);
-
 		// Rasterizer state
 		{
 			D3D11_RASTERIZER_DESC desc;
@@ -465,7 +463,7 @@ namespace happy
 
 		bb::mat4 jitteredProjection;
 		jitteredProjection.identity();
-		jitteredProjection.translate(bb::vec3(m_TAA_Jitter.x / (float)m_pRenderContext->getWidth(), m_TAA_Jitter.y / (float)m_pRenderContext->getHeight(), 0.0f));
+		jitteredProjection.translate(bb::vec3(target->m_Jitter.x / target->getWidth(), target->m_Jitter.y / target->getHeight(), 0.0f));
 		jitteredProjection.multiply(target->m_Projection);
 
 		CBufferScene sceneCB;
@@ -757,7 +755,10 @@ namespace happy
 		//--------------------------------------------------------------------
 		// Render lighting
 		{
-			ID3D11RenderTargetView* rtvs[] = { scene->m_PostProcessItems.size() > 0 ? target->m_PostBuffer[0].rtv.Get() : m_pRenderContext->getBackBuffer() };
+			ID3D11RenderTargetView* rtvs[] = 
+			{ 
+				(scene->m_PostProcessItems.size() > 0 || target->m_pOutputTarget == nullptr) ? target->historyRTV() : target->m_pOutputTarget
+			};
 			context.OMSetRenderTargets(1, rtvs, nullptr);
 			context.PSSetShaderResources(0, 8, srvs);
 
@@ -810,18 +811,19 @@ namespace happy
 
 			int pptarget = 1;
 			int ppview = 0;
+			int pass = 0;
 
 			for (auto process = scene->m_PostProcessItems.begin(); process != scene->m_PostProcessItems.end(); ++process)
 			{
 				ID3D11RenderTargetView* pp_rtvs[] = { target->m_PostBuffer[pptarget].rtv.Get() };
-				if (process == scene->m_PostProcessItems.end() - 1)
+				if (pass == scene->m_PostProcessItems.size() - 1 && target->m_pOutputTarget)
 				{
-					pp_rtvs[0] = m_pRenderContext->getBackBuffer();
+					pp_rtvs[0] = target->m_pOutputTarget;
 				}
 
 				ID3D11ShaderResourceView* pp_srvs[10] = { 0 };
 				if (process->m_SceneInputSlot < 10) 
-					pp_srvs[process->m_SceneInputSlot] = target->m_PostBuffer[ppview].srv.Get();
+					pp_srvs[process->m_SceneInputSlot] = pass == 0 ? target->currentSRV() : target->m_PostBuffer[ppview].srv.Get();
 				if (process->m_DepthInputSlot < 10) 
 					pp_srvs[process->m_DepthInputSlot] = target->m_GraphicsBuffer[RenderTarget::GBuf_DepthStencilIdx].srv.Get();
 				for (auto &slot : process->m_InputSlots)
@@ -850,6 +852,7 @@ namespace happy
 				context.Draw(6, 0);
 
 				std::swap(pptarget, ppview);
+				pass++;
 
 				context.PSSetShaderResources(process->m_SceneInputSlot, 1, &nullSRV);
 			}
@@ -858,5 +861,9 @@ namespace happy
 		// Reset SRVs since we need them as output next frame
 		for (int i = 0; i < 8; ++i) srvs[i] = nullptr;
 		context.PSSetShaderResources(0, 8, srvs);
+
+		target->m_LastUsedHistoryBuffer += 1;
+		target->m_LastUsedHistoryBuffer %= 2;
+		target->m_Jitter.set(target->m_Jitter.y, -target->m_Jitter.x);
 	}
 }

@@ -4,8 +4,22 @@ namespace happy
 {
 	struct PostProcessItem
 	{
+		enum Slot
+		{
+			Frame,
+			PreviousFrame,
+			Depth,
+			Normals,
+			Velocity,
+		};
+
+		virtual ~PostProcessItem() {}
+
+		void setInputSlot(Slot buffer, unsigned slot);
+
 		void setSceneInputSlot(unsigned slot);
 		void setDepthInputSlot(unsigned slot);
+		
 		void addInputSlot(const TextureHandle &texture, unsigned slot);
 
 		void* getShaderId() { return (void*)m_Handle.Get(); }
@@ -20,7 +34,10 @@ namespace happy
 		shared_ptr<vector<unsigned char>> m_ConstBufferData;
 
 		unsigned                      m_SceneInputSlot = 0;
+		unsigned                      m_PreviousFrameInputSlot = (unsigned)-1;
 		unsigned                      m_DepthInputSlot = (unsigned)-1;
+		unsigned                      m_NormalsInputSlot = (unsigned)-1;
+		unsigned                      m_VelocityInputSlot = (unsigned)-1;
 		vector<pair<unsigned, void*>> m_InputSlots;
 	};
 

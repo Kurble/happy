@@ -77,6 +77,9 @@
     <ClInclude Include="RenderQueue.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="TemporalAAPostEffect.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
@@ -157,6 +160,9 @@
     <FxCompile Include="SSAOBlur.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="TAA.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeferredRenderer.cpp">
@@ -211,6 +217,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="RenderQueue.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="TemporalAAPostEffect.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

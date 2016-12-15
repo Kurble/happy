@@ -5,6 +5,8 @@ namespace happy
 {
 	RenderTarget::RenderTarget(RenderingContext *context, unsigned width, unsigned height, bool hiresEffects) 
 		: m_pRenderContext(context)
+		, m_pOutputTarget(nullptr)
+		, m_Jitter(0.33f, 0.33f)
 	{
 		if (width > 0 && height > 0)
 			resize(width, height, hiresEffects);
@@ -170,8 +172,32 @@ namespace happy
 	{
 		m_View = view;
 	}
+
 	void RenderTarget::setProjection(bb::mat4 &projection)
 	{
 		m_Projection = projection;
+	}
+
+	void RenderTarget::setOutput(ID3D11RenderTargetView* target)
+	{
+		m_pOutputTarget = target;
+	}
+
+	ID3D11RenderTargetView* RenderTarget::historyRTV() const
+	{
+		unsigned i = (m_LastUsedHistoryBuffer + 1) % 2;
+		return m_HistoryBuffer[i].rtv.Get();
+	}
+
+	ID3D11ShaderResourceView* RenderTarget::historySRV() const
+	{
+		unsigned i = m_LastUsedHistoryBuffer % 2;
+		return m_HistoryBuffer[i].srv.Get();
+	}
+
+	ID3D11ShaderResourceView* RenderTarget::currentSRV() const
+	{
+		unsigned i = (m_LastUsedHistoryBuffer + 1) % 2;
+		return m_HistoryBuffer[i].srv.Get();
 	}
 }

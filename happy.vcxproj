@@ -224,6 +224,7 @@
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="TemporalAAPostEffect.h" />
     <ClInclude Include="TextureHandle.h" />
     <ClInclude Include="VertexTypes.h" />
   </ItemGroup>
@@ -405,6 +406,14 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
+    <FxCompile Include="TAA.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='FastDebug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='FastDebug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="VertexPositionNormalTangentBinormalTexcoord.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='FastDebug|Win32'">Vertex</ShaderType>
@@ -455,6 +464,7 @@
     <ClCompile Include="Resources.cpp" />
     <ClCompile Include="SkinController.cpp" />
     <ClCompile Include="SkinLoader.cpp" />
+    <ClCompile Include="TemporalAAPostEffect.cpp" />
     <ClCompile Include="VertexTypes.cpp" />
     <ClCompile Include="ImageLoader.cpp" />
   </ItemGroup>

@@ -65,7 +65,6 @@ namespace happy
 		//--------------------------------------------------------------------
 		// State
 		RendererConfiguration             m_Config;
-		bb::vec2                          m_TAA_Jitter;
 
 		//--------------------------------------------------------------------
 		// D3D11 State Objects
