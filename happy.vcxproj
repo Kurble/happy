@@ -218,6 +218,7 @@
     <ClInclude Include="RenderMesh.h" />
     <ClInclude Include="RenderQueue.h" />
     <ClInclude Include="RenderSkin.h" />
+    <ClInclude Include="RenderTarget.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="SkinController.h" />
     <ClInclude Include="Sphere.h" />
@@ -448,7 +449,9 @@
     <ClCompile Include="PostProcessItem.cpp" />
     <ClCompile Include="RenderingContext.cpp" />
     <ClCompile Include="RenderMesh.cpp" />
+    <ClCompile Include="RenderQueue.cpp" />
     <ClCompile Include="RenderSkin.cpp" />
+    <ClCompile Include="RenderTarget.cpp" />
     <ClCompile Include="Resources.cpp" />
     <ClCompile Include="SkinController.cpp" />
     <ClCompile Include="SkinLoader.cpp" />

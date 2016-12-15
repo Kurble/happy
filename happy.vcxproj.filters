@@ -71,6 +71,9 @@
     <ClInclude Include="MultiTexture.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="RenderTarget.h">
+      <Filter>Source</Filter>
+    </ClInclude>
     <ClInclude Include="RenderQueue.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -202,6 +205,12 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="MultiTexture.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTarget.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderQueue.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

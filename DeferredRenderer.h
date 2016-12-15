@@ -6,6 +6,8 @@
 #include "PBREnvironment.h"
 #include "TextureHandle.h"
 #include "PostProcessItem.h"
+#include "RenderTarget.h"
+#include "RenderQueue.h"
 
 namespace happy
 {
@@ -42,116 +44,31 @@ namespace happy
 		DeferredRenderer(const RenderingContext* pRenderContext, const RendererConfiguration config = RendererConfiguration());
 
 		const RenderingContext* getContext() const;
-		const bb::mat4 getViewProj() const;
 		const RendererConfiguration& getConfig() const;
 
-		void resize(unsigned int width, unsigned int height);
-		void clear();
-		
-		void pushRenderMesh(const RenderMesh &mesh, const bb::mat4 &transform, const StencilMask group);
-		void pushRenderMesh(const RenderMesh &mesh, float alpha, const bb::mat4 &transform, const StencilMask group);
-		void pushSkinRenderItem(const SkinRenderItem &skin);
-		void pushDecal(const TextureHandle &texture, const bb::mat4 &transform, const StencilMask filter);
-		void pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const bb::mat4 &transform, const StencilMask filter);
-		void pushLight(const bb::vec3 &position, const bb::vec3 &color, const float radius, const float falloff);
-		void pushPostProcessItem(const PostProcessItem &proc);
-
-		void setEnvironment(const PBREnvironment &environment);
-		void setCamera(const bb::mat4 &view, const bb::mat4 &projection);
 		void setConfiguration(const RendererConfiguration &config);
 
-		void render() const;
+		void render(const RenderQueue *scene, RenderTarget *target) const;
 
 	private:
 		const RenderingContext *m_pRenderContext;
 
-		struct MeshItem
-		{
-			MeshItem(const RenderMesh &mesh, const float alpha, const bb::mat4 &transform, const StencilMask group)
-				: m_Mesh(mesh), m_Alpha(alpha), m_Transform(transform), m_Group(group)
-			{}
-
-			RenderMesh    m_Mesh;
-			float         m_Alpha;
-			bb::mat4      m_Transform;
-			StencilMask   m_Group;
-		};
-
-		struct DecalItem
-		{
-			DecalItem(const TextureHandle &texture, const TextureHandle &normal, const bb::mat4 &transform, const StencilMask filter)
-				: m_Texture(texture), m_NormalMap(normal), m_Transform(transform), m_Filter(filter) 
-			{}
-
-			TextureHandle m_Texture;
-			TextureHandle m_NormalMap;
-			bb::mat4      m_Transform;
-			StencilMask   m_Filter;
-		};
-
-		struct PointLightItem
-		{
-			PointLightItem(const bb::vec3 &position, const bb::vec3 &color, const float radius, const float faloff)
-				: m_Position(position), m_Color(color), m_Radius(radius), m_FaloffExponent(faloff) 
-			{}
-
-			bb::vec3      m_Position;
-			bb::vec3      m_Color;
-			float         m_Radius;
-			float         m_FaloffExponent;
-		};
-
-		//--------------------------------------------------------------------
-		// State
-		RendererConfiguration             m_Config;
-		D3D11_VIEWPORT                    m_ViewPort;
-		D3D11_VIEWPORT                    m_BlurViewPort;
-		bb::mat4                          m_View;
-		bb::mat4                          m_Projection;
-		PBREnvironment                    m_Environment;
-		vector<MeshItem>                  m_GeometryPositionTexcoord;
-		vector<MeshItem>                  m_GeometryPositionNormalTexcoord;
-		vector<MeshItem>                  m_GeometryPositionNormalTangentBinormalTexcoord;
-		vector<SkinRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
-		vector<MeshItem>                  m_GeometryPositionTexcoordTransparent;
-		vector<MeshItem>                  m_GeometryPositionNormalTexcoordTransparent;
-		vector<MeshItem>                  m_GeometryPositionNormalTangentBinormalTexcoordTransparent;
-		vector<SkinRenderItem>            m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent;
-		vector<DecalItem>                 m_Decals;
-		vector<PointLightItem>            m_PointLights;
-		vector<PostProcessItem>           m_PostProcessItems;
-
 		//--------------------------------------------------------------------
 		// Private functions
-		void renderGeometry() const;
-		void renderDeferred() const;
+		void renderGeometry(const RenderQueue *scene, RenderTarget *target) const;
+		void renderDeferred(const RenderQueue *scene, RenderTarget *target) const;
 		template<typename T>
-		void renderStaticMeshList(const vector<MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
+		void renderStaticMeshList(const vector<RenderQueue::MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
 		template<typename T>
 		void updateConstantBuffer(ID3D11DeviceContext *context, ID3D11Buffer *buffer, const T &value) const;
 
 		//--------------------------------------------------------------------
-		// D3D11 Objects
-		
-		// GBuffer content:
-		static const size_t GBuf_Graphics0Idx    = 0;
-		static const size_t GBuf_Graphics1Idx    = 1;
-		static const size_t GBuf_Graphics2Idx    = 2;
-		static const size_t GBuf_Occlusion0Idx   = 3;
-		static const size_t GBuf_Occlusion1Idx   = 4;
-		static const size_t GBuf_DepthStencilIdx = 5;
-		static const size_t GBuf_ChannelCount    = 6;
-		// G-Buffer content:
-		// 0:   (albedo.rgb, emissive factor)
-		// 1:   (normal.xyz)
-		// 2:   (specular.rgb, gloss)
-		// 3-4: (ssao.r)
-		// 5:   (depth.r stencil.g)
-		ComPtr<ID3D11Texture2D>           m_pGBuffer[GBuf_ChannelCount];
-		ComPtr<ID3D11RenderTargetView>    m_pGBufferTarget[GBuf_ChannelCount];
-		ComPtr<ID3D11ShaderResourceView>  m_pGBufferView[GBuf_ChannelCount];
-		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferView;
-		ComPtr<ID3D11DepthStencilView>    m_pDepthBufferViewReadOnly;
+		// State
+		RendererConfiguration             m_Config;
+		bb::vec2                          m_TAA_Jitter;
+
+		//--------------------------------------------------------------------
+		// D3D11 State Objects
 		ComPtr<ID3D11RasterizerState>     m_pRasterState;
 		ComPtr<ID3D11InputLayout>         m_pILPositionTexcoord;
 		ComPtr<ID3D11InputLayout>         m_pILPositionNormalTexcoord;
@@ -189,7 +106,5 @@ namespace happy
 		ComPtr<ID3D11InputLayout>         m_pILPointLighting;
 		ComPtr<ID3D11PixelShader>         m_pPSPointLighting;
 		ComPtr<ID3D11Buffer>              m_pCBPointLighting;
-		ComPtr<ID3D11RenderTargetView>    m_pPostProcessRT[2];
-		ComPtr<ID3D11ShaderResourceView>  m_pPostProcessView[2];
 	};
 }
