@@ -23,6 +23,7 @@
 #include "CompiledShaders\SphereVS.h"
 #include "CompiledShaders\SSAO.h"
 #include "CompiledShaders\SSAOBlur.h"
+#include "CompiledShaders\TAA.h"
 #include "CompiledShaders\PointLighting.h"
 #include "CompiledShaders\DeferredShadingPBR_ao_extreme.h"
 #include "CompiledShaders\DeferredShadingPBR_ao_high.h"
@@ -218,6 +219,7 @@ namespace happy
 		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSPointLighting, m_pILPointLighting, g_shSphereVS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSSSAO, g_shSSAO);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSSSAOBlur, g_shSSAOBlur);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSTAA, g_shTAA);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSPointLighting, g_shPointLighting);
 		if (m_Config.m_PostEffectQuality >= Quality::Extreme) switch (m_Config.m_LightingQuality)
 		{
@@ -757,7 +759,7 @@ namespace happy
 		{
 			ID3D11RenderTargetView* rtvs[] = 
 			{ 
-				(scene->m_PostProcessItems.size() > 0 || target->m_pOutputTarget == nullptr) ? target->historyRTV() : target->m_pOutputTarget
+				target->historyRTV()
 			};
 			context.OMSetRenderTargets(1, rtvs, nullptr);
 			context.PSSetShaderResources(0, 8, srvs);
@@ -793,6 +795,32 @@ namespace happy
 		}
 
 		//--------------------------------------------------------------------
+		// Anti Aliasing
+		{
+			ID3D11RenderTargetView* rtvs[] = 
+			{ 
+				(scene->m_PostProcessItems.size() > 0 || target->m_pOutputTarget == nullptr) ? target->m_PostBuffer[0].rtv.Get() : target->m_pOutputTarget
+			};
+
+			srvs[0] = target->currentSRV();
+			srvs[1] = target->historySRV();
+			srvs[2] = target->m_GraphicsBuffer[RenderTarget::GBuf_DepthStencilIdx].srv.Get();
+			srvs[3] = nullptr;
+			srvs[4] = nullptr;
+			srvs[5] = nullptr;
+			srvs[6] = nullptr;
+			srvs[7] = nullptr;
+
+			context.OMSetRenderTargets(1, rtvs, nullptr);
+			context.PSSetShaderResources(0, 8, srvs);
+
+			// Render environmental lighting
+			context.PSSetShader(m_pPSTAA.Get(), nullptr, 0);
+			context.Draw(6, 0);
+		}
+		// todo todo todo todo todo todo todo todo todo todo
+
+		//--------------------------------------------------------------------
 		// Post processing
 		{
 			ID3D11Buffer* constBuffers[] =
@@ -823,9 +851,14 @@ namespace happy
 
 				ID3D11ShaderResourceView* pp_srvs[10] = { 0 };
 				if (process->m_SceneInputSlot < 10) 
-					pp_srvs[process->m_SceneInputSlot] = pass == 0 ? target->currentSRV() : target->m_PostBuffer[ppview].srv.Get();
+					pp_srvs[process->m_SceneInputSlot] = target->m_PostBuffer[ppview].srv.Get();
 				if (process->m_DepthInputSlot < 10) 
 					pp_srvs[process->m_DepthInputSlot] = target->m_GraphicsBuffer[RenderTarget::GBuf_DepthStencilIdx].srv.Get();
+				if (process->m_NormalsInputSlot < 10)
+					pp_srvs[process->m_DepthInputSlot] = target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics1Idx].srv.Get();
+				if (process->m_VelocityInputSlot < 10)
+					pp_srvs[process->m_VelocityInputSlot] = nullptr;
+
 				for (auto &slot : process->m_InputSlots)
 					pp_srvs[slot.first] = (ID3D11ShaderResourceView*)slot.second;
 
@@ -864,6 +897,6 @@ namespace happy
 
 		target->m_LastUsedHistoryBuffer += 1;
 		target->m_LastUsedHistoryBuffer %= 2;
-		target->m_Jitter.set(target->m_Jitter.y, -target->m_Jitter.x);
+		target->m_Jitter.set(-target->m_Jitter.x, -target->m_Jitter.y);
 	}
 }

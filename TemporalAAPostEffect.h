@@ -10,5 +10,8 @@ namespace happy
 	{
 	public:
 		TemporalAAPostEffect(RenderingContext* context);
+
+	private:
+		//
 	};
 }

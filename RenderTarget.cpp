@@ -6,7 +6,7 @@ namespace happy
 	RenderTarget::RenderTarget(RenderingContext *context, unsigned width, unsigned height, bool hiresEffects) 
 		: m_pRenderContext(context)
 		, m_pOutputTarget(nullptr)
-		, m_Jitter(0.33f, 0.33f)
+		, m_Jitter(0.5f, 0.5f)
 	{
 		if (width > 0 && height > 0)
 			resize(width, height, hiresEffects);

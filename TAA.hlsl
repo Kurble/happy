@@ -16,11 +16,11 @@ cbuffer CBufferScene : register(b0)
 	unsigned int aoEnabled;
 };
 
-SamplerState g_ScreenSampler    : register(s0);
-SamplerState g_TextureSampler   : register(s1);
-Texture2D<float4> g_SceneBuffer : register(t0);
-Texture2D<float>  g_DepthBuffer : register(t1);
-Texture2D<float>  g_VisionMap   : register(t2);
+SamplerState g_ScreenSampler      : register(s0);
+SamplerState g_TextureSampler     : register(s1);
+Texture2D<float4> g_SceneBuffer   : register(t0);
+Texture2D<float4> g_HistoryBuffer : register(t1);
+Texture2D<float>  g_DepthBuffer   : register(t2);
 
 float3 getPosition(float2 tex, float depth)
 {
@@ -39,5 +39,8 @@ float3 getPosition(float2 tex, float depth)
 
 float4 main(VSOut input) : SV_TARGET
 {
-	return float4(1, 1, 1, 1);
+	float4 sample1 = g_SceneBuffer.Sample(g_ScreenSampler, input.tex);
+	float4 sample2 = g_HistoryBuffer.Sample(g_ScreenSampler, input.tex);
+
+	return (sample1 + sample2) * 0.5f;
 }

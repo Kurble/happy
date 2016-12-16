@@ -8,6 +8,6 @@ namespace happy
 	{
 		THROW_ON_FAIL(context->getDevice()->CreatePixelShader(g_shTAA, sizeof(g_shTAA), nullptr, &m_Handle));
 
-		// set inputs!
+		m_KeepsHistory = true;
 	}
 }

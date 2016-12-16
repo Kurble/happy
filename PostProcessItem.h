@@ -29,16 +29,17 @@ namespace happy
 		friend class DeferredRenderer;
 		friend class Canvas;
 		
-		ComPtr<ID3D11PixelShader> m_Handle;
+		ComPtr<ID3D11PixelShader>         m_Handle;
 		ComPtr<ID3D11Buffer>              m_ConstBuffer;
 		shared_ptr<vector<unsigned char>> m_ConstBufferData;
+		bool                              m_KeepsHistory = false;
 
-		unsigned                      m_SceneInputSlot = 0;
-		unsigned                      m_PreviousFrameInputSlot = (unsigned)-1;
-		unsigned                      m_DepthInputSlot = (unsigned)-1;
-		unsigned                      m_NormalsInputSlot = (unsigned)-1;
-		unsigned                      m_VelocityInputSlot = (unsigned)-1;
-		vector<pair<unsigned, void*>> m_InputSlots;
+		unsigned                          m_SceneInputSlot = 0;
+		unsigned                          m_PreviousFrameInputSlot = (unsigned)-1;
+		unsigned                          m_DepthInputSlot = (unsigned)-1;
+		unsigned                          m_NormalsInputSlot = (unsigned)-1;
+		unsigned                          m_VelocityInputSlot = (unsigned)-1;
+		vector<pair<unsigned, void*>>     m_InputSlots;
 	};
 
 	template <typename T> struct ConstBufPostProcessItem: public PostProcessItem
