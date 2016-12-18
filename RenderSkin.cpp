@@ -5,6 +5,8 @@ namespace happy
 {
 	void RenderSkin::setBindPose(const RenderingContext *pRenderContext, const vector<bb::mat4>& pose)
 	{
+		if (pose.size() == 0) throw exception("no bind pose found!");
+
 		D3D11_BUFFER_DESC poseDesc;
 		ZeroMemory(&poseDesc, sizeof(poseDesc));
 

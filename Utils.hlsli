@@ -20,11 +20,10 @@ float calcLinearDepth(float2 tex, float depth)
 float4 convertToYCoCg(float4 rgba)
 {
 	return float4(
-		dot(rgba, float3(.25, .5, .25)),
-		dot(rgba, float3(.5, 0., -.5)),
-		dot(rgba, float3(-.25, .5, -.25)),
+		dot(rgba.rgb, float3( 0.25f, 0.50f,  0.25f)),
+		dot(rgba.rgb, float3( 0.50f, 0.00f, -0.50f)),
+		dot(rgba.rgb, float3(-0.25f, 0.50f, -0.25f)),
 		rgba.a);
-
 }
 
 float4 convertToRGBA(float4 yCoCg)

@@ -90,7 +90,7 @@ namespace happy
 		ComPtr<ID3D11BlendState>          m_pDecalBlendState;
 		ComPtr<ID3D11SamplerState>        m_pScreenSampler;
 		ComPtr<ID3D11Buffer>              m_pScreenQuadBuffer;
-		ComPtr<ID3D11ShaderResourceView>  m_pNoiseTexture;
+		ComPtr<ID3D11ShaderResourceView>  m_pNoiseTexture[RenderTarget::MultiSamples];
 		ComPtr<ID3D11VertexShader>        m_pVSScreenQuad;
 		ComPtr<ID3D11InputLayout>         m_pILScreenQuad;
 		ComPtr<ID3D11PixelShader>         m_pPSGlobalLighting;

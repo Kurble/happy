@@ -33,6 +33,8 @@ float4 main(VSOut input) : SV_TARGET
 	float4 historyPosition = mul(viewHistory, float4(currentPosition, 1));
 	historyPosition = mul(projectionHistory, historyPosition);
 
+	// todo: take motion into account
+
 	//=========================================================
 	// Sample the current neighbourhood
 	//=========================================================

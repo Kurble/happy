@@ -260,7 +260,6 @@ namespace happy
 
 		// Noise texture
 		{
-			ComPtr<ID3D11Texture2D> pTexture;
 			D3D11_TEXTURE2D_DESC desc;
 			desc.Width = 4;
 			desc.Height = 4;
@@ -275,18 +274,23 @@ namespace happy
 			desc.MiscFlags = 0;
 
 			char data[4 * 4 * 4];
-			for (int i = 0; i < sizeof(data); ++i)
-			{
-				data[i] = (char)rand();
-			}
 
 			D3D11_SUBRESOURCE_DATA initData;
 			initData.pSysMem = data;
 			initData.SysMemPitch = static_cast<UINT>(4 * 4);
 			initData.SysMemSlicePitch = static_cast<UINT>(sizeof(data));
 
-			THROW_ON_FAIL(pRenderContext->getDevice()->CreateTexture2D(&desc, &initData, &pTexture));
-			THROW_ON_FAIL(pRenderContext->getDevice()->CreateShaderResourceView(pTexture.Get(), nullptr, &m_pNoiseTexture));
+			for (unsigned tex = 0; tex < RenderTarget::MultiSamples; ++tex)
+			{
+				for (int i = 0; i < sizeof(data); ++i)
+				{
+					data[i] = (char)rand();
+				}
+
+				ComPtr<ID3D11Texture2D> pTexture;
+				THROW_ON_FAIL(pRenderContext->getDevice()->CreateTexture2D(&desc, &initData, &pTexture));
+				THROW_ON_FAIL(pRenderContext->getDevice()->CreateShaderResourceView(pTexture.Get(), nullptr, &m_pNoiseTexture[tex]));
+			}
 		}
 
 		// G-Buffer depth stencil state
@@ -746,7 +750,7 @@ namespace happy
 
 			srvs[1] = target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics1Idx].srv.Get();
 			srvs[5] = target->m_GraphicsBuffer[RenderTarget::GBuf_DepthStencilIdx].srv.Get();
-			srvs[6] = m_pNoiseTexture.Get();
+			srvs[6] = m_pNoiseTexture[target->m_JitterIndex].Get();
 			context.PSSetShaderResources(0, 8, srvs);
 
 			context.Draw(6, 0);

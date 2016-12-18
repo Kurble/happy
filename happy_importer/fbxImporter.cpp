@@ -83,12 +83,21 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 		uniqueVertices.push_back(v);
 	}
 
-	ofstream fout(skinOut.c_str(), ios::out | ios::binary);
+	ofstream fout;
 
 	FbxSkin *skin = (FbxSkin*)mesh->GetDeformer(0, FbxDeformer::eSkin);
 	if (skin)
 	{
 		uint32_t boneCount = (unsigned)skin->GetClusterCount();
+
+		cout << "Exporting skin with" << boneCount << " bones" << endl;
+		if (boneCount == 0)
+		{
+			cout << "Error: no bones in mesh! Skipping..." << endl;
+			return;
+		}
+
+		fout.open(skinOut.c_str(), ios::out | ios::binary);
 		fout.write((const char*)&boneCount, sizeof(uint32_t));
 
 		for (unsigned boneIndex = 0; boneIndex < boneCount; ++boneIndex)
@@ -139,8 +148,7 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 	}
 	else
 	{
-		uint32_t nope = 0;
-		fout.write((const char*)&nope, sizeof(uint32_t));
+		return;
 	}
 
 	vector<happy::VertexPositionNormalTangentBinormalTexcoordIndicesWeights> meshVertices;
@@ -244,6 +252,8 @@ void loadAnim(FbxScene *scene, FbxMesh *mesh, string &animOut)
 			frameCountPrecise = fmaxf(frameCountPrecise, localInterval.GetDuration().GetFrameCountPrecise(timeMode));
 		}
 
+		cout << "Exporting animation with " << boneCount << " bones and " << frameCount << " frames." << endl;
+
 		ofstream fout(animOut, ios::out | ios::binary);
 		fout.write((const char*)&fps, sizeof(float));
 		fout.write((const char*)&frameCount, sizeof(uint32_t));
@@ -274,6 +284,8 @@ void loadNode(FbxScene *scene, FbxNode *fbxNode, string &skinOut, string &animOu
 	{
 		FbxNodeAttribute *nodeAttributeFbx = fbxNode->GetNodeAttributeByIndex(i);
 		FbxNodeAttribute::EType attributeType = nodeAttributeFbx->GetAttributeType();
+
+		cout << "Processing node \"" << fbxNode->GetName() << "\"..." << endl;
 
 		switch (attributeType)
 		{
