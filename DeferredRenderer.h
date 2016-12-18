@@ -96,8 +96,9 @@ namespace happy
 		ComPtr<ID3D11PixelShader>         m_pPSGlobalLighting;
 		ComPtr<ID3D11PixelShader>         m_pPSSSAO;
 		ComPtr<ID3D11PixelShader>         m_pPSSSAOBlur;
-		ComPtr<ID3D11PixelShader>         m_pPSTAA;
 		ComPtr<ID3D11Buffer>              m_pCBSSAO;
+		ComPtr<ID3D11PixelShader>         m_pPSTAA;
+		ComPtr<ID3D11Buffer>              m_pCBTAA;
 		ComPtr<ID3D11Buffer>              m_pSphereVBuffer;
 		ComPtr<ID3D11Buffer>              m_pSphereIBuffer;
 		ComPtr<ID3D11Buffer>              m_pCubeVBuffer;

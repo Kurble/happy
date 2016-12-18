@@ -1,13 +1,20 @@
 #include "stdafx.h"
 #include "RenderTarget.h"
 
+#include "bb_lib\halton.h"
+
 namespace happy
 {
 	RenderTarget::RenderTarget(RenderingContext *context, unsigned width, unsigned height, bool hiresEffects) 
 		: m_pRenderContext(context)
 		, m_pOutputTarget(nullptr)
-		, m_Jitter(0.5f, 0.5f)
 	{
+		for (size_t i = 0; i < MultiSamples; ++i)
+		{
+			m_Jitter[i].x = halton(3, i) - 0.5f;
+			m_Jitter[i].y = halton(2, i) - 0.5f;
+		}
+
 		if (width > 0 && height > 0)
 			resize(width, height, hiresEffects);
 	}

@@ -45,6 +45,8 @@ namespace happy
 
 		static const size_t GBuf_ChannelCount = 6;
 
+		static const size_t MultiSamples = 8;
+
 		RenderingContext* m_pRenderContext;
 
 		struct TargetPair
@@ -57,7 +59,11 @@ namespace happy
 		D3D11_VIEWPORT m_BlurViewPort;
 		bb::mat4 m_View;
 		bb::mat4 m_Projection;
-		bb::vec2 m_Jitter;
+		bb::mat4 m_ViewHistory;
+		bb::mat4 m_ProjectionHistory;
+
+		unsigned m_JitterIndex = 0;
+		bb::vec2 m_Jitter[MultiSamples];
 
 		ID3D11RenderTargetView* m_pOutputTarget;
 

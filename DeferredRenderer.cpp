@@ -49,6 +49,17 @@ namespace happy
 		unsigned int aoEnabled;
 	};
 
+	struct CBufferTAA
+	{
+		bb::mat4 viewInverse;
+		bb::mat4 projectionInverse;
+		bb::mat4 viewHistory;
+		bb::mat4 projectionHistory;
+		float blendFactor;
+		float texelWidth;
+		float texelHeight;
+	};
+
 	struct CBufferObject
 	{
 		bb::mat4 world;
@@ -175,6 +186,17 @@ namespace happy
 			bufferDesc.MiscFlags = 0;
 			bufferDesc.ByteWidth = (UINT)((sizeof(CBufferPointLight) + 15) / 16) * 16;
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBPointLighting));
+		}
+
+		// TAA CB
+		{
+			D3D11_BUFFER_DESC bufferDesc;
+			bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+			bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			bufferDesc.MiscFlags = 0;
+			bufferDesc.ByteWidth = (UINT)((sizeof(CBufferTAA) + 15) / 16) * 16;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&bufferDesc, NULL, &m_pCBTAA));
 		}
 
 		// SSAO CB
@@ -465,7 +487,9 @@ namespace happy
 
 		bb::mat4 jitteredProjection;
 		jitteredProjection.identity();
-		jitteredProjection.translate(bb::vec3(target->m_Jitter.x / target->getWidth(), target->m_Jitter.y / target->getHeight(), 0.0f));
+		jitteredProjection.translate(bb::vec3(
+			target->m_Jitter[target->m_JitterIndex].x / target->getWidth(), 
+			target->m_Jitter[target->m_JitterIndex].y / target->getHeight(), 0.0f));
 		jitteredProjection.multiply(target->m_Projection);
 
 		CBufferScene sceneCB;
@@ -484,6 +508,11 @@ namespace happy
 		renderGeometry(scene, target);
 
 		renderDeferred(scene, target);
+
+		target->m_LastUsedHistoryBuffer += 1;
+		target->m_LastUsedHistoryBuffer %= 2;
+		target->m_JitterIndex += 1;
+		target->m_JitterIndex %= RenderTarget::MultiSamples;
 	}
 
 	template<typename T>
@@ -759,7 +788,7 @@ namespace happy
 		{
 			ID3D11RenderTargetView* rtvs[] = 
 			{ 
-				target->historyRTV()
+				target->m_PostBuffer[0].rtv.Get()
 			};
 			context.OMSetRenderTargets(1, rtvs, nullptr);
 			context.PSSetShaderResources(0, 8, srvs);
@@ -799,10 +828,10 @@ namespace happy
 		{
 			ID3D11RenderTargetView* rtvs[] = 
 			{ 
-				(scene->m_PostProcessItems.size() > 0 || target->m_pOutputTarget == nullptr) ? target->m_PostBuffer[0].rtv.Get() : target->m_pOutputTarget
+				target->historyRTV()
 			};
 
-			srvs[0] = target->currentSRV();
+			srvs[0] = target->m_PostBuffer[0].srv.Get();
 			srvs[1] = target->historySRV();
 			srvs[2] = target->m_GraphicsBuffer[RenderTarget::GBuf_DepthStencilIdx].srv.Get();
 			srvs[3] = nullptr;
@@ -811,14 +840,36 @@ namespace happy
 			srvs[6] = nullptr;
 			srvs[7] = nullptr;
 
-			context.OMSetRenderTargets(1, rtvs, nullptr);
-			context.PSSetShaderResources(0, 8, srvs);
+			CBufferTAA cbuf;
+			cbuf.viewInverse = target->m_View;
+			cbuf.viewInverse.inverse();
+			cbuf.projectionInverse = target->m_Projection;
+			cbuf.projectionInverse.inverse();
+			cbuf.viewHistory = target->m_ViewHistory;
+			cbuf.projectionHistory = target->m_ProjectionHistory;
+			cbuf.blendFactor = 2.0f / (RenderTarget::MultiSamples + 1);
+			cbuf.texelWidth = 1.0f / target->getWidth();
+			cbuf.texelHeight = 1.0f / target->getHeight();
+			target->m_ViewHistory = target->m_View;
+			target->m_ProjectionHistory = target->m_Projection;
 
-			// Render environmental lighting
+			updateConstantBuffer<CBufferTAA>(&context, m_pCBTAA.Get(), cbuf);
+
+			ID3D11Buffer* constBuffers[] =
+			{
+				m_pCBScene.Get(),
+				nullptr,
+				m_pCBTAA.Get(),
+			};
+
+			context.OMSetRenderTargets(1, rtvs, nullptr);
 			context.PSSetShader(m_pPSTAA.Get(), nullptr, 0);
+			context.PSSetShaderResources(0, 8, srvs);
+			context.PSSetConstantBuffers(0, 3, constBuffers);
+
+			// Render antialias
 			context.Draw(6, 0);
 		}
-		// todo todo todo todo todo todo todo todo todo todo
 
 		//--------------------------------------------------------------------
 		// Post processing
@@ -839,19 +890,19 @@ namespace happy
 
 			int pptarget = 1;
 			int ppview = 0;
-			int pass = 0;
+			size_t pass = 0;
 
 			for (auto process = scene->m_PostProcessItems.begin(); process != scene->m_PostProcessItems.end(); ++process)
 			{
 				ID3D11RenderTargetView* pp_rtvs[] = { target->m_PostBuffer[pptarget].rtv.Get() };
-				if (pass == scene->m_PostProcessItems.size() - 1 && target->m_pOutputTarget)
+				if (pass == (scene->m_PostProcessItems.size() - 1) && target->m_pOutputTarget)
 				{
 					pp_rtvs[0] = target->m_pOutputTarget;
 				}
 
 				ID3D11ShaderResourceView* pp_srvs[10] = { 0 };
 				if (process->m_SceneInputSlot < 10) 
-					pp_srvs[process->m_SceneInputSlot] = target->m_PostBuffer[ppview].srv.Get();
+					pp_srvs[process->m_SceneInputSlot] = (pass==0) ? target->currentSRV() : target->m_PostBuffer[ppview].srv.Get();
 				if (process->m_DepthInputSlot < 10) 
 					pp_srvs[process->m_DepthInputSlot] = target->m_GraphicsBuffer[RenderTarget::GBuf_DepthStencilIdx].srv.Get();
 				if (process->m_NormalsInputSlot < 10)
@@ -894,9 +945,5 @@ namespace happy
 		// Reset SRVs since we need them as output next frame
 		for (int i = 0; i < 8; ++i) srvs[i] = nullptr;
 		context.PSSetShaderResources(0, 8, srvs);
-
-		target->m_LastUsedHistoryBuffer += 1;
-		target->m_LastUsedHistoryBuffer %= 2;
-		target->m_Jitter.set(-target->m_Jitter.x, -target->m_Jitter.y);
 	}
 }

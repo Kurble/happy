@@ -16,10 +16,6 @@ namespace happy
 		virtual ~PostProcessItem() {}
 
 		void setInputSlot(Slot buffer, unsigned slot);
-
-		void setSceneInputSlot(unsigned slot);
-		void setDepthInputSlot(unsigned slot);
-		
 		void addInputSlot(const TextureHandle &texture, unsigned slot);
 
 		void* getShaderId() { return (void*)m_Handle.Get(); }

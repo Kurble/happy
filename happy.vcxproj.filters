@@ -77,9 +77,6 @@
     <ClInclude Include="RenderQueue.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="TemporalAAPostEffect.h">
-      <Filter>Source</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
@@ -217,9 +214,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="RenderQueue.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="TemporalAAPostEffect.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
