@@ -73,5 +73,9 @@ float4 main(VSOut input) : SV_TARGET
 	//=========================================================
 	// Calculate results
 	//=========================================================
+	float impulse = abs(color.x - history.x) / max(color.x, max(history.x, minimum.x));
+	float factor = lerp(blendFactor * 0.8f, blendFactor * 2.0f, impulse*impulse);
+
 	return convertToRGBA(lerp(history, color, blendFactor));
+	//return convertToRGBA(color);
 }

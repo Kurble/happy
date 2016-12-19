@@ -21,8 +21,8 @@ namespace happy
 	struct RendererConfiguration
 	{
 		bool     m_AOEnabled     = true;
-		unsigned m_AOSamples     = 8;
-		float    m_AOOcclusionRadius = 0.13f;
+		unsigned m_AOSamples     = 16;
+		float    m_AOOcclusionRadius = 0.4f;
 		bool     m_AOHiRes       = true;
 		
 				/* extreme: parallax occlusion *
@@ -55,6 +55,11 @@ namespace happy
 
 		//--------------------------------------------------------------------
 		// Private functions
+		void createStates(const RenderingContext *pRenderContext);
+		void createGeometries(const RenderingContext *pRenderContext);
+		void createBuffers(const RenderingContext *pRenderContext);
+		void createShaders(const RenderingContext *pRenderContext);
+
 		void renderGeometry(const RenderQueue *scene, RenderTarget *target) const;
 		void renderDeferred(const RenderQueue *scene, RenderTarget *target) const;
 		template<typename T>

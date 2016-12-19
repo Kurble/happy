@@ -208,6 +208,7 @@
     <ClInclude Include="CBuffers.h" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="DeferredRenderer.h" />
+    <ClInclude Include="DeferredRendererConstBuffers.h" />
     <ClInclude Include="GBufferCommon.h" />
     <ClInclude Include="happy.h" />
     <ClInclude Include="MultiTexture.h" />
@@ -451,6 +452,7 @@
     <ClCompile Include="AnimationLoader.cpp" />
     <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="DeferredRenderer.cpp" />
+    <ClCompile Include="DeferredRendererObjects.cpp" />
     <ClCompile Include="MultiTexture.cpp" />
     <ClCompile Include="ObjLoader.cpp" />
     <ClCompile Include="PBREnvironment.cpp" />

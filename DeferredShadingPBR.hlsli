@@ -24,7 +24,7 @@ float4 main(VSOut input) : SV_TARGET
 	float4 channel0  = g_GraphicsBuffer0.Sample(g_ScreenSampler, input.tex);
 	float3 channel1  = g_GraphicsBuffer1.Sample(g_ScreenSampler, input.tex);
 	float4 channel2  = g_GraphicsBuffer2.Sample(g_ScreenSampler, input.tex);
-	float  occlusion = g_OcclusionBuffer.Sample(g_ScreenSampler, input.tex);
+	float  occlusion = g_OcclusionBuffer.Sample(g_TextureSampler, input.tex);
 	float  depth     = g_DepthBuffer.Sample(g_ScreenSampler, input.tex);
 
 	//------------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ float4 main(VSOut input) : SV_TARGET
 		float  schlick = pow(1 - max(0, dot(normal, -viewNormal)), 5.0f);
 
 		// calculate diffuse part
-		float3 diffContrib = (1.0f - schlick) * albedo * (1.0f - occlusion);
+		float3 diffContrib = (1.0f - schlick) * albedo * occlusion;
 		float3 diffResult = sampleEnv(normal, 0) * 2.0f * diffContrib;
 
 		// calculate specular part
@@ -60,7 +60,7 @@ float4 main(VSOut input) : SV_TARGET
 		float3 specResult = sampleEnv(reflect(viewNormal, normal), gloss) * specContrib;
 
 		return float4(lerp(diffResult, albedo, emissive) + specResult, 1.0f);
-		//return float4(normal * 0.5f + 0.5f, 1.0f);
+		//return float4(occlusion, occlusion, occlusion, 1.0f);
 	}
 	else
 	{

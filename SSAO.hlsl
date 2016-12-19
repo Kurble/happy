@@ -17,13 +17,15 @@ SamplerState       g_ScreenSampler : register(s0);
 
 Texture2D<float4>  g_NormalBuffer  : register(t1);
 Texture2D<float>   g_DepthBuffer   : register(t5);
-Texture2D<float4>  g_Noise         : register(t6);
+Texture2D<float2>  g_Noise         : register(t6);
 
 float3 sampleNoise(float2 pos)
 {
 	uint u = (uint)pos.x % g_uNoiseSize;
 	uint v = (uint)pos.y % g_uNoiseSize;
-	return g_Noise.Sample(g_ScreenSampler, float2(u, v) / g_fNoiseSize).xyz * 2.0f - 1.0f;
+	float2 xy = g_Noise.Sample(g_ScreenSampler, float2(u, v) / g_fNoiseSize).xy * 2.0f - 1.0f;
+
+	return float3(xy, 0.0f);
 }
 
 float main(VSOut input) : SV_TARGET
@@ -37,7 +39,7 @@ float main(VSOut input) : SV_TARGET
 	float3   noise     = sampleNoise(input.pos.xy);
 	float3   normal    = normalize(g_NormalBuffer.Sample(g_ScreenSampler, input.tex).xyz * 2.0f - 1.0f);
 	float3   tangent   = normalize(noise - normal * dot(noise, normal));
-	float3   bitangent = cross(normal, tangent);
+	float3   bitangent = normalize(cross(normal, tangent));
 	float3x3 tbn       = float3x3(tangent, bitangent, normal);
 
 	//-----------------------------------------------------------------------------------------------
@@ -47,8 +49,10 @@ float main(VSOut input) : SV_TARGET
 	{
 		// calculate samplePosition
 		float3 samplePosition = mul(g_SampleKernel[i], tbn);
-		float  tangentialCheck = dot(normalize(samplePosition), normal) > 0.15f ? 1.0f : 0.0f;
+		//float  tangentialCheck = dot(normalize(samplePosition), normal) > 0.2f ? 1.0f : 0.0f;
 		samplePosition = originPosition + samplePosition * g_OcclusionRadius;
+
+		float occlusionRadius = dot(samplePosition * g_OcclusionRadius, samplePosition * g_OcclusionRadius);
 
 		// project samplePosition (so we know where to sample)
 		float4 offset = float4(samplePosition, 1.0);
@@ -57,14 +61,17 @@ float main(VSOut input) : SV_TARGET
 		offset.xy /= offset.w;
 		offset.xy  = offset.xy * float2(0.5f, -0.5f) + 0.5f;
 
+		float predictedDepth = offset.z / offset.w;
+
 		float sampleDepth = g_DepthBuffer.Sample(g_ScreenSampler, offset.xy);
 		float sampleLinearDepth = calcLinearDepth(offset.xy, sampleDepth);
 
 		// range check and accumulate
-		float rangeCheck = abs(originLinearDepth - sampleLinearDepth) < g_OcclusionRadius ? 1.0 : 0.0;
-		float depthCheck = sampleDepth <= originDepth ? 1.0f : 0.0;
-		occlusion += depthCheck * rangeCheck * tangentialCheck;
+		float rangeCheck = (originLinearDepth - sampleLinearDepth)*(originLinearDepth - sampleLinearDepth) < occlusionRadius ? 1.0 : 0.0;
+		float depthCheck = sampleDepth <= predictedDepth ? 1.0f : 0.0;
+		occlusion += depthCheck * rangeCheck;
 	}
 
-	return occlusion * g_InvSamples;
+	occlusion = occlusion * g_InvSamples;
+	return 1.0f - occlusion * 0.7f;
 }
