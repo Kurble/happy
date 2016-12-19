@@ -218,7 +218,7 @@ namespace happy
 				ssaoCB.random[i] = bb::vec3(-1.0f + (rand() % 2000) / 1000.0f, -1.0f + (rand() % 2000) / 1000.0f, (rand() % 1000) / 1000.0f);
 				ssaoCB.random[i].normalize();
 				float scale = (float)i / 512.0f;
-				ssaoCB.random[i] *= bb::lerp(0.2f, 1.0f, scale * scale);
+				ssaoCB.random[i] *= bb::lerp(0.2f, 1.0f, scale);
 			}
 
 			D3D11_MAPPED_SUBRESOURCE msr;
