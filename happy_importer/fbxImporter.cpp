@@ -90,7 +90,7 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 	{
 		uint32_t boneCount = (unsigned)skin->GetClusterCount();
 
-		cout << "Exporting skin with" << boneCount << " bones" << endl;
+		cout << "Exporting skin with " << boneCount << " bones" << endl;
 		if (boneCount == 0)
 		{
 			cout << "Error: no bones in mesh! Skipping..." << endl;
@@ -109,10 +109,29 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 			}
 
 			FbxCluster *cluster = skin->GetCluster(boneIndex);
-
 			{
 				FbxAMatrix bindPoseMatrix;
 				cluster->GetTransformLinkMatrix(bindPoseMatrix);
+
+				FbxAMatrix transform;
+				cluster->GetTransformMatrix(transform);
+
+				switch (cluster->GetLinkMode())
+				{
+				case FbxCluster::eNormalize:
+					break;
+
+				case FbxCluster::eAdditive:
+					cout << "Warning: " << cluster->GetName() << " has additive link mode" << endl;
+					break;
+
+				case FbxCluster::eTotalOne:
+					cout << "Warning: " << cluster->GetName() << " has total one link mode" << endl;
+					break;
+				}
+
+				bindPoseMatrix = transform.Inverse() * bindPoseMatrix;
+
 				bb::mat4 m;
 				for (int i = 0; i < 16; ++i) m.m[i] = (float)((double*)bindPoseMatrix)[i];
 

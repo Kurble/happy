@@ -755,7 +755,7 @@ namespace happy
 
 			context.Draw(6, 0);
 
-			int aotarget = RenderTarget::GBuf_Occlusion1Idx;
+			/*int aotarget = RenderTarget::GBuf_Occlusion1Idx;
 			int aoview = RenderTarget::GBuf_Occlusion0Idx;
 
 			// Shader 2+3: BLUR H+V
@@ -771,7 +771,7 @@ namespace happy
 				context.Draw(6, 0);
 
 				std::swap(aotarget, aoview);
-			}
+			}*/
 
 			context.RSSetViewports(1, &target->m_ViewPort);
 		}
@@ -782,7 +782,7 @@ namespace happy
 		srvs[1] = target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics1Idx].srv.Get();
 		srvs[2] = target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics2Idx].srv.Get();
 		srvs[3] = nullptr;
-		srvs[4] = target->m_GraphicsBuffer[RenderTarget::GBuf_Occlusion1Idx].srv.Get();
+		srvs[4] = target->m_GraphicsBuffer[RenderTarget::GBuf_Occlusion0Idx].srv.Get();
 		srvs[5] = target->m_GraphicsBuffer[RenderTarget::GBuf_DepthStencilIdx].srv.Get();
 		srvs[6] = scene->m_Environment.getLightingSRV();
 		srvs[7] = scene->m_Environment.getEnvironmentSRV();

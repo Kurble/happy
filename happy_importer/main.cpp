@@ -50,6 +50,16 @@ int main(int argc, char** argv)
 		cout << "   [-rm <roughness map input>] \\" << endl;
 		cout << "   [-fm <reflection map input>] \\" << endl;
 		cout << "   [-t <multi texture output>]" << endl;
+
+		std::string base = "C:\\Users\\re-lion\\Documents\\Code\\rts\\";
+
+		fbxImporter(
+			base + "max\\Buildings\\MainBuilding\\export\\Main_Building_Investor.FBX",
+			base + "rts_resources\\Buildings\\SteamBase\\skin.skin",
+			base + "rts_resources\\Buildings\\SteamBase\\idle.anim");
+
+		cin.get();
+
 		return 0;
 	}
 }
