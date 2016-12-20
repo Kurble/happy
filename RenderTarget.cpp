@@ -64,7 +64,7 @@ namespace happy
 			{
 				continue;
 			}
-			else if (i == GBuf_Occlusion0Idx || i == GBuf_Occlusion1Idx)
+			else if (i == GBuf_OcclusionIdx)
 			{
 				if (!hiresEffects)
 				{
@@ -76,6 +76,10 @@ namespace happy
 			else if (i == GBuf_Graphics1Idx)
 			{
 				texDesc.Format = DXGI_FORMAT_R11G11B10_FLOAT;
+			}
+			else if (i == GBuf_VelocityIdx)
+			{
+				texDesc.Format = DXGI_FORMAT_R16G16_FLOAT;
 			}
 
 			ComPtr<ID3D11Texture2D> tex;

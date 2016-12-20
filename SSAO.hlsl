@@ -73,5 +73,5 @@ float main(VSOut input) : SV_TARGET
 	}
 
 	occlusion = occlusion * g_InvSamples;
-	return 1.0f - occlusion * 0.7f;
+	return occlusion * 0.7f;
 }

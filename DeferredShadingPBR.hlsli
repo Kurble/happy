@@ -37,6 +37,7 @@ float4 main(VSOut input) : SV_TARGET
 	float3 normal   = normalize(channel1.rgb * 2.0f - 1.0f);
 	float3 specular = channel2.rgb;
 	float  gloss    = channel2.a;
+	occlusion       = 1.0f - occlusion;
 
 	//------------------------------------------------------------------------------------
 	// Calculate pixel properties

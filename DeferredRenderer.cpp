@@ -305,7 +305,7 @@ namespace happy
 		
 		//--------------------------------------------------------------------
 		// Generate SSAO buffer
-		if (m_Config.m_PostEffectQuality >= Quality::Normal)
+		if (m_Config.m_PostEffectQuality >= Quality::High)
 		{
 			ID3D11Buffer* constBuffers[] =
 			{
@@ -317,7 +317,7 @@ namespace happy
 			context.RSSetViewports(1, &target->m_BlurViewPort);
 
 			// Shader 1: SSAO
-			context.OMSetRenderTargets(1, target->m_GraphicsBuffer[RenderTarget::GBuf_Occlusion0Idx].rtv.GetAddressOf(), nullptr);
+			context.OMSetRenderTargets(1, target->m_GraphicsBuffer[RenderTarget::GBuf_OcclusionIdx].rtv.GetAddressOf(), nullptr);
 			context.PSSetShader(m_pPSSSAO.Get(), nullptr, 0);
 			context.PSSetConstantBuffers(0, 3, constBuffers);
 			context.PSSetSamplers(0, 2, samplers);
@@ -329,24 +329,6 @@ namespace happy
 
 			context.Draw(6, 0);
 
-			/*int aotarget = RenderTarget::GBuf_Occlusion1Idx;
-			int aoview = RenderTarget::GBuf_Occlusion0Idx;
-
-			// Shader 2+3: BLUR H+V
-			for (int t = 0; t < 1; ++t)
-			{
-				context.PSSetShader(m_pPSSSAOBlur.Get(), nullptr, 0);
-				context.PSSetConstantBuffers(0, 3, constBuffers);
-				context.PSSetShaderResources(6, 1, &nullSRV);
-				context.OMSetRenderTargets(1, target->m_GraphicsBuffer[aotarget].rtv.GetAddressOf(), nullptr);
-				srvs[6] = target->m_GraphicsBuffer[aoview].srv.Get();
-				context.PSSetShaderResources(0, 8, srvs);
-
-				context.Draw(6, 0);
-
-				std::swap(aotarget, aoview);
-			}*/
-
 			context.RSSetViewports(1, &target->m_ViewPort);
 		}
 
@@ -356,7 +338,7 @@ namespace happy
 		srvs[1] = target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics1Idx].srv.Get();
 		srvs[2] = target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics2Idx].srv.Get();
 		srvs[3] = nullptr;
-		srvs[4] = target->m_GraphicsBuffer[RenderTarget::GBuf_Occlusion0Idx].srv.Get();
+		srvs[4] = target->m_GraphicsBuffer[RenderTarget::GBuf_OcclusionIdx].srv.Get();
 		srvs[5] = target->m_GraphicsBuffer[RenderTarget::GBuf_DepthStencilIdx].srv.Get();
 		srvs[6] = scene->m_Environment.getLightingSRV();
 		srvs[7] = scene->m_Environment.getEnvironmentSRV();
@@ -403,6 +385,7 @@ namespace happy
 
 		//--------------------------------------------------------------------
 		// Anti Aliasing
+		if (m_Config.m_AAEnabled)
 		{
 			ID3D11RenderTargetView* rtvs[] = 
 			{ 
@@ -473,14 +456,22 @@ namespace happy
 			for (auto process = scene->m_PostProcessItems.begin(); process != scene->m_PostProcessItems.end(); ++process)
 			{
 				ID3D11RenderTargetView* pp_rtvs[] = { target->m_PostBuffer[pptarget].rtv.Get() };
-				if (pass == (scene->m_PostProcessItems.size() - 1) && target->m_pOutputTarget)
+				if (pass == (scene->m_PostProcessItems.size() - 1))
 				{
-					pp_rtvs[0] = target->m_pOutputTarget;
+					if (target->m_pOutputTarget)
+					{
+						pp_rtvs[0] = target->m_pOutputTarget;
+						target->m_Handle = nullptr;
+					}
+					else
+					{
+						target->m_Handle = target->m_PostBuffer[pptarget].srv.Get();
+					}
 				}
 
 				ID3D11ShaderResourceView* pp_srvs[10] = { 0 };
 				if (process->m_SceneInputSlot < 10) 
-					pp_srvs[process->m_SceneInputSlot] = (pass==0) ? target->currentSRV() : target->m_PostBuffer[ppview].srv.Get();
+					pp_srvs[process->m_SceneInputSlot] = target->m_PostBuffer[ppview].srv.Get();
 				if (process->m_DepthInputSlot < 10) 
 					pp_srvs[process->m_DepthInputSlot] = target->m_GraphicsBuffer[RenderTarget::GBuf_DepthStencilIdx].srv.Get();
 				if (process->m_NormalsInputSlot < 10)
@@ -490,6 +481,12 @@ namespace happy
 
 				for (auto &slot : process->m_InputSlots)
 					pp_srvs[slot.first] = (ID3D11ShaderResourceView*)slot.second;
+
+				// take AA result as first pass input if AA is enabled
+				if (pass == 0 && m_Config.m_AAEnabled)
+				{
+					pp_srvs[process->m_SceneInputSlot] = target->currentSRV();
+				}
 
 				if (process->m_ConstBuffer)
 				{

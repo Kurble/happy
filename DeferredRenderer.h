@@ -20,10 +20,10 @@ namespace happy
 
 	struct RendererConfiguration
 	{
-		bool     m_AOEnabled     = true;
 		unsigned m_AOSamples     = 16;
 		float    m_AOOcclusionRadius = 0.4f;
-		bool     m_AOHiRes       = true;
+
+		bool     m_AAEnabled     = true;
 		
 				/* extreme: parallax occlusion *
 				/* high:    pbr + ao maps */

@@ -36,14 +36,14 @@ namespace happy
 		ID3D11ShaderResourceView* historySRV() const;
 		ID3D11ShaderResourceView* currentSRV() const;
 
-		static const size_t GBuf_Graphics0Idx = 0;    // albedo.rgb, emissive
-		static const size_t GBuf_Graphics1Idx = 1;    // normal.xyz
-		static const size_t GBuf_Graphics2Idx = 2;    // specular.rgb, gloss
-		static const size_t GBuf_Occlusion0Idx = 3;   // ssao
-		static const size_t GBuf_Occlusion1Idx = 4;   // ssao
+		static const size_t GBuf_Graphics0Idx    = 0; // albedo.rgb, emissive
+		static const size_t GBuf_Graphics1Idx    = 1; // normal.xyz
+		static const size_t GBuf_Graphics2Idx    = 2; // specular.rgb, gloss
+		static const size_t GBuf_VelocityIdx     = 3; // velocity.xy
+		static const size_t GBuf_OcclusionIdx    = 4; // ssao
 		static const size_t GBuf_DepthStencilIdx = 5; // depth, stencil
 
-		static const size_t GBuf_ChannelCount = 6;
+		static const size_t GBuf_ChannelCount    = 6;
 
 		static const size_t MultiSamples = 8;
 
