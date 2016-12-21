@@ -13,6 +13,11 @@ namespace happy
 		return m_VertexType;
 	}
 
+	size_t RenderMesh::getVertexStride() const
+	{
+		return m_VertexStride;
+	}
+
 	ID3D11Buffer* RenderMesh::getVtxBuffer() const
 	{
 		return m_pVtx.Get();

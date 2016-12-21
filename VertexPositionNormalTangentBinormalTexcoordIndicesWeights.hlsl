@@ -1,4 +1,4 @@
-#include "GBufferCommon.h"
+#include "GBufferCommon.hlsli"
 
 cbuffer CBufferBindPose    : register(b3 ) { float4x4 bindpose[64]; };
 cbuffer CBufferAnim0Frame0 : register(b4 ) { float4x4 pose0[64]; }
@@ -57,15 +57,16 @@ VSOut main(VSIn input)
 
 	float3x3 normalTransform = mul((float3x3)world, (float3x3)skinTransform);
 
-	output.position =  mul(skinTransform,   input.position);
-	output.position  = mul(world,           output.position);
-	output.position  = mul(view,            output.position);
-	output.position  = mul(projection,      output.position);
+	output.position =  mul(skinTransform,      input.position);
+	output.position  = mul(world,              output.position);
+	output.position  = mul(jitteredView,       output.position);
+	output.position  = mul(jitteredProjection, output.position);
 	output.normal    = normalize(mul(normalTransform, input.normal));
 	output.tangent   = normalize(mul(normalTransform, input.tangent));
 	output.binormal  = normalize(mul(normalTransform, input.binormal));
 	output.texcoord0 = input.texcoord;
 	output.texcoord1 = input.texcoord;
+	output.velocity = float4(0, 0, 0, 0);
 
 	return output;
 }

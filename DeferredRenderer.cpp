@@ -29,34 +29,6 @@ namespace happy
 		return m_Config;
 	}
 
-	void DeferredRenderer::setConfiguration(const RendererConfiguration &config)
-	{
-		m_Config = config;
-
-		CBufferSSAO ssaoCB;
-		ssaoCB.occlusionRadius = m_Config.m_AOOcclusionRadius;
-		ssaoCB.samples = m_Config.m_AOSamples;
-		ssaoCB.invSamples = 1.0f / (float)m_Config.m_AOSamples;
-		for (int i = 0; i < 512; ++i)
-		{
-			ssaoCB.random[i] = bb::vec3(-1.0f + ((rand() % 2000) / 1000.0f), -1.0f + (rand() % 2000) / 1000.0f, (rand() % 1000) / 1000.0f);
-			ssaoCB.random[i].normalize();
-			float scale = (float)i / 512.0f;
-			ssaoCB.random[i] *= bb::lerp(0.05f, 1.0f, scale * scale);
-		}
-
-		updateConstantBuffer(m_pRenderContext->getContext(), m_pCBSSAO.Get(), ssaoCB);
-	}
-
-	template <typename T>
-	void DeferredRenderer::updateConstantBuffer(ID3D11DeviceContext *context, ID3D11Buffer *buffer, const T &value) const
-	{
-		D3D11_MAPPED_SUBRESOURCE msr;
-		THROW_ON_FAIL(context->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
-		memcpy(msr.pData, (void*)&value, ((sizeof(T) + 15) / 16) * 16);
-		context->Unmap(buffer, 0);
-	}
-
 	void DeferredRenderer::render(const RenderQueue *scene, RenderTarget *target) const
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
@@ -71,12 +43,16 @@ namespace happy
 		jitteredProjection.multiply(target->m_Projection);
 
 		CBufferScene sceneCB;
-		sceneCB.view = target->m_View;
-		sceneCB.projection = jitteredProjection;
-		sceneCB.viewInverse = target->m_View;
-		sceneCB.viewInverse.inverse();
-		sceneCB.projectionInverse = jitteredProjection;
-		sceneCB.projectionInverse.inverse();
+		sceneCB.jitteredView = target->m_View;
+		sceneCB.jitteredProjection = jitteredProjection;
+		sceneCB.currentView = target->m_View;
+		sceneCB.currentProjection = target->m_Projection;
+		sceneCB.previousView = target->m_ViewHistory;
+		sceneCB.previousProjection = target->m_ProjectionHistory;
+		sceneCB.inverseView = sceneCB.jitteredView;
+		sceneCB.inverseView.inverse();
+		sceneCB.inverseProjection = sceneCB.jitteredProjection;
+		sceneCB.inverseProjection.inverse();
 		sceneCB.width = (float)m_pRenderContext->getWidth();
 		sceneCB.height = (float)m_pRenderContext->getHeight();
 		sceneCB.convolutionStages = scene->m_Environment.getCubemapArrayLength();
@@ -93,7 +69,6 @@ namespace happy
 		target->m_JitterIndex %= RenderTarget::MultiSamples;
 	}
 
-	template<typename T>
 	void DeferredRenderer::renderStaticMeshList(const vector<RenderQueue::MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const
 	{
 		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
@@ -105,10 +80,11 @@ namespace happy
 		{
 			CBufferObject objectCB;
 			objectCB.world = elem.m_Transform;
+			objectCB.previousWorld = elem.m_Transform;
 			objectCB.alpha = elem.m_Alpha;
 			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
 
-			UINT stride = sizeof(T);
+			UINT stride = elem.m_Mesh.getVertexStride();
 			UINT offset = 0;
 			ID3D11Buffer* buffer = elem.m_Mesh.getVtxBuffer();
 
@@ -142,16 +118,18 @@ namespace happy
 		context.PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
 		context.PSSetConstantBuffers(0, 3, constBuffers);
 
-		//-------------------------------------------------------------
+		//=========================================================
 		// Render Static Meshes, opaque
-		#define RENDER_STATIC_MESH_LIST(X) renderStaticMeshList<Vertex##X>(scene->m_Geometry##X, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
+		//=========================================================
+		#define RENDER_STATIC_MESH_LIST(X) renderStaticMeshList(scene->m_Geometry##X, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
 		RENDER_STATIC_MESH_LIST(PositionTexcoord);
 		RENDER_STATIC_MESH_LIST(PositionNormalTexcoord);
 		RENDER_STATIC_MESH_LIST(PositionNormalTangentBinormalTexcoord);
 		#undef RENDER_STATIC_MESH_LIST
 
-		//-------------------------------------------------------------
+		//=========================================================
 		// Render Skins, opaque
+		//=========================================================
 		context.IASetInputLayout(m_pILPositionNormalTangentBinormalTexcoordIndicesWeights.Get());
 		context.VSSetShader(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights.Get(), nullptr, 0);
 		context.VSSetConstantBuffers(0, 3, constBuffers);
@@ -191,16 +169,18 @@ namespace happy
 		context.PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
 		context.PSSetConstantBuffers(0, 3, constBuffers);
 
-		//-------------------------------------------------------------
+		//=========================================================
 		// Render Static Meshes, transparent
-		#define RENDER_STATIC_MESH_LIST(X) renderStaticMeshList<Vertex##X>(scene->m_Geometry##X##Transparent, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
+		//=========================================================
+		#define RENDER_STATIC_MESH_LIST(X) renderStaticMeshList(scene->m_Geometry##X##Transparent, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
 		RENDER_STATIC_MESH_LIST(PositionTexcoord);
 		RENDER_STATIC_MESH_LIST(PositionNormalTexcoord);
 		RENDER_STATIC_MESH_LIST(PositionNormalTangentBinormalTexcoord);
 		#undef RENDER_STATIC_MESH_LIST
 
-		//-------------------------------------------------------------
+		//=========================================================
 		// Render Skins, transparent
+		//=========================================================
 		context.IASetInputLayout(m_pILPositionNormalTangentBinormalTexcoordIndicesWeights.Get());
 		context.VSSetShader(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights.Get(), nullptr, 0);
 		context.VSSetConstantBuffers(0, 3, constBuffers);
@@ -236,8 +216,9 @@ namespace happy
 			context.DrawIndexed((UINT)elem.m_Skin.getIndexCount(), 0, 0);
 		}
 
-		//-------------------------------------------------------------
+		//=========================================================
 		// Render Decals
+		//=========================================================
 		context.OMSetRenderTargets(3, rtvs, target->m_pDepthBufferViewReadOnly.Get());
 		context.OMSetBlendState(m_pDecalBlendState.Get(), nullptr, 0xffffffff);
 		context.IASetInputLayout(m_pILPositionTexcoord.Get());
@@ -248,8 +229,8 @@ namespace happy
 		{
 			CBufferObject objectCB;
 			objectCB.world = elem.m_Transform;
-			objectCB.worldInverse = elem.m_Transform;
-			objectCB.worldInverse.inverse();
+			objectCB.inverseWorld = elem.m_Transform;
+			objectCB.inverseWorld.inverse();
 			objectCB.alpha = 1.0f;
 			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
 
@@ -303,8 +284,9 @@ namespace happy
 		UINT offset = 0;
 		context.IASetVertexBuffers(0, 1, m_pScreenQuadBuffer.GetAddressOf(), &stride, &offset);
 		
-		//--------------------------------------------------------------------
+		//=========================================================
 		// Generate SSAO buffer
+		//=========================================================
 		if (m_Config.m_PostEffectQuality >= Quality::High)
 		{
 			ID3D11Buffer* constBuffers[] =
@@ -332,8 +314,9 @@ namespace happy
 			context.RSSetViewports(1, &target->m_ViewPort);
 		}
 
-		//--------------------------------------------------------------------
+		//=========================================================
 		// SRVs State
+		//=========================================================
 		srvs[0] = target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics0Idx].srv.Get();
 		srvs[1] = target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics1Idx].srv.Get();
 		srvs[2] = target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics2Idx].srv.Get();
@@ -343,8 +326,9 @@ namespace happy
 		srvs[6] = scene->m_Environment.getLightingSRV();
 		srvs[7] = scene->m_Environment.getEnvironmentSRV();
 
-		//--------------------------------------------------------------------
+		//=========================================================
 		// Render lighting
+		//=========================================================
 		{
 			ID3D11RenderTargetView* rtvs[] = 
 			{ 
@@ -383,8 +367,9 @@ namespace happy
 			}*/
 		}
 
-		//--------------------------------------------------------------------
+		//=========================================================
 		// Anti Aliasing
+		//=========================================================
 		if (m_Config.m_AAEnabled)
 		{
 			ID3D11RenderTargetView* rtvs[] = 
@@ -432,8 +417,9 @@ namespace happy
 			context.Draw(6, 0);
 		}
 
-		//--------------------------------------------------------------------
+		//=========================================================
 		// Post processing
+		//=========================================================
 		{
 			ID3D11Buffer* constBuffers[] =
 			{

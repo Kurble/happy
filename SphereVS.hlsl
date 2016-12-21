@@ -1,4 +1,4 @@
-#include "CBuffers.h"
+#include "CBuffers.hlsli"
 struct VSOut
 {
 	float4 position : SV_Position;
@@ -24,8 +24,8 @@ VSOut main(VSIn input)
 	VSOut output;
 
 	output.position  = float4((input.position.xyz * lightSize) + lightPosition.xyz, 1);
-	output.position  = mul(view, output.position);
-	output.position  = mul(projection, output.position);
+	output.position  = mul(jitteredView, output.position);
+	output.position  = mul(jitteredProjection, output.position);
 	output.screenPos = (output.position.xy / output.position.w)*float2(.5f, -.5f) + .5f;
 
 	return output;

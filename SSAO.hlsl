@@ -1,4 +1,4 @@
-#include "RendererCommon.h"
+#include "RendererCommon.hlsli"
 #include "Utils.hlsli"
 
 cbuffer CBufferSSAO: register(b2)
@@ -56,8 +56,8 @@ float main(VSOut input) : SV_TARGET
 
 		// project samplePosition (so we know where to sample)
 		float4 offset = float4(samplePosition, 1.0);
-		offset = mul(view, offset);
-		offset = mul(projection, offset);
+		offset = mul(jitteredView, offset);
+		offset = mul(jitteredProjection, offset);
 		offset.xy /= offset.w;
 		offset.xy  = offset.xy * float2(0.5f, -0.5f) + 0.5f;
 

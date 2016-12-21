@@ -22,20 +22,9 @@ namespace happy
 	{
 		unsigned m_AOSamples     = 16;
 		float    m_AOOcclusionRadius = 0.4f;
-
 		bool     m_AAEnabled     = true;
-		
-				/* extreme: parallax occlusion *
-				/* high:    pbr + ao maps */
-				/* normal:  roughness mapping */
-				/* low:     only N dot L */
-		Quality m_LightingQuality = Quality::Extreme;
-
-				/* extreme: dssdo *
-				/* high:    no post effects */
-				/* normal:  no post effects */
-				/* low:     no post effects */
-		Quality m_PostEffectQuality = Quality::Extreme;
+		Quality  m_LightingQuality = Quality::Extreme;
+		Quality  m_PostEffectQuality = Quality::Extreme;
 	};
 
 	class DeferredRenderer
@@ -46,33 +35,30 @@ namespace happy
 		const RenderingContext* getContext() const;
 		const RendererConfiguration& getConfig() const;
 
-		void setConfiguration(const RendererConfiguration &config);
-
 		void render(const RenderQueue *scene, RenderTarget *target) const;
 
 	private:
 		const RenderingContext *m_pRenderContext;
 
-		//--------------------------------------------------------------------
-		// Private functions
+		//=========================================================
+		// Private methods
+		//=========================================================
 		void createStates(const RenderingContext *pRenderContext);
 		void createGeometries(const RenderingContext *pRenderContext);
 		void createBuffers(const RenderingContext *pRenderContext);
 		void createShaders(const RenderingContext *pRenderContext);
-
 		void renderGeometry(const RenderQueue *scene, RenderTarget *target) const;
 		void renderDeferred(const RenderQueue *scene, RenderTarget *target) const;
-		template<typename T>
 		void renderStaticMeshList(const vector<RenderQueue::MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
-		template<typename T>
-		void updateConstantBuffer(ID3D11DeviceContext *context, ID3D11Buffer *buffer, const T &value) const;
 
-		//--------------------------------------------------------------------
+		//=========================================================
 		// State
+		//=========================================================
 		RendererConfiguration             m_Config;
 
-		//--------------------------------------------------------------------
+		//=========================================================
 		// D3D11 State Objects
+		//=========================================================
 		ComPtr<ID3D11RasterizerState>     m_pRasterState;
 		ComPtr<ID3D11InputLayout>         m_pILPositionTexcoord;
 		ComPtr<ID3D11InputLayout>         m_pILPositionNormalTexcoord;
@@ -100,7 +86,6 @@ namespace happy
 		ComPtr<ID3D11InputLayout>         m_pILScreenQuad;
 		ComPtr<ID3D11PixelShader>         m_pPSGlobalLighting;
 		ComPtr<ID3D11PixelShader>         m_pPSSSAO;
-		ComPtr<ID3D11PixelShader>         m_pPSSSAOBlur;
 		ComPtr<ID3D11Buffer>              m_pCBSSAO;
 		ComPtr<ID3D11PixelShader>         m_pPSTAA;
 		ComPtr<ID3D11Buffer>              m_pCBTAA;

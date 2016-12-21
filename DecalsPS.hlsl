@@ -1,4 +1,4 @@
-#include "GBufferCommon.h"
+#include "GBufferCommon.hlsli"
 
 struct GBufferOut
 {
@@ -23,9 +23,9 @@ float3 samplePosition(float2 tex)
 		1.0f
 	);
 
-	position = mul(projectionInverse, position);
-	position = mul(viewInverse, position);
-	position = mul(worldInverse, position);
+	position = mul(inverseProjection, position);
+	position = mul(inverseView, position);
+	position = mul(inverseWorld, position);
 
 	return position.xyz / position.w;
 }

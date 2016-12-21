@@ -1,4 +1,4 @@
-#include "CBuffers.h"
+#include "CBuffers.hlsli"
 
 struct VSOut
 {
@@ -32,8 +32,8 @@ float3 samplePosition(float2 tex)
 		1.0f
 	);
 
-	position = mul(projectionInverse, position);
-	position = mul(viewInverse, position);
+	position = mul(inverseProjection, position);
+	position = mul(inverseView, position);
 
 	return position.xyz / position.w;
 }
@@ -52,8 +52,8 @@ float4 main(VSOut input) : SV_TARGET
 	float3 screenNormal = float3(
 		(screenTex.x - .5) * 2 * (width / height),
 		(screenTex.y - .5) * -2,
-		-projection[0][0] * 2);
-	float3 viewNormal = normalize(mul(screenNormal, (float3x3)view));
+		-currentProjection[0][0] * 2);
+	float3 viewNormal = normalize(mul(screenNormal, (float3x3)currentView));
 
 	if (depth < 1)
 	{

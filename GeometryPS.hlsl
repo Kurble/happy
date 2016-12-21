@@ -1,4 +1,4 @@
-#include "GBufferCommon.h"
+#include "GBufferCommon.hlsli"
 
 struct GBufferOut
 {

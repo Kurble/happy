@@ -205,16 +205,16 @@
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AssetLoaders.h" />
     <ClInclude Include="Canvas.h" />
-    <ClInclude Include="CBuffers.h" />
+    <ClInclude Include="CBuffers.hlsli" />
     <ClInclude Include="Cube.h" />
     <ClInclude Include="DeferredRenderer.h" />
     <ClInclude Include="DeferredRendererConstBuffers.h" />
-    <ClInclude Include="GBufferCommon.h" />
+    <ClInclude Include="GBufferCommon.hlsli" />
     <ClInclude Include="happy.h" />
     <ClInclude Include="MultiTexture.h" />
     <ClInclude Include="PBREnvironment.h" />
     <ClInclude Include="PostProcessItem.h" />
-    <ClInclude Include="RendererCommon.h" />
+    <ClInclude Include="RendererCommon.hlsli" />
     <ClInclude Include="RenderingContext.h" />
     <ClInclude Include="RenderMesh.h" />
     <ClInclude Include="RenderQueue.h" />
@@ -340,15 +340,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="SSAOBlur.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='FastDebug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='FastDebug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <FileType>Document</FileType>
     </FxCompile>
     <FxCompile Include="EnvironmentalLighting.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>

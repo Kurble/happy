@@ -9,12 +9,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CBuffers.h">
-      <Filter>Shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="GBufferCommon.h">
-      <Filter>Shaders</Filter>
-    </ClInclude>
     <ClInclude Include="AssetLoaders.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -22,9 +16,6 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="PBREnvironment.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="RendererCommon.h">
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="RenderingContext.h">
@@ -79,6 +70,15 @@
     </ClInclude>
     <ClInclude Include="DeferredRendererConstBuffers.h">
       <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="CBuffers.hlsli">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="GBufferCommon.hlsli">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="RendererCommon.hlsli">
+      <Filter>Shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -155,9 +155,6 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="SSAO.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="SSAOBlur.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="TAA.hlsl">

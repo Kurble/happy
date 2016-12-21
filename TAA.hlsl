@@ -6,10 +6,10 @@ struct VSOut
 
 cbuffer CBufferTAA : register(b2)
 {
-	float4x4 viewInverse;
-	float4x4 projectionInverse;
-	float4x4 viewHistory;
-	float4x4 projectionHistory;
+	float4x4 inverseView;
+	float4x4 inverseProjection;
+	float4x4 previousView;
+	float4x4 previousProjection;
 	float blendFactor;
 	float texelWidth;
 	float texelHeight;
@@ -30,8 +30,8 @@ float4 main(VSOut input) : SV_TARGET
 	// Find the location where the history pixel is
 	//=========================================================
 	float3 currentPosition = calcPosition(input.tex, g_DepthBuffer.Sample(g_ScreenSampler, input.tex));
-	float4 historyPosition = mul(viewHistory, float4(currentPosition, 1));
-	historyPosition = mul(projectionHistory, historyPosition);
+	float4 previousPosition = mul(previousView, float4(currentPosition, 1));
+	previousPosition = mul(previousProjection, previousPosition);
 
 	// todo: take motion into account
 
@@ -62,7 +62,7 @@ float4 main(VSOut input) : SV_TARGET
 	//=========================================================
 	// History clipping
 	//=========================================================
-	float4 history = convertToYCoCg(g_HistoryBuffer.Sample(g_ScreenSampler, (historyPosition.xy/historyPosition.w) * float2(0.5f, -0.5f) + 0.5f));
+	float4 history = convertToYCoCg(g_HistoryBuffer.Sample(g_ScreenSampler, (previousPosition.xy/ previousPosition.w) * float2(0.5f, -0.5f) + 0.5f));
 	
 	const float3 origin = history.rgb - 0.5f*(minimum.rgb + maximum.rgb);
 	const float3 direction = average.rgb - history.rgb;

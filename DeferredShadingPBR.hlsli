@@ -1,4 +1,4 @@
-#include "RendererCommon.h"
+#include "RendererCommon.hlsli"
 
 SamplerState             g_ScreenSampler   : register(s0);
 SamplerState             g_TextureSampler  : register(s1);
@@ -43,8 +43,8 @@ float4 main(VSOut input) : SV_TARGET
 	// Calculate pixel properties
 	float3 screenNormal = float3((input.tex.x - 0.5f) *  2.0f * (width / height), 
 		                         (input.tex.y - 0.5f) * -2.0f, 
-		                         ( -projection[0][0]) *  2.0f);
-	float3 viewNormal = normalize(mul((float3x3)viewInverse, screenNormal));
+		                         ( -currentProjection[0][0]) *  2.0f);
+	float3 viewNormal = normalize(mul((float3x3)inverseView, screenNormal));
 
 	//------------------------------------------------------------------------------------
 	// Perform shading

@@ -13,6 +13,7 @@ namespace happy
 		{
 			m_IndexCount = idxCount;
 			m_VertexType = Vtx::Type;
+			m_VertexStride = sizeof(Vtx);
 
 			D3D11_BUFFER_DESC vtxDesc, idxDesc;
 			ZeroMemory(&vtxDesc, sizeof(vtxDesc));
@@ -40,12 +41,14 @@ namespace happy
 		ID3D11Buffer* getVtxBuffer() const;
 		ID3D11Buffer* getIdxBuffer() const;
 		size_t getIndexCount() const;
+		size_t getVertexStride() const;
 		ID3D11ShaderResourceView** getTextures() const;
 
 	private:
 		friend class Resources;
 
 		VertexType m_VertexType;
+		size_t m_VertexStride;
 		ComPtr<ID3D11Buffer> m_pVtx;
 		ComPtr<ID3D11Buffer> m_pIdx;
 		size_t m_IndexCount;

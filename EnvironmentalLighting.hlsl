@@ -1,4 +1,4 @@
-#include "RendererCommon.h"
+#include "RendererCommon.hlsli"
 
 SamplerState g_ScreenSampler  : register(s0);
 SamplerState g_TextureSampler : register(s1);
@@ -29,8 +29,8 @@ float4 main(VSOut input) : SV_TARGET
 	float3 screenNormal = float3(
 		(input.tex.x - .5) * 2 * (width / height),
 		(input.tex.y - .5) * -2,
-		-projection[0][0] * 2);
-	float3 viewNormal = normalize(mul(screenNormal, (float3x3)view));
+		-currentProjection[0][0] * 2);
+	float3 viewNormal = normalize(mul(screenNormal, (float3x3)currentView));
 
 	// Apply PBR
 	if (depth < 1)

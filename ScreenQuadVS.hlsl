@@ -1,4 +1,4 @@
-#include "RendererCommon.h"
+#include "RendererCommon.hlsli"
 
 struct VSIn
 {

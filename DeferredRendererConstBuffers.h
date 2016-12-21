@@ -2,12 +2,25 @@
 
 namespace happy
 {
+	template <typename T>
+	void updateConstantBuffer(ID3D11DeviceContext *context, ID3D11Buffer *buffer, const T &value)
+	{
+		D3D11_MAPPED_SUBRESOURCE msr;
+		THROW_ON_FAIL(context->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+		memcpy(msr.pData, (void*)&value, ((sizeof(T) + 15) / 16) * 16);
+		context->Unmap(buffer, 0);
+	}
+
 	struct CBufferScene
 	{
-		bb::mat4 view;
-		bb::mat4 projection;
-		bb::mat4 viewInverse;
-		bb::mat4 projectionInverse;
+		bb::mat4 jitteredView;
+		bb::mat4 jitteredProjection;
+		bb::mat4 inverseView;
+		bb::mat4 inverseProjection;
+		bb::mat4 currentView;
+		bb::mat4 currentProjection;
+		bb::mat4 previousView;
+		bb::mat4 previousProjection;
 		float width;
 		float height;
 		unsigned int convolutionStages;
@@ -28,7 +41,8 @@ namespace happy
 	struct CBufferObject
 	{
 		bb::mat4 world;
-		bb::mat4 worldInverse;
+		bb::mat4 inverseWorld;
+		bb::mat4 previousWorld;
 		float alpha;
 	};
 

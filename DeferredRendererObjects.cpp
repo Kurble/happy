@@ -25,7 +25,6 @@
 #include "CompiledShaders\ScreenQuadVS.h"
 #include "CompiledShaders\SphereVS.h"
 #include "CompiledShaders\SSAO.h"
-#include "CompiledShaders\SSAOBlur.h"
 #include "CompiledShaders\TAA.h"
 #include "CompiledShaders\PointLighting.h"
 #include "CompiledShaders\DeferredShadingPBR_ao_extreme.h"
@@ -402,7 +401,6 @@ namespace happy
 		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSScreenQuad, m_pILScreenQuad, g_shScreenQuadVS);
 		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSPointLighting, m_pILPointLighting, g_shSphereVS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSSSAO, g_shSSAO);
-		CreatePixelShader(pRenderContext->getDevice(), m_pPSSSAOBlur, g_shSSAOBlur);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSTAA, g_shTAA);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSPointLighting, g_shPointLighting);
 		if (m_Config.m_PostEffectQuality >= Quality::Extreme) switch (m_Config.m_LightingQuality)
