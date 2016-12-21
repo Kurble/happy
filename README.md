@@ -29,7 +29,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	happy::RenderTarget renderTarget(&context, context.getWidth(), context.getHeight(), true);
 	g_pRenderTarget = &renderTarget;
 	renderTarget.setOutput(context.getBackBuffer());
-	renderer.resize(context.getWidth(), context.getHeight());
 	
 	happy::DeferredRenderer renderer(&context);
 	g_pRenderer = &renderer;
