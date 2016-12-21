@@ -3,13 +3,14 @@ Deferred PBR rendering engine for DirectX 11.
 
 Features:
 - Deferred rendering
-- Deferred Screen Space Directional Occlusion
-- PBR with normal, roughness and metallic maps
-- Cubemap lighting
+- Screen Space Ambient Occlusion (SSAO)
+- Unreal like Temporal Anti Aliasing (TAA)
+- PBR using the specular / gloss workflow
+- Image based lighting (IBL)
 - Texture loaders
 - OBJ loader
 - Dynamic point lights
-- Skinmeshes imported from fbx
+- Simple blendable skinned animations
 
 # Setup
 Happy is very easy to setup. All you need to do is create a window and an event loop. The rest is handled by happy!
@@ -22,19 +23,25 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	}
 
 	happy::RenderingContext context;
-	happy::DeferredRenderer renderer(&context);
-	happy::Resources        resources("Path\\To\\Resources...", &context);
+	g_pContext = &context;
 	context.attach(g_hWnd);
+	
+	happy::RenderTarget renderTarget(&context, context.getWidth(), context.getHeight(), true);
+	g_pRenderTarget = &renderTarget;
+	renderTarget.setOutput(context.getBackBuffer());
 	renderer.resize(context.getWidth(), context.getHeight());
-
-	g_pRenderingContext = &context;
+	
+	happy::DeferredRenderer renderer(&context);
 	g_pRenderer = &renderer;
 	
+	happy::Resources resources("Path\\To\\Resources...", &context);
+	
+	happy::RenderQueue renderQueue;
+	
 	happy::PBREnvironment environment = resources.getCubemapFolder("cubemap", "jpg");
-	environment.convolute(&context, 32, 16);
-	renderer.setEnvironment(environment);
+	environment.convolute(&context, 32, 16);	
 
-	happy::RenderMesh testModel = resources.getRenderMesh(&context, "Mesh.obj", "Texture.png", "Normals.png");
+	happy::RenderMesh testModel = resources.getRenderMesh("Mesh.obj", "Textures.texdef");
 
 	MSG msg = { 0 };
 	while (msg.message != WM_QUIT)
@@ -46,27 +53,30 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		}
 		else
 		{
-			renderer.clear();
+			renderQueue.clear();
+			renderQueue.setEnvironment(environment);
 
-			Mat4 world;
+			bb::mat4 world;
 			world.identity();
-			renderer.pushRenderMesh(testModel, world);
+			renderQueue.pushRenderMesh(testModel, world, 0);
 			
-			Vec3 pivot = Vec3(0, 0, 1);
-			Vec3 eye = pivot + Vec3(
+			bb::vec3 pivot = bb::vec3(0, 0, 1);
+			bb::vec3 eye = pivot + bb::vec3(
 				cosf(-camRotation[0])*cosf(camRotation[1]),
 				sinf(-camRotation[0])*cosf(camRotation[1]),
 				sinf(camRotation[1])) * zoom;
 
-			Mat4 view, projection;
+			bb::mat4 view, projection;
 			view.identity();
-			view.lookat(eye, pivot, Vec3(0, 0, 1));
+			view.lookat(eye, pivot, bb::vec3(0, 0, 1));
 			projection.identity();
 
-			projection.perspective(55, (float)context.getWidth()/(float)context.getHeight(), .1f, 100.0f);
+			projection.perspective(55, renderTarget.getWidth()/renderTarget.getHeight(), .1f, 100.0f);
 
-			renderer.setCamera(view, projection);
-			renderer.render();
+			renderTarget.setView(view);
+			renderTarget.setProjection(projection);
+			renderer.render(&renderQueue, &renderTarget);
+			
 			context.swap();
 		}
 	}
