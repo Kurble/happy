@@ -1,14 +1,14 @@
 #include "GBufferCommon.hlsli"
 
-cbuffer CBufferBindPose    : register(b3 ) { float4x4 bindpose[64]; };
-cbuffer CBufferAnim0Frame0 : register(b4 ) { float4x4 pose0[64]; }
-cbuffer CBufferAnim0Frame1 : register(b5 ) { float4x4 pose1[64]; }
-cbuffer CBufferAnim1Frame0 : register(b6 ) { float4x4 pose2[64]; }
-cbuffer CBufferAnim1Frame1 : register(b7 ) { float4x4 pose3[64]; }
-cbuffer CBufferAnim2Frame0 : register(b8 ) { float4x4 pose4[64]; }
-cbuffer CBufferAnim2Frame1 : register(b9 ) { float4x4 pose5[64]; }
-cbuffer CBufferAnim3Frame0 : register(b10) { float4x4 pose6[64]; }
-cbuffer CBufferAnim3Frame1 : register(b11) { float4x4 pose7[64]; }
+cbuffer CBufferBindPose         : register(b3 ) { float4x4 bindpose[64]; };
+cbuffer CBufferTime0Anim0Frame0 : register(b4 ) { float4x4 previousPose0_0[64]; }
+cbuffer CBufferTime0Anim0Frame1 : register(b5 ) { float4x4 previousPose0_1[64]; }
+cbuffer CBufferTime0Anim1Frame0 : register(b6 ) { float4x4 previousPose1_0[64]; }
+cbuffer CBufferTime0Anim1Frame1 : register(b7 ) { float4x4 previousPose1_1[64]; }
+cbuffer CBufferTime1Anim0Frame0 : register(b8 ) { float4x4 currentPose0_0[64]; }
+cbuffer CBufferTime1Anim0Frame1 : register(b9 ) { float4x4 currentPose0_1[64]; }
+cbuffer CBufferTime1Anim1Frame0 : register(b10) { float4x4 currentPose1_0[64]; }
+cbuffer CBufferTime1Anim1Frame1 : register(b11) { float4x4 currentPose1_1[64]; }
 
 struct VSIn
 {
@@ -21,7 +21,7 @@ struct VSIn
 	float4 weights :  TEXCOORD5;
 };
 
-float4x4 resolveBoneMatrix(uint bone)
+float4x4 resolvePreviousBone(uint bone)
 {
 	if (bone >= 63)
 	{
@@ -29,44 +29,59 @@ float4x4 resolveBoneMatrix(uint bone)
 	}
 	else
 	{
-		float4x4 animation                 = animationBlend.x * lerp(pose0[bone], pose1[bone], frameBlend.x);
-		if (animationCount > 1) animation += animationBlend.y * lerp(pose2[bone], pose3[bone], frameBlend.y);
-		if (animationCount > 2) animation += animationBlend.z * lerp(pose4[bone], pose5[bone], frameBlend.z);
-		if (animationCount > 3) animation += animationBlend.w * lerp(pose6[bone], pose7[bone], frameBlend.w);
+		float4x4 animation                  = previousAnimationBlend.x * lerp(previousPose0_0[bone], previousPose0_1[bone], previousFrameBlend.x);
+		if (animationCount == 2) animation += previousAnimationBlend.y * lerp(previousPose1_0[bone], previousPose1_1[bone], previousFrameBlend.y);
 		return mul(animation, bindpose[bone]);
 	}
 }
 
-float3 transformNormal(float3 normal, float4x4 skinTransform)
+float4x4 resolveCurrentBone(uint bone)
 {
-	float4 normal4 = float4(normal, 0.0f);
-	//normal4 = mul(skinTransform, normal4);
-	normal4 = mul(world,         normal4);
-	return normal4.xyz;
+	if (bone >= 63)
+	{
+		return 0;
+	}
+	else
+	{
+		float4x4 animation                  = currentAnimationBlend.x * lerp(currentPose0_0[bone], currentPose0_1[bone], currentFrameBlend.x);
+		if (animationCount == 2) animation += currentAnimationBlend.y * lerp(currentPose1_0[bone], currentPose1_1[bone], currentFrameBlend.y);
+		return mul(animation, bindpose[bone]);
+	}
 }
 
 VSOut main(VSIn input)
 {
 	VSOut output;
 
-	float4x4 skinTransform =
-		input.weights.x * resolveBoneMatrix(input.indices.x) +
-		input.weights.y * resolveBoneMatrix(input.indices.y) +
-		input.weights.z * resolveBoneMatrix(input.indices.z) +
-		input.weights.w * resolveBoneMatrix(input.indices.w);
+	float4x4 previousSkinTransform =
+		input.weights.x * resolvePreviousBone(input.indices.x) +
+		input.weights.y * resolvePreviousBone(input.indices.y) +
+		input.weights.z * resolvePreviousBone(input.indices.z) +
+		input.weights.w * resolvePreviousBone(input.indices.w);
 
-	float3x3 normalTransform = mul((float3x3)world, (float3x3)skinTransform);
+	float4 previousVSPosition = mul(previousSkinTransform, input.position);
+	previousVSPosition        = mul(previousWorld, previousVSPosition);
+	previousVSPosition        = mul(previousView, previousVSPosition);
 
-	output.position =  mul(skinTransform,      input.position);
-	output.position  = mul(world,              output.position);
-	output.position  = mul(jitteredView,       output.position);
-	output.position  = mul(jitteredProjection, output.position);
-	output.normal    = normalize(mul(normalTransform, input.normal));
-	output.tangent   = normalize(mul(normalTransform, input.tangent));
-	output.binormal  = normalize(mul(normalTransform, input.binormal));
-	output.texcoord0 = input.texcoord;
-	output.texcoord1 = input.texcoord;
-	output.velocity = float4(0, 0, 0, 0);
+	float4x4 currentSkinTransform =
+		input.weights.x * resolveCurrentBone(input.indices.x) +
+		input.weights.y * resolveCurrentBone(input.indices.y) +
+		input.weights.z * resolveCurrentBone(input.indices.z) +
+		input.weights.w * resolveCurrentBone(input.indices.w);
+
+	float4 currentVSPosition  = mul(currentSkinTransform, input.position);
+	currentVSPosition         = mul(currentWorld, currentVSPosition);
+	currentVSPosition         = mul(currentView, currentVSPosition);
+
+	float3x3 normalTransform = mul((float3x3)currentWorld, (float3x3)currentSkinTransform);
+
+	output.position         = mul(jitteredProjection, currentVSPosition);
+	output.previousPosition = mul(previousProjection, previousVSPosition);
+	output.normal           = normalize(mul(normalTransform, input.normal));
+	output.tangent          = normalize(mul(normalTransform, input.tangent));
+	output.binormal         = normalize(mul(normalTransform, input.binormal));
+	output.texcoord0        = input.texcoord;
+	output.texcoord1        = input.texcoord;
 
 	return output;
 }

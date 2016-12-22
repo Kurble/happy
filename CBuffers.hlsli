@@ -16,7 +16,7 @@ cbuffer CBufferScene : register(b0)
 
 cbuffer CBufferObject : register(b1)
 {
-	float4x4 world;
+	float4x4 currentWorld;
 	float4x4 inverseWorld;
 	float4x4 previousWorld;
 	float alpha;
@@ -24,7 +24,11 @@ cbuffer CBufferObject : register(b1)
 
 cbuffer CBufferSkin : register(b2)
 {
-	float4 animationBlend;
-	float4 frameBlend;
+	float2 previousAnimationBlend;
+	float2 previousFrameBlend;
+	
+	float2 currentAnimationBlend;
+	float2 currentFrameBlend;
+
 	uint animationCount;
 }

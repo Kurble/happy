@@ -40,7 +40,7 @@ namespace happy
 
 	struct CBufferObject
 	{
-		bb::mat4 world;
+		bb::mat4 currentWorld;
 		bb::mat4 inverseWorld;
 		bb::mat4 previousWorld;
 		float alpha;
@@ -48,8 +48,10 @@ namespace happy
 
 	struct CBufferSkin
 	{
-		float blendAnim[4];
-		float blendFrame[4];
+		float previousBlendAnim[2];
+		float previousBlendFrame[2];
+		float currentBlendAnim[2];
+		float currentBlendFrame[2];
 		unsigned int animationCount;
 	};
 

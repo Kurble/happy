@@ -18,13 +18,19 @@ namespace happy
 	{
 		RenderSkin m_Skin;
 		float m_Alpha;
-		bb::mat4  m_World;
 		StencilMask m_Groups;
 		unsigned m_AnimationCount;
-		bb::vec4 m_BlendFrame;
-		bb::vec4 m_BlendAnimation;
 
-		ID3D11Buffer* m_Frames[8];
+		bb::vec2 m_PreviousBlendFrame;
+		bb::vec2 m_PreviousBlendAnimation;
+		ID3D11Buffer* m_PreviousFrames[4];
+		bb::mat4 m_PreviousWorld;
+
+		bb::vec2 m_CurrentBlendFrame;
+		bb::vec2 m_CurrentBlendAnimation;
+		ID3D11Buffer* m_CurrentFrames[4];
+		bb::mat4 m_CurrentWorld;
+
 	};
 
 	class SkinController

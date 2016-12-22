@@ -8,7 +8,5 @@ struct VSOut
 	float3 binormal   : TEXCOORD2;
 	float2 texcoord0  : TEXCOORD3;
 	float2 texcoord1  : TEXCOORD4;
-
-	// xy = previous screen space position, zw = current screen space position
-	float4 velocity   : TEXCOORD5; 
+	float4 previousPosition : TEXCOORD5; 
 };

@@ -22,11 +22,16 @@ namespace happy
 
 		m_RenderItem.m_Alpha = 1.0f;
 		m_RenderItem.m_AnimationCount = 1;
-		m_RenderItem.m_World.identity();
-		m_RenderItem.m_World.scale(bb::vec3(1, 1, 1) * 0.5f);
 		m_RenderItem.m_Groups = 0x00;
-		m_RenderItem.m_BlendAnimation = bb::vec4(1, 0, 0, 0);
-		m_RenderItem.m_BlendFrame = bb::vec4(0, 0, 0, 0);
+		m_RenderItem.m_CurrentBlendAnimation = bb::vec2(1, 0);
+		m_RenderItem.m_CurrentBlendFrame = bb::vec2(0, 0);
+		memset(m_RenderItem.m_CurrentFrames, 0, sizeof(m_RenderItem.m_CurrentFrames));
+		m_RenderItem.m_CurrentWorld.identity();
+		m_RenderItem.m_CurrentWorld.scale(bb::vec3(1, 1, 1) * 0.5f);
+		m_RenderItem.m_PreviousBlendAnimation = m_RenderItem.m_CurrentBlendAnimation;
+		m_RenderItem.m_PreviousBlendFrame = m_RenderItem.m_CurrentBlendFrame;
+		memcpy(m_RenderItem.m_PreviousFrames, m_RenderItem.m_CurrentFrames, sizeof(m_RenderItem.m_CurrentFrames));
+		m_RenderItem.m_PreviousWorld = m_RenderItem.m_CurrentWorld;
 	}
 
 	void SkinController::setAlpha(float alpha)
@@ -99,11 +104,16 @@ namespace happy
 
 	bb::mat4 &SkinController::worldMatrix()
 	{
-		return m_RenderItem.m_World;
+		return m_RenderItem.m_CurrentWorld;
 	}
 
 	void SkinController::update(system_clock::time_point time)
 	{
+		m_RenderItem.m_PreviousBlendAnimation = m_RenderItem.m_CurrentBlendAnimation;
+		m_RenderItem.m_PreviousBlendFrame = m_RenderItem.m_CurrentBlendFrame;
+		memcpy(m_RenderItem.m_PreviousFrames, m_RenderItem.m_CurrentFrames, sizeof(m_RenderItem.m_CurrentFrames));
+		m_RenderItem.m_PreviousWorld = m_RenderItem.m_CurrentWorld;
+
 		vector<pair<unsigned,float>> influences;
 		for (unsigned i = 0; i < m_States.size(); ++i)
 		{
@@ -117,7 +127,7 @@ namespace happy
 			return a.second > b.second;
 		});
 
-		m_RenderItem.m_AnimationCount = min(4, (unsigned)influences.size());
+		m_RenderItem.m_AnimationCount = min(2, (unsigned)influences.size());
 		float total = 0;
 		for (unsigned a = 0; a < m_RenderItem.m_AnimationCount; ++a)
 		{
@@ -125,15 +135,15 @@ namespace happy
 			std::chrono::duration<float, std::ratio<1, 1>> timer(time - state.m_Timer);
 
 			float x = timer.count() * state.m_SpeedMultiplier;
-			m_RenderItem.m_Frames[a * 2 + 0] = state.m_Anim.getFrame0(x);
-			m_RenderItem.m_Frames[a * 2 + 1] = state.m_Anim.getFrame1(x);
-			m_RenderItem.m_BlendFrame[a] = state.m_Anim.getFrameBlend(x);
+			m_RenderItem.m_CurrentFrames[a * 2 + 0] = state.m_Anim.getFrame0(x);
+			m_RenderItem.m_CurrentFrames[a * 2 + 1] = state.m_Anim.getFrame1(x);
+			m_RenderItem.m_CurrentBlendFrame[a] = state.m_Anim.getFrameBlend(x);
 
-			m_RenderItem.m_BlendAnimation[a] = influences[a].second;
+			m_RenderItem.m_CurrentBlendAnimation[a] = influences[a].second;
 			total += influences[a].second;
 		}
 
-		m_RenderItem.m_BlendAnimation = m_RenderItem.m_BlendAnimation * (1.0f / total);
+		m_RenderItem.m_CurrentBlendAnimation = m_RenderItem.m_CurrentBlendAnimation * (1.0f / total);
 	}
 
 	const SkinRenderItem& SkinController::getRenderItem() const

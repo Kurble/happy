@@ -79,7 +79,7 @@ namespace happy
 		for (const auto &elem : renderList)
 		{
 			CBufferObject objectCB;
-			objectCB.world = elem.m_Transform;
+			objectCB.currentWorld = elem.m_Transform;
 			objectCB.previousWorld = elem.m_Transform;
 			objectCB.alpha = elem.m_Alpha;
 			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
@@ -136,14 +136,17 @@ namespace happy
 		for (const auto &elem : scene->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights)
 		{
 			CBufferObject objectCB;
-			objectCB.world = elem.m_World;
+			objectCB.currentWorld = elem.m_CurrentWorld;
+			objectCB.previousWorld = elem.m_PreviousWorld;
 			objectCB.alpha = elem.m_Alpha;
 			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
 
 			CBufferSkin skinCB;
 			skinCB.animationCount = elem.m_AnimationCount;
-			for (int i = 0; i < 4; ++i) skinCB.blendAnim[i] = (&elem.m_BlendAnimation.x)[i];
-			for (int i = 0; i < 4; ++i) skinCB.blendFrame[i] = (&elem.m_BlendFrame.x)[i];
+			for (int i = 0; i < 2; ++i) skinCB.previousBlendAnim[i] = (&elem.m_PreviousBlendAnimation.x)[i];
+			for (int i = 0; i < 2; ++i) skinCB.previousBlendFrame[i] = (&elem.m_PreviousBlendFrame.x)[i];
+			for (int i = 0; i < 2; ++i) skinCB.currentBlendAnim[i] = (&elem.m_CurrentBlendAnimation.x)[i];
+			for (int i = 0; i < 2; ++i) skinCB.currentBlendFrame[i] = (&elem.m_CurrentBlendFrame.x)[i];
 			updateConstantBuffer(&context, m_pCBSkin.Get(), skinCB);
 
 			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoordIndicesWeights);
@@ -155,7 +158,16 @@ namespace happy
 				elem.m_Skin.getBindPoseBuffer()
 			};
 
-			for (unsigned i = 0; i < elem.m_AnimationCount * 2; ++i) buffers.push_back(elem.m_Frames[i]);
+			for (unsigned i = 0; i < 4; ++i)
+				if (i < elem.m_AnimationCount * 2)
+					buffers.push_back(elem.m_PreviousFrames[i]);
+				else
+					buffers.push_back(nullptr);
+			for (unsigned i = 0; i < 4; ++i)
+				if (i < elem.m_AnimationCount * 2)
+					buffers.push_back(elem.m_CurrentFrames[i]);
+				else
+					buffers.push_back(nullptr);
 
 			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Groups);
 			context.VSSetConstantBuffers(3, (UINT)buffers.size(), &buffers[0]);
@@ -187,26 +199,38 @@ namespace happy
 		for (const auto &elem : scene->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent)
 		{
 			CBufferObject objectCB;
-			objectCB.world = elem.m_World;
+			objectCB.currentWorld = elem.m_CurrentWorld;
+			objectCB.previousWorld = elem.m_PreviousWorld;
 			objectCB.alpha = elem.m_Alpha;
 			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
 
 			CBufferSkin skinCB;
 			skinCB.animationCount = elem.m_AnimationCount;
-			for (int i = 0; i < 4; ++i) skinCB.blendAnim[i] = (&elem.m_BlendAnimation.x)[i];
-			for (int i = 0; i < 4; ++i) skinCB.blendFrame[i] = (&elem.m_BlendFrame.x)[i];
+			for (int i = 0; i < 2; ++i) skinCB.previousBlendAnim[i] = (&elem.m_PreviousBlendAnimation.x)[i];
+			for (int i = 0; i < 2; ++i) skinCB.previousBlendFrame[i] = (&elem.m_PreviousBlendFrame.x)[i];
+			for (int i = 0; i < 2; ++i) skinCB.currentBlendAnim[i] = (&elem.m_CurrentBlendAnimation.x)[i];
+			for (int i = 0; i < 2; ++i) skinCB.currentBlendFrame[i] = (&elem.m_CurrentBlendFrame.x)[i];
 			updateConstantBuffer(&context, m_pCBSkin.Get(), skinCB);
 
 			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 			UINT offset = 0;
 			ID3D11Buffer* buffer = elem.m_Skin.getVtxBuffer();
-			
+
 			vector<ID3D11Buffer*> buffers =
 			{
 				elem.m_Skin.getBindPoseBuffer()
 			};
 
-			for (unsigned i = 0; i < elem.m_AnimationCount * 2; ++i) buffers.push_back(elem.m_Frames[i]);
+			for (unsigned i = 0; i < 4; ++i)
+				if (i < elem.m_AnimationCount * 2)
+					buffers.push_back(elem.m_PreviousFrames[i]);
+				else
+					buffers.push_back(nullptr);
+			for (unsigned i = 0; i < 4; ++i)
+				if (i < elem.m_AnimationCount * 2)
+					buffers.push_back(elem.m_CurrentFrames[i]);
+				else
+					buffers.push_back(nullptr);
 
 			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Groups);
 			context.VSSetConstantBuffers(3, (UINT)buffers.size(), &buffers[0]);
@@ -228,7 +252,7 @@ namespace happy
 		for (const auto &elem : scene->m_Decals)
 		{
 			CBufferObject objectCB;
-			objectCB.world = elem.m_Transform;
+			objectCB.currentWorld = elem.m_Transform;
 			objectCB.inverseWorld = elem.m_Transform;
 			objectCB.inverseWorld.inverse();
 			objectCB.alpha = 1.0f;

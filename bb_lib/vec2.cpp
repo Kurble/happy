@@ -60,6 +60,11 @@ namespace bb
 		return x < other.x;
 	}
 
+	float& vec2::operator[](int i)
+	{
+		return (&x)[i];
+	}
+
 	float vec2::mag() const 
 	{
 		return sqrtf(x*x + y*y);

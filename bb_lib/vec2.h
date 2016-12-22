@@ -33,6 +33,8 @@ namespace bb
 
 		float cross(const vec2 &b) const;
 
+		float& operator[](int i);
+
 		float x;
 		float y;
 	};
