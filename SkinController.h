@@ -30,7 +30,6 @@ namespace happy
 		bb::vec2 m_CurrentBlendAnimation;
 		ID3D11Buffer* m_CurrentFrames[4];
 		bb::mat4 m_CurrentWorld;
-
 	};
 
 	class SkinController

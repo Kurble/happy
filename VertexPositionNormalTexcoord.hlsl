@@ -17,6 +17,7 @@ VSOut main(VSIn input)
 	output.previousPosition = mul(previousWorld,      input.position);
 	output.previousPosition = mul(previousView,       output.previousPosition);
 	output.previousPosition = mul(previousProjection, output.previousPosition);
+	output.currentPosition  = output.position;
 	output.normal           = normalize(mul((float3x3)currentWorld, input.normal));
 	output.tangent          = 0;
 	output.binormal         = 0;

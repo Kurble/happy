@@ -48,8 +48,11 @@ namespace happy
 		void createBuffers(const RenderingContext *pRenderContext);
 		void createShaders(const RenderingContext *pRenderContext);
 		void renderGeometry(const RenderQueue *scene, RenderTarget *target) const;
-		void renderDeferred(const RenderQueue *scene, RenderTarget *target) const;
 		void renderStaticMeshList(const vector<RenderQueue::MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
+		void renderSkinList(const vector<SkinRenderItem> &renderList) const;
+		void renderLighting(const RenderQueue *scene, RenderTarget *target) const;
+		void renderScreenSpacePass(ID3D11PixelShader *ps, ID3D11RenderTargetView* rtv, ID3D11Buffer** constBuffers, ID3D11ShaderResourceView** srvs, ID3D11SamplerState** samplers) const;
+		void renderPostProcessing(const RenderQueue *scene, RenderTarget *target) const;
 
 		//=========================================================
 		// State

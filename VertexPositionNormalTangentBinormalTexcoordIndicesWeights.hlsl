@@ -77,6 +77,7 @@ VSOut main(VSIn input)
 
 	output.position         = mul(jitteredProjection, currentVSPosition);
 	output.previousPosition = mul(previousProjection, previousVSPosition);
+	output.currentPosition  = output.position;
 	output.normal           = normalize(mul(normalTransform, input.normal));
 	output.tangent          = normalize(mul(normalTransform, input.tangent));
 	output.binormal         = normalize(mul(normalTransform, input.binormal));

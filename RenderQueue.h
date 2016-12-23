@@ -61,15 +61,27 @@ namespace happy
 			float         m_FaloffExponent;
 		};
 		
-		PBREnvironment          m_Environment;
+
+		//=========================================================
+		// Static geometry
+		//=========================================================
 		vector<MeshItem>        m_GeometryPositionTexcoord;
 		vector<MeshItem>        m_GeometryPositionNormalTexcoord;
 		vector<MeshItem>        m_GeometryPositionNormalTangentBinormalTexcoord;
-		vector<SkinRenderItem>  m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
 		vector<MeshItem>        m_GeometryPositionTexcoordTransparent;
 		vector<MeshItem>        m_GeometryPositionNormalTexcoordTransparent;
 		vector<MeshItem>        m_GeometryPositionNormalTangentBinormalTexcoordTransparent;
+
+		//=========================================================
+		// Dynamic geometry
+		//=========================================================
+		vector<SkinRenderItem>  m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
 		vector<SkinRenderItem>  m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent;
+
+		//=========================================================
+		// Misc.
+		//=========================================================
+		PBREnvironment          m_Environment;
 		vector<DecalItem>       m_Decals;
 		vector<PointLightItem>  m_PointLights;
 		vector<PostProcessItem> m_PostProcessItems;

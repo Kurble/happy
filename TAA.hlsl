@@ -29,11 +29,20 @@ float4 main(VSOut input) : SV_TARGET
 	//=========================================================
 	// Find the location where the history pixel is
 	//=========================================================
-	float3 currentPosition = calcPosition(input.tex, g_DepthBuffer.Sample(g_ScreenSampler, input.tex));
-	float4 previousPosition = mul(previousView, float4(currentPosition, 1));
-	previousPosition = mul(previousProjection, previousPosition);
+	float2 velocity = g_VelocityBuffer.Sample(g_ScreenSampler, input.tex);
+	float2 previousCoordinate = input.tex;
+	if (velocity.x >= 1)
+	{
+		float3 currentPosition = calcPosition(input.tex, g_DepthBuffer.Sample(g_ScreenSampler, input.tex));
+		float4 previousPosition = mul(previousView, float4(currentPosition, 1));
+		previousPosition = mul(previousProjection, previousPosition);
 
-	// todo: take motion into account
+		previousCoordinate = (previousPosition.xy / previousPosition.w) * float2(0.5f, -0.5f) + 0.5f;
+	}
+	else
+	{
+		previousCoordinate += velocity;
+	}
 
 	//=========================================================
 	// Sample the current neighbourhood
@@ -62,7 +71,7 @@ float4 main(VSOut input) : SV_TARGET
 	//=========================================================
 	// History clipping
 	//=========================================================
-	float4 history = convertToYCoCg(g_HistoryBuffer.Sample(g_ScreenSampler, (previousPosition.xy/ previousPosition.w) * float2(0.5f, -0.5f) + 0.5f));
+	float4 history = convertToYCoCg(g_HistoryBuffer.Sample(g_ScreenSampler, previousCoordinate));
 	
 	const float3 origin = history.rgb - 0.5f*(minimum.rgb + maximum.rgb);
 	const float3 direction = average.rgb - history.rgb;
@@ -77,5 +86,4 @@ float4 main(VSOut input) : SV_TARGET
 	float factor = lerp(blendFactor * 0.8f, blendFactor * 2.0f, impulse*impulse);
 
 	return convertToRGBA(lerp(history, color, blendFactor));
-	//return convertToRGBA(color);
 }

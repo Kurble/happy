@@ -21,6 +21,7 @@ namespace happy
 		D3D11_MESSAGE_ID hide[] =
 		{
 			D3D11_MESSAGE_ID_DEVICE_DRAW_CONSTANT_BUFFER_TOO_SMALL,
+			D3D11_MESSAGE_ID_DEVICE_DRAW_RENDERTARGETVIEW_NOT_SET,
 			// TODO: Add more message IDs here as needed 
 		};
 		D3D11_INFO_QUEUE_FILTER filter;
