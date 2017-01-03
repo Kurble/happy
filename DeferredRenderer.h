@@ -58,6 +58,7 @@ namespace happy
 		// State
 		//=========================================================
 		RendererConfiguration             m_Config;
+		PostProcessItem                   m_ColorGrading;
 
 		//=========================================================
 		// D3D11 State Objects

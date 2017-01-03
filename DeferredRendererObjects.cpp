@@ -35,6 +35,7 @@
 #include "CompiledShaders\DeferredShadingPBR_high.h"
 #include "CompiledShaders\DeferredShadingPBR_normal.h"
 #include "CompiledShaders\DeferredShadingPBR_low.h"
+#include "CompiledShaders\ColorGrading.h"
 //----------------------------------------------------------------------
 
 namespace happy
@@ -320,11 +321,9 @@ namespace happy
 			{
 				float xd = ((i) % 2) ? 1.0f : -1.0f;
 				float yd = ((i / 2) % 2) ? 1.0f : -1.0f;
-				float zd = ((i / 4) % 2) ? 1.0f : -1.0f;
-
 				ssaoCB.random[i] = bb::vec3(xd * (rand() % 1000) / 1000.0f, 
 					                        yd * (rand() % 1000) / 1000.0f, 
-					                        0.5f + zd * (rand() % 500) / 1000.0f);
+					                             (rand() % 1000) / 1000.0f);
 				ssaoCB.random[i].normalize();
 				float scale = (float)(i%m_Config.m_AOSamples) / (float)m_Config.m_AOSamples;
 				ssaoCB.random[i] *= bb::lerp(0.1f, 1.0f, scale * scale);
@@ -417,5 +416,7 @@ namespace happy
 		case Quality::Normal:  CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shDeferredShadingPBR_normal);     break;
 		case Quality::Low:     CreatePixelShader(pRenderContext->getDevice(), m_pPSGlobalLighting, g_shDeferredShadingPBR_low);        break;
 		}
+
+		CreatePixelShader(pRenderContext->getDevice(), m_ColorGrading.m_Handle, g_shColorGrading);
 	}
 }

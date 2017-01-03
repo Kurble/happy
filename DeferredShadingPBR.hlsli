@@ -15,6 +15,7 @@ TextureCube<float4>      g_CubeEnvironment : register(t7);
 float3 sampleEnv(float3 normal, float gloss)
 {
 	return g_CubeLighting.Sample(g_TextureSampler, float4(normal.xzy, round((convolutionStages - 1) * gloss))).rgb;
+	//return g_CubeEnvironment.Sample(g_TextureSampler, normal.xzy).rgb;
 }
 
 float4 main(VSOut input) : SV_TARGET
@@ -41,16 +42,16 @@ float4 main(VSOut input) : SV_TARGET
 
 	//------------------------------------------------------------------------------------
 	// Calculate pixel properties
-	float3 screenNormal = float3((input.tex.x - 0.5f) *  2.0f * (width / height), 
+	float3 screenNormal = float3((input.tex.x - 0.5f) * -2.0f * (width / height), 
 		                         (input.tex.y - 0.5f) * -2.0f, 
-		                         ( -currentProjection[0][0]) *  2.0f);
+		                         (currentProjection[0][0]) *  2.0f);
 	float3 viewNormal = normalize(mul((float3x3)inverseView, screenNormal));
 
 	//------------------------------------------------------------------------------------
 	// Perform shading
 	if (depth < 1)
 	{
-		float  schlick = pow(1 - max(0, dot(normal, -viewNormal)), 5.0f);
+		float  schlick = pow(1 - max(0, dot(normal, viewNormal)), 5.0f);
 
 		// calculate diffuse part
 		float3 diffContrib = (1.0f - schlick) * albedo * occlusion;
@@ -58,13 +59,12 @@ float4 main(VSOut input) : SV_TARGET
 
 		// calculate specular part
 		float3 specContrib = (specular + (1.0f - specular) * schlick);
-		float3 specResult = sampleEnv(reflect(viewNormal, normal), gloss) * specContrib;
+		float3 specResult = sampleEnv(reflect(-viewNormal, normal), gloss) * specContrib;
 
 		return float4(lerp(diffResult, albedo, emissive) + specResult, 1.0f);
-		//return float4(occlusion, occlusion, occlusion, 1.0f);
 	}
 	else
 	{
-		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+		return g_CubeEnvironment.Sample(g_TextureSampler, viewNormal);
 	}
 }

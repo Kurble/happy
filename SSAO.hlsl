@@ -72,7 +72,6 @@ float main(VSOut input) : SV_TARGET
 		occlusion += depthCheck * rangeCheck;
 	}
 
-	occlusion = 1.0f - occlusion * g_InvSamples;
-	occlusion = 1.0f - (occlusion * occlusion);
+	occlusion = occlusion * g_InvSamples;
 	return occlusion * 0.7f;
 }

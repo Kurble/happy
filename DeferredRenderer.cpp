@@ -380,10 +380,13 @@ namespace happy
 		int ppview = 0;
 		size_t pass = 0;
 
-		for (auto process = scene->m_PostProcessItems.begin(); process != scene->m_PostProcessItems.end(); ++process)
+		vector<const PostProcessItem*> processItems = { &m_ColorGrading };
+		for (auto &pp : scene->m_PostProcessItems) processItems.push_back(&pp);
+
+		for (auto process : processItems)
 		{
 			ID3D11RenderTargetView* rtvs[] = { target->m_PostBuffer[pptarget].rtv.Get() };
-			if (pass == (scene->m_PostProcessItems.size() - 1))
+			if (pass == (processItems.size() - 1))
 			{
 				if (target->m_pOutputTarget)
 				{
