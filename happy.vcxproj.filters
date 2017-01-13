@@ -80,6 +80,12 @@
     <ClInclude Include="RendererCommon.hlsli">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="TimedDeviceContext.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsTimer.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
@@ -220,6 +226,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="DeferredRendererObjects.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsTimer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

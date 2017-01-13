@@ -210,6 +210,7 @@
     <ClInclude Include="DeferredRenderer.h" />
     <ClInclude Include="DeferredRendererConstBuffers.h" />
     <ClInclude Include="GBufferCommon.hlsli" />
+    <ClInclude Include="GraphicsTimer.h" />
     <ClInclude Include="happy.h" />
     <ClInclude Include="MultiTexture.h" />
     <ClInclude Include="PBREnvironment.h" />
@@ -226,6 +227,7 @@
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TextureHandle.h" />
+    <ClInclude Include="TimedDeviceContext.h" />
     <ClInclude Include="VertexTypes.h" />
   </ItemGroup>
   <ItemGroup>
@@ -452,6 +454,7 @@
     <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="DeferredRenderer.cpp" />
     <ClCompile Include="DeferredRendererObjects.cpp" />
+    <ClCompile Include="GraphicsTimer.cpp" />
     <ClCompile Include="MultiTexture.cpp" />
     <ClCompile Include="ObjLoader.cpp" />
     <ClCompile Include="PBREnvironment.cpp" />

@@ -31,9 +31,9 @@ namespace happy
 
 	void DeferredRenderer::render(const RenderQueue *scene, RenderTarget *target) const
 	{
-		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
-		context.RSSetState(m_pRasterState.Get());
-		context.RSSetViewports(1, &target->m_ViewPort);
+		auto context = m_pRenderContext->getContext("DeferredRenderer::render");
+		context->RSSetState(m_pRasterState.Get());
+		context->RSSetViewports(1, &target->m_ViewPort);
 
 		bb::mat4 jitteredProjection;
 		jitteredProjection.identity();
@@ -57,7 +57,7 @@ namespace happy
 		sceneCB.height = (float)m_pRenderContext->getHeight();
 		sceneCB.convolutionStages = scene->m_Environment.getCubemapArrayLength();
 		sceneCB.aoEnabled = m_Config.m_PostEffectQuality >= Quality::Normal ? 1 : 0;
-		updateConstantBuffer<CBufferScene>(&context, m_pCBScene.Get(), sceneCB);
+		updateConstantBuffer<CBufferScene>(context, m_pCBScene.Get(), sceneCB);
 
 		// Render the scene to the graphics buffer
 		renderGeometry(scene, target);
@@ -65,13 +65,13 @@ namespace happy
 		// Prepare pipeline for screen space rendering
 		UINT stride = sizeof(VertexPositionTexcoord);
 		UINT offset = 0;
-		context.OMSetDepthStencilState(m_pLightingDepthStencilState.Get(), 0);
-		context.OMSetBlendState(nullptr, nullptr, 0xffffffff);
-		context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		context.IASetInputLayout(m_pILScreenQuad.Get());
-		context.VSSetShader(m_pVSScreenQuad.Get(), nullptr, 0);
-		context.VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
-		context.IASetVertexBuffers(0, 1, m_pScreenQuadBuffer.GetAddressOf(), &stride, &offset);
+		context->OMSetDepthStencilState(m_pLightingDepthStencilState.Get(), 0);
+		context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		context->IASetInputLayout(m_pILScreenQuad.Get());
+		context->VSSetShader(m_pVSScreenQuad.Get(), nullptr, 0);
+		context->VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+		context->IASetVertexBuffers(0, 1, m_pScreenQuadBuffer.GetAddressOf(), &stride, &offset);
 
 		// Perform screen space rendering
 		renderLighting(scene, target);
@@ -79,7 +79,7 @@ namespace happy
 
 		// Reset SRVs since we need them as output next frame
 		vector<ID3D11ShaderResourceView*> srvs(8, nullptr);
-		context.PSSetShaderResources(0, 8, srvs.data());
+		context->PSSetShaderResources(0, 8, srvs.data());
 
 		// Update temporal counters in render target
 		target->m_LastUsedHistoryBuffer += 1;
@@ -90,7 +90,7 @@ namespace happy
 
 	void DeferredRenderer::renderGeometry(const RenderQueue *scene, RenderTarget *target) const
 	{
-		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
+		auto context = m_pRenderContext->getContext("DeferredRenderer::renderGeometry");
 
 		ID3D11RenderTargetView* rtvs[] = 
 		{ 
@@ -101,14 +101,14 @@ namespace happy
 		};
 		{
 			float col[] = { 1, 1, 1, 1 };
-			context.ClearDepthStencilView(target->m_pDepthBufferView.Get(), D3D11_CLEAR_DEPTH, 1, 0);
-			context.ClearRenderTargetView(target->m_GraphicsBuffer[RenderTarget::GBuf_VelocityIdx].rtv.Get(), col);
+			context->ClearDepthStencilView(target->m_pDepthBufferView.Get(), D3D11_CLEAR_DEPTH, 1, 0);
+			context->ClearRenderTargetView(target->m_GraphicsBuffer[RenderTarget::GBuf_VelocityIdx].rtv.Get(), col);
 		}
-		context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
-		context.OMSetBlendState(nullptr, nullptr, 0xffffffff);
+		context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
+		context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
-		auto setStaticRendering = [&] {context.OMSetRenderTargets(3, rtvs, target->m_pDepthBufferView.Get());};
-		auto setDynamicRendering = [&] {context.OMSetRenderTargets(4, rtvs, target->m_pDepthBufferView.Get());};
+		auto setStaticRendering = [&] {context->OMSetRenderTargets(3, rtvs, target->m_pDepthBufferView.Get());};
+		auto setDynamicRendering = [&] {context->OMSetRenderTargets(4, rtvs, target->m_pDepthBufferView.Get());};
 
 		ID3D11Buffer* constBuffers[] =
 		{
@@ -117,14 +117,14 @@ namespace happy
 			m_pCBSkin.Get(),
 		};
 
-		context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		//=========================================================
 		// Render opaque meshes
 		//=========================================================
-		context.PSSetShader(m_pPSGeometry.Get(), nullptr, 0);
-		context.PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
-		context.PSSetConstantBuffers(0, 3, constBuffers);
+		context->PSSetShader(m_pPSGeometry.Get(), nullptr, 0);
+		context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
+		context->PSSetConstantBuffers(0, 3, constBuffers);
 		setStaticRendering();
 		#define RENDER_STATIC_MESH_LIST(X) renderStaticMeshList(scene->m_Geometry##X, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
 		RENDER_STATIC_MESH_LIST(PositionTexcoord);
@@ -137,9 +137,9 @@ namespace happy
 		//=========================================================
 		// Render transparent meshes
 		//=========================================================
-		context.PSSetShader(m_pPSGeometryAlphaStippled.Get(), nullptr, 0);
-		context.PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
-		context.PSSetConstantBuffers(0, 3, constBuffers);
+		context->PSSetShader(m_pPSGeometryAlphaStippled.Get(), nullptr, 0);
+		context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
+		context->PSSetConstantBuffers(0, 3, constBuffers);
 		setStaticRendering();
 		#define RENDER_STATIC_MESH_LIST(X) renderStaticMeshList(scene->m_Geometry##X##Transparent, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
 		RENDER_STATIC_MESH_LIST(PositionTexcoord);
@@ -152,12 +152,12 @@ namespace happy
 		//=========================================================
 		// Render Decals
 		//=========================================================
-		context.OMSetRenderTargets(3, rtvs, target->m_pDepthBufferViewReadOnly.Get());
-		context.OMSetBlendState(m_pDecalBlendState.Get(), nullptr, 0xffffffff);
-		context.IASetInputLayout(m_pILPositionTexcoord.Get());
-		context.VSSetShader(m_pVSPositionTexcoord.Get(), nullptr, 0);
-		context.VSSetConstantBuffers(0, 3, constBuffers);
-		context.PSSetShader(m_pPSDecals.Get(), nullptr, 0);
+		context->OMSetRenderTargets(3, rtvs, target->m_pDepthBufferViewReadOnly.Get());
+		context->OMSetBlendState(m_pDecalBlendState.Get(), nullptr, 0xffffffff);
+		context->IASetInputLayout(m_pILPositionTexcoord.Get());
+		context->VSSetShader(m_pVSPositionTexcoord.Get(), nullptr, 0);
+		context->VSSetConstantBuffers(0, 3, constBuffers);
+		context->PSSetShader(m_pPSDecals.Get(), nullptr, 0);
 		for (const auto &elem : scene->m_Decals)
 		{
 			CBufferObject objectCB;
@@ -165,7 +165,7 @@ namespace happy
 			objectCB.inverseWorld = elem.m_Transform;
 			objectCB.inverseWorld.inverse();
 			objectCB.alpha = 1.0f;
-			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
+			updateConstantBuffer(context, m_pCBObject.Get(), objectCB);
 
 			UINT stride = sizeof(VertexPositionTexcoord);
 			UINT offset = 0;
@@ -181,44 +181,48 @@ namespace happy
 				target->m_GraphicsBuffer[RenderTarget::GBuf_DepthStencilIdx].srv.Get(),
 			};
 
-			context.OMSetDepthStencilState(m_pDecalsDepthStencilState.Get(), elem.m_Filter);
-			context.PSSetShaderResources(0, 6, textures);
-			context.IASetIndexBuffer(m_pCubeIBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
-			context.IASetVertexBuffers(0, 1, m_pCubeVBuffer.GetAddressOf(), &stride, &offset);
-			context.DrawIndexed(36, 0, 0);
+			context->OMSetDepthStencilState(m_pDecalsDepthStencilState.Get(), elem.m_Filter);
+			context->PSSetShaderResources(0, 6, textures);
+			context->IASetIndexBuffer(m_pCubeIBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+			context->IASetVertexBuffers(0, 1, m_pCubeVBuffer.GetAddressOf(), &stride, &offset);
+			context->DrawIndexed(36, 0, 0);
 		}
 	}
 
 	void DeferredRenderer::renderStaticMeshList(const vector<RenderQueue::MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const
 	{
-		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
+		if (renderList.size() == 0) return;
 
-		context.IASetInputLayout(layout);
-		context.VSSetShader(shader, nullptr, 0);
-		context.VSSetConstantBuffers(0, 3, constBuffers);
+		auto context = m_pRenderContext->getContext("DeferredRenderer::renderStaticMeshList");
+
+		context->IASetInputLayout(layout);
+		context->VSSetShader(shader, nullptr, 0);
+		context->VSSetConstantBuffers(0, 3, constBuffers);
 		for (const auto &elem : renderList)
 		{
 			CBufferObject objectCB;
 			objectCB.currentWorld = elem.m_Transform;
 			objectCB.previousWorld = elem.m_Transform;
 			objectCB.alpha = elem.m_Alpha;
-			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
+			updateConstantBuffer(context, m_pCBObject.Get(), objectCB);
 
 			UINT stride = elem.m_Mesh.getVertexStride();
 			UINT offset = 0;
 			ID3D11Buffer* buffer = elem.m_Mesh.getVtxBuffer();
 
-			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Group);
-			context.PSSetShaderResources(0, 3, elem.m_Mesh.getTextures());
-			context.IASetIndexBuffer(elem.m_Mesh.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
-			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
-			context.DrawIndexed((UINT)elem.m_Mesh.getIndexCount(), 0, 0);
+			context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Group);
+			context->PSSetShaderResources(0, 3, elem.m_Mesh.getTextures());
+			context->IASetIndexBuffer(elem.m_Mesh.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
+			context->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+			context->DrawIndexed((UINT)elem.m_Mesh.getIndexCount(), 0, 0);
 		}
 	}
 
 	void DeferredRenderer::renderSkinList(const vector<SkinRenderItem> &renderList) const
 	{
-		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
+		if (renderList.size() == 0) return;
+
+		auto context = m_pRenderContext->getContext("DeferredRenderer::renderSkinList");
 
 		ID3D11Buffer* constBuffers[] =
 		{
@@ -226,16 +230,16 @@ namespace happy
 			m_pCBObject.Get(),
 			m_pCBSkin.Get(),
 		};
-		context.IASetInputLayout(m_pILPositionNormalTangentBinormalTexcoordIndicesWeights.Get());
-		context.VSSetShader(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights.Get(), nullptr, 0);
-		context.VSSetConstantBuffers(0, 3, constBuffers);
+		context->IASetInputLayout(m_pILPositionNormalTangentBinormalTexcoordIndicesWeights.Get());
+		context->VSSetShader(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights.Get(), nullptr, 0);
+		context->VSSetConstantBuffers(0, 3, constBuffers);
 		for (const auto &elem : renderList)
 		{
 			CBufferObject objectCB;
 			objectCB.currentWorld = elem.m_CurrentWorld;
 			objectCB.previousWorld = elem.m_PreviousWorld;
 			objectCB.alpha = elem.m_Alpha;
-			updateConstantBuffer(&context, m_pCBObject.Get(), objectCB);
+			updateConstantBuffer(context, m_pCBObject.Get(), objectCB);
 
 			CBufferSkin skinCB;
 			skinCB.animationCount = elem.m_AnimationCount;
@@ -243,7 +247,7 @@ namespace happy
 			for (int i = 0; i < 2; ++i) skinCB.previousBlendFrame[i] = (&elem.m_PreviousBlendFrame.x)[i];
 			for (int i = 0; i < 2; ++i) skinCB.currentBlendAnim[i] = (&elem.m_CurrentBlendAnimation.x)[i];
 			for (int i = 0; i < 2; ++i) skinCB.currentBlendFrame[i] = (&elem.m_CurrentBlendFrame.x)[i];
-			updateConstantBuffer(&context, m_pCBSkin.Get(), skinCB);
+			updateConstantBuffer(context, m_pCBSkin.Get(), skinCB);
 
 			UINT stride = sizeof(VertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 			UINT offset = 0;
@@ -265,31 +269,31 @@ namespace happy
 				else
 					buffers.push_back(nullptr);
 
-			context.OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Groups);
-			context.VSSetConstantBuffers(3, (UINT)buffers.size(), &buffers[0]);
-			context.PSSetShaderResources(0, 3, elem.m_Skin.getTextures());
-			context.IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
-			context.IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
-			context.DrawIndexed((UINT)elem.m_Skin.getIndexCount(), 0, 0);
+			context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Groups);
+			context->VSSetConstantBuffers(3, (UINT)buffers.size(), &buffers[0]);
+			context->PSSetShaderResources(0, 3, elem.m_Skin.getTextures());
+			context->IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
+			context->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
+			context->DrawIndexed((UINT)elem.m_Skin.getIndexCount(), 0, 0);
 		}
 	}
 
 	void DeferredRenderer::renderScreenSpacePass(ID3D11PixelShader *ps, ID3D11RenderTargetView* rtv, ID3D11Buffer** constBuffers, ID3D11ShaderResourceView** srvs, ID3D11SamplerState** samplers) const
 	{
-		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
+		auto context = m_pRenderContext->getContext("DeferredRenderer::renderScreenSpacePass");
 
-		context.OMSetRenderTargets(1, &rtv, nullptr);
-		context.PSSetShader(ps, nullptr, 0);
-		context.PSSetConstantBuffers(0, 3, constBuffers);
-		context.PSSetShaderResources(0, 8, srvs);
-		context.PSSetSamplers(0, 2, samplers);
+		context->OMSetRenderTargets(1, &rtv, nullptr);
+		context->PSSetShader(ps, nullptr, 0);
+		context->PSSetConstantBuffers(0, 3, constBuffers);
+		context->PSSetShaderResources(0, 8, srvs);
+		context->PSSetSamplers(0, 2, samplers);
 
-		context.Draw(6, 0);
+		context->Draw(6, 0);
 	}
 
 	void DeferredRenderer::renderLighting(const RenderQueue *scene, RenderTarget *target) const
 	{
-		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
+		auto context = m_pRenderContext->getContext("DeferredRenderer::renderLighting");
 
 		ID3D11Buffer* constBuffers[] =
 		{
@@ -321,9 +325,9 @@ namespace happy
 			srvs[7] = nullptr;	
 			constBuffers[2] = m_pCBSSAO.Get();
 
-			context.RSSetViewports(1, &target->m_BlurViewPort);
+			context->RSSetViewports(1, &target->m_BlurViewPort);
 			renderScreenSpacePass(m_pPSSSAO.Get(), target->m_GraphicsBuffer[RenderTarget::GBuf_OcclusionIdx].rtv.Get(), constBuffers, srvs, samplers);
-			context.RSSetViewports(1, &target->m_ViewPort);
+			context->RSSetViewports(1, &target->m_ViewPort);
 		}
 
 		//=========================================================
@@ -357,7 +361,7 @@ namespace happy
 			cbuf.texelHeight = 1.0f / target->getHeight();
 			target->m_ViewHistory = target->m_View;
 			target->m_ProjectionHistory = target->m_Projection;
-			updateConstantBuffer<CBufferTAA>(&context, m_pCBTAA.Get(), cbuf);
+			updateConstantBuffer<CBufferTAA>(context, m_pCBTAA.Get(), cbuf);
 
 			srvs[0] = target->m_PostBuffer[0].srv.Get();
 			srvs[1] = target->historySRV();
@@ -374,7 +378,7 @@ namespace happy
 
 	void DeferredRenderer::renderPostProcessing(const RenderQueue *scene, RenderTarget *target) const
 	{
-		ID3D11DeviceContext& context = *m_pRenderContext->getContext();
+		auto context = m_pRenderContext->getContext("DeferredRenderer::renderPostProcessing");
 
 		int pptarget = 1;
 		int ppview = 0;
@@ -433,9 +437,9 @@ namespace happy
 			if (process->m_ConstBuffer)
 			{
 				D3D11_MAPPED_SUBRESOURCE msr;
-				THROW_ON_FAIL(context.Map(process->m_ConstBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
+				THROW_ON_FAIL(context->Map(process->m_ConstBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &msr));
 				memcpy(msr.pData, (void*)process->m_ConstBufferData->data(), process->m_ConstBufferData->size());
-				context.Unmap(process->m_ConstBuffer.Get(), 0);
+				context->Unmap(process->m_ConstBuffer.Get(), 0);
 
 				constBuffers[1] = process->m_ConstBuffer.Get();
 			}
@@ -444,19 +448,19 @@ namespace happy
 				constBuffers[1] = nullptr;
 			}
 
-			context.OMSetRenderTargets(1, rtvs, nullptr);
-			context.PSSetShader(process->m_Handle.Get(), nullptr, 0);
-			context.PSSetShaderResources(0, 8, srvs);
-			context.PSSetSamplers(0, 2, samplers);
-			context.PSSetConstantBuffers(0, 2, constBuffers);
+			context->OMSetRenderTargets(1, rtvs, nullptr);
+			context->PSSetShader(process->m_Handle.Get(), nullptr, 0);
+			context->PSSetShaderResources(0, 8, srvs);
+			context->PSSetSamplers(0, 2, samplers);
+			context->PSSetConstantBuffers(0, 2, constBuffers);
 
-			context.Draw(6, 0);
+			context->Draw(6, 0);
 
 			std::swap(pptarget, ppview);
 			pass++;
 
 			ID3D11ShaderResourceView *nullSRV = nullptr;
-			context.PSSetShaderResources(process->m_SceneInputSlot, 1, &nullSRV);
+			context->PSSetShaderResources(process->m_SceneInputSlot, 1, &nullSRV);
 		}
 	}
 }

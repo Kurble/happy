@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "RenderingContext.h"
+#include "GraphicsTimer.h"
 
 namespace happy
 {
@@ -22,6 +23,8 @@ namespace happy
 		{
 			D3D11_MESSAGE_ID_DEVICE_DRAW_CONSTANT_BUFFER_TOO_SMALL,
 			D3D11_MESSAGE_ID_DEVICE_DRAW_RENDERTARGETVIEW_NOT_SET,
+			D3D11_MESSAGE_ID_QUERY_BEGIN_ABANDONING_PREVIOUS_RESULTS,
+			D3D11_MESSAGE_ID_QUERY_END_ABANDONING_PREVIOUS_RESULTS,
 			// TODO: Add more message IDs here as needed 
 		};
 		D3D11_INFO_QUEUE_FILTER filter;
@@ -33,6 +36,9 @@ namespace happy
 
 		m_Width = 0;
 		m_Height = 0;
+
+		m_pGraphicsTimer = make_shared<GraphicsTimer>(*m_pDevice.Get(), *m_pContext.Get());
+		m_pGraphicsTimer->begin();
 	}
 
 	void RenderingContext::attach(HWND hWnd)
@@ -70,6 +76,8 @@ namespace happy
 	void RenderingContext::swap()
 	{
 		m_pSwapChain->Present(1, 0);
+		m_pGraphicsTimer->end();
+		m_pGraphicsTimer->begin();
 	}
 
 	void RenderingContext::resize(unsigned int width, unsigned int height)
@@ -119,6 +127,15 @@ namespace happy
 	ID3D11DeviceContext* RenderingContext::getContext() const
 	{
 		return m_pContext.Get();
+	}
+
+	TimedDeviceContext RenderingContext::getContext(const char *perfZone) const
+	{
+		ID3D11Query* query = m_pGraphicsTimer->beginZone(perfZone);
+		return TimedDeviceContext(m_pContext.Get(), perfZone, [this, query]		
+		{
+			m_pGraphicsTimer->endZone(query);
+		});
 	}
 
 	ID3D11RenderTargetView* RenderingContext::getBackBuffer() const
