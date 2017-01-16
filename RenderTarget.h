@@ -10,6 +10,8 @@
 #include "bb_lib\mat4.h"
 #include "bb_lib\math_util.h"
 
+#include <array>
+
 namespace happy
 {
 	class RenderTarget : public TextureHandle
@@ -24,9 +26,11 @@ namespace happy
 		const bb::mat4&         getProjection() const;
 		const float             getWidth() const;
 		const float             getHeight() const;
+		const array<float, 4>&  getViewport() const;
 
 		void                    setView(bb::mat4 &view);
 		void                    setProjection(bb::mat4 &projection);
+		void                    setViewport(array<float, 4> &viewport);
 		void                    setOutput(ID3D11RenderTargetView* target);
 
 	private:
@@ -55,6 +59,7 @@ namespace happy
 			ComPtr<ID3D11ShaderResourceView> srv;
 		};
 
+		array<float, 4> m_ViewPortArray;
 		D3D11_VIEWPORT m_ViewPort;
 		D3D11_VIEWPORT m_BlurViewPort;
 		bb::mat4 m_View;

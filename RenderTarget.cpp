@@ -82,6 +82,9 @@ namespace happy
 				texDesc.Format = DXGI_FORMAT_R16G16_FLOAT;
 			}
 
+			m_GraphicsBuffer[i].rtv.Reset();
+			m_GraphicsBuffer[i].srv.Reset();
+
 			ComPtr<ID3D11Texture2D> tex;
 			THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &tex));
 			THROW_ON_FAIL(device.CreateRenderTargetView(tex.Get(), nullptr, m_GraphicsBuffer[i].rtv.GetAddressOf()));
@@ -102,6 +105,7 @@ namespace happy
 			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 			dsvDesc.Texture2D.MipSlice = 0;
 			dsvDesc.Flags = 0;
+			m_pDepthBufferView.Reset();
 			THROW_ON_FAIL(device.CreateDepthStencilView(depthStencilTex.Get(), &dsvDesc, m_pDepthBufferView.GetAddressOf()));
 		}
 
@@ -112,6 +116,7 @@ namespace happy
 			dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 			dsvDesc.Texture2D.MipSlice = 0;
 			dsvDesc.Flags = D3D11_DSV_READ_ONLY_DEPTH | D3D11_DSV_READ_ONLY_STENCIL;
+			m_pDepthBufferViewReadOnly.Reset();
 			THROW_ON_FAIL(device.CreateDepthStencilView(depthStencilTex.Get(), &dsvDesc, m_pDepthBufferViewReadOnly.GetAddressOf()));
 		}
 
@@ -122,6 +127,7 @@ namespace happy
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			srvDesc.Texture2D.MostDetailedMip = 0;
 			srvDesc.Texture2D.MipLevels = -1;
+			m_GraphicsBuffer[GBuf_DepthStencilIdx].srv.Reset();
 			THROW_ON_FAIL(device.CreateShaderResourceView(depthStencilTex.Get(), &srvDesc, m_GraphicsBuffer[GBuf_DepthStencilIdx].srv.GetAddressOf()));
 		}
 
@@ -134,6 +140,8 @@ namespace happy
 			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 
+			m_PostBuffer[i].rtv.Reset();
+			m_PostBuffer[i].srv.Reset();
 			THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &tex));
 			THROW_ON_FAIL(device.CreateRenderTargetView(tex.Get(), nullptr, m_PostBuffer[i].rtv.GetAddressOf()));
 			THROW_ON_FAIL(device.CreateShaderResourceView(tex.Get(), nullptr, m_PostBuffer[i].srv.GetAddressOf()));
@@ -148,6 +156,8 @@ namespace happy
 			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 
+			m_HistoryBuffer[i].rtv.Reset();
+			m_HistoryBuffer[i].srv.Reset();
 			THROW_ON_FAIL(device.CreateTexture2D(&texDesc, &data, &tex));
 			THROW_ON_FAIL(device.CreateRenderTargetView(tex.Get(), nullptr, m_HistoryBuffer[i].rtv.GetAddressOf()));
 			THROW_ON_FAIL(device.CreateShaderResourceView(tex.Get(), nullptr, m_HistoryBuffer[i].srv.GetAddressOf()));
@@ -177,6 +187,16 @@ namespace happy
 	const float RenderTarget::getHeight() const
 	{
 		return m_ViewPort.Height;
+	}
+
+	const array<float, 4>& RenderTarget::getViewport() const
+	{
+		return m_ViewPortArray;
+	}
+
+	void RenderTarget::setViewport(array<float, 4>& viewport)
+	{
+		m_ViewPortArray = viewport;
 	}
 
 	void RenderTarget::setView(bb::mat4 &view)

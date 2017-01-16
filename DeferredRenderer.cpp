@@ -53,8 +53,8 @@ namespace happy
 		sceneCB.inverseView.inverse();
 		sceneCB.inverseProjection = sceneCB.jitteredProjection;
 		sceneCB.inverseProjection.inverse();
-		sceneCB.width = (float)m_pRenderContext->getWidth();
-		sceneCB.height = (float)m_pRenderContext->getHeight();
+		sceneCB.width = (float)target->getWidth();
+		sceneCB.height = (float)target->getHeight();
 		sceneCB.convolutionStages = scene->m_Environment.getCubemapArrayLength();
 		sceneCB.aoEnabled = m_Config.m_PostEffectQuality >= Quality::Normal ? 1 : 0;
 		updateConstantBuffer<CBufferScene>(context, m_pCBScene.Get(), sceneCB);
@@ -198,6 +198,9 @@ namespace happy
 		context->IASetInputLayout(layout);
 		context->VSSetShader(shader, nullptr, 0);
 		context->VSSetConstantBuffers(0, 3, constBuffers);
+
+		StencilMask current = (StencilMask)-1;
+
 		for (const auto &elem : renderList)
 		{
 			CBufferObject objectCB;
@@ -210,7 +213,8 @@ namespace happy
 			UINT offset = 0;
 			ID3D11Buffer* buffer = elem.m_Mesh.getVtxBuffer();
 
-			context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Group);
+			if (current != elem.m_Group)
+				context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), current = elem.m_Group);
 			context->PSSetShaderResources(0, 3, elem.m_Mesh.getTextures());
 			context->IASetIndexBuffer(elem.m_Mesh.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
 			context->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
@@ -233,8 +237,12 @@ namespace happy
 		context->IASetInputLayout(m_pILPositionNormalTangentBinormalTexcoordIndicesWeights.Get());
 		context->VSSetShader(m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights.Get(), nullptr, 0);
 		context->VSSetConstantBuffers(0, 3, constBuffers);
+
+		StencilMask current = (StencilMask)-1;
+
 		for (const auto &elem : renderList)
 		{
+			auto skinContext = m_pRenderContext->getContext("skin element");
 			CBufferObject objectCB;
 			objectCB.currentWorld = elem.m_CurrentWorld;
 			objectCB.previousWorld = elem.m_PreviousWorld;
@@ -269,7 +277,8 @@ namespace happy
 				else
 					buffers.push_back(nullptr);
 
-			context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), elem.m_Groups);
+			if (current != elem.m_Groups)
+				context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), current = elem.m_Groups);
 			context->VSSetConstantBuffers(3, (UINT)buffers.size(), &buffers[0]);
 			context->PSSetShaderResources(0, 3, elem.m_Skin.getTextures());
 			context->IASetIndexBuffer(elem.m_Skin.getIdxBuffer(), DXGI_FORMAT_R16_UINT, 0);
