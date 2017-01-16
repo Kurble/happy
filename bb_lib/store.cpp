@@ -80,6 +80,29 @@ namespace bb
 
 			return i;
 		}
+		else if (next == '$')
+		{
+			s.ignore();
+			char numbuf[20];
+			memset(numbuf, 0, 20);
+			s.getline(numbuf, 20, '$');
+
+			if (numbuf[19]) throw exception("malformed binary section");
+
+			char *p;
+			size_t size = strtol(numbuf, &p, 10);
+			if (*p)
+			{
+				throw exception("malformed binary section");
+			}
+			
+			std::vector<char> b;
+			b.resize(size);
+
+			s.read(b.data(), size);
+
+			return b;
+		}
 		else
 		{
 			std::string lit = takeLiteral(s);
@@ -239,6 +262,16 @@ namespace bb
 		}
 		else throw exception("error in store: expected field not found");
 	}
+	const vector<char>& store::getFieldB(const string &key) const
+	{
+		auto i = m_Data.find(key);
+		if (i != m_Data.end())
+		{
+			if (i->second.type != val::Binary) throw exception("error in store: expected different type");
+			return i->second.b;
+		}
+		else throw exception("error in store: expected field not found");
+	}
 
 	void store::setFieldF(const string &key, const float &val)
 	{
@@ -257,6 +290,10 @@ namespace bb
 		m_Data.emplace(key, val);
 	}
 	void store::setFieldL(const string &key, const vector<val> &val)
+	{
+		m_Data.emplace(key, val);
+	}
+	void store::setFieldB(const string &key, const vector<char> &val)
 	{
 		m_Data.emplace(key, val);
 	}
