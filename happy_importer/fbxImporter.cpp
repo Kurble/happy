@@ -326,7 +326,7 @@ void loadNode(FbxScene *scene, FbxNode *fbxNode, string &skinOut, string &animOu
 	}
 }
 
-int fbxImporter(string fbxPath, string skinOut, string animOut)
+int fbxImporter(string fbxPath, string skinOut, string animOut, float scale)
 {
 	FbxManager    *sdk = FbxManager::Create();
 	FbxIOSettings *ios = FbxIOSettings::Create(sdk, "");

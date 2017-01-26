@@ -11,6 +11,8 @@ int main(int argc, char** argv)
 		string skin = "";
 		string anim = "";
 
+		float scale = 1.0f;
+
 		string nm = "";
 		string rm = "";
 		string fm = "";
@@ -25,6 +27,7 @@ int main(int argc, char** argv)
 			if (option == "-s") skin = val;
 			if (option == "-a") anim = val;
 			if (option == "-t") texture = val;
+			if (option == "-scale") scale = strtof(val, nullptr);
 
 			// inputs
 			if (option == "-fbx") fbx = val;
@@ -34,7 +37,7 @@ int main(int argc, char** argv)
 		}
 
 		if (skin.size() || anim.size())
-			if (int rv = fbxImporter(fbx, skin, anim)) return rv;
+			if (int rv = fbxImporter(fbx, skin, anim, scale)) return rv;
 		if (texture.size()) 
 			if (int rv = texImporter(nm, rm, fm, texture)) return rv;
 
