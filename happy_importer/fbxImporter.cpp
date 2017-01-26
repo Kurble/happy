@@ -348,6 +348,18 @@ int fbxImporter(string fbxPath, string skinOut, string animOut, float scale)
 		imp->Import(scene);
 		imp->Destroy();
 	}
+	
+
+	FbxSystemUnit srcFsu = scene->GetGlobalSettings().GetSystemUnit();
+	FbxSystemUnit dstFsu(srcFsu.GetScaleFactor() / scale, 1.0);
+	FbxSystemUnit::ConversionOptions options;
+	options.mConvertRrsNodes = true;
+	options.mConvertLimits = true;
+	options.mConvertClusters = true;
+	options.mConvertLightIntensity = true;
+	options.mConvertPhotometricLProperties = true;
+	options.mConvertCameraClipPlanes = true;
+	dstFsu.ConvertScene(scene, options);
 
 	loadNode(scene, scene->GetRootNode(), skinOut, animOut);
 	return 0;

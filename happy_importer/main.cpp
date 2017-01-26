@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 		fbxImporter(
 			base + "max\\Buildings\\MainBuilding\\export\\Main_Building_Investor.FBX",
 			base + "rts_resources\\Buildings\\SteamBase\\skin.skin",
-			base + "rts_resources\\Buildings\\SteamBase\\idle.anim");
+			base + "rts_resources\\Buildings\\SteamBase\\idle.anim", 1.0f);
 
 		cin.get();
 
