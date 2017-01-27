@@ -2,6 +2,12 @@
 
 #include "TimedDeviceContext.h"
 
+namespace vk
+{
+	class Instance;
+	class Device;
+	class SwapchainKHR;
+}
 
 namespace happy
 {
@@ -24,10 +30,21 @@ namespace happy
 		TimedDeviceContext getContext(const char *perfZone) const;
 
 	private:
-		ComPtr<IDXGISwapChain1> m_pSwapChain;
-		ComPtr<ID3D11Device> m_pDevice;
-		ComPtr<ID3D11DeviceContext> m_pContext;
-		ComPtr<ID3D11RenderTargetView> m_pBackBuffer;
+		shared_ptr<vk::Instance> m_pInstance;
+		shared_ptr<vk::Device> m_pDevice;
+		shared_ptr<vk::SwapchainKHR> m_pSwapChain;
+
+		std::vector<const char*> m_VkLayerNames;
+		std::vector<const char*> m_VkExtensionNames;
+
+		void filterLayers();
+		void filterExtensions();
+
+
+		//ComPtr<IDXGISwapChain1> m_pSwapChain;
+		//ComPtr<ID3D11Device> m_pDevice;
+		//ComPtr<ID3D11DeviceContext> m_pContext;
+		//ComPtr<ID3D11RenderTargetView> m_pBackBuffer;
 
 		shared_ptr<GraphicsTimer> m_pGraphicsTimer;
 
