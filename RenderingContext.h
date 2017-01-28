@@ -5,8 +5,11 @@
 namespace vk
 {
 	class Instance;
+	class PhysicalDevice;
 	class Device;
 	class SwapchainKHR;
+	class DebugReportCallbackEXT;
+	class Queue;
 }
 
 namespace happy
@@ -30,15 +33,34 @@ namespace happy
 		TimedDeviceContext getContext(const char *perfZone) const;
 
 	private:
-		shared_ptr<vk::Instance> m_pInstance;
-		shared_ptr<vk::Device> m_pDevice;
 		shared_ptr<vk::SwapchainKHR> m_pSwapChain;
+		shared_ptr<vk::Queue> m_pGraphicsQueue;
+		shared_ptr<vk::Device> m_pDevice;
+		shared_ptr<vk::PhysicalDevice> m_pPhysicalDevice;
+		shared_ptr<vk::DebugReportCallbackEXT> m_pDebugReportCB;
+		shared_ptr<vk::Instance> m_pInstance;
+
+		struct QueueFamilyIndices
+		{
+			int graphics = -1;
+
+			bool isCompatible() const
+			{
+				return graphics >= 0;
+			}
+		};
+		QueueFamilyIndices m_QueueFamilyIndices;
 
 		std::vector<const char*> m_VkLayerNames;
 		std::vector<const char*> m_VkExtensionNames;
 
 		void filterLayers();
 		void filterExtensions();
+		void createInstance();
+		void createDebugReporter();
+		void createPhysicalDevice();
+		void createLogicalDevice();
+		QueueFamilyIndices findPhysicalDeviceQueueIndices(vk::PhysicalDevice* pDevice);
 
 
 		//ComPtr<IDXGISwapChain1> m_pSwapChain;

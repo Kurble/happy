@@ -4,10 +4,30 @@
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.hpp>
+#include <windows.h>
 
 namespace happy
 {
 	static const bool validationEnabled = true;
+
+	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+		  VkDebugReportFlagsEXT flags
+		, VkDebugReportObjectTypeEXT objType
+		, uint64_t obj
+		, size_t location
+		, int32_t code
+		, const char* layerPrefix
+		, const char* msg
+		, void* userData) 
+	{
+		stringstream ss;
+
+		ss << "[debug] validation layer: " << msg << std::endl;
+		
+		OutputDebugStringA(ss.str().c_str());
+
+		return VK_FALSE;
+	}
 
 	RenderingContext::RenderingContext()
 	{
@@ -15,6 +35,7 @@ namespace happy
 		{ 
 			"VK_LAYER_LUNARG_standard_validation",
 		};
+		
 		filterLayers();
 
 		m_VkExtensionNames = 
@@ -22,31 +43,22 @@ namespace happy
 			VK_KHR_SURFACE_EXTENSION_NAME,
 			VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
 		};
+		if (m_VkLayerNames.size() > 0) m_VkExtensionNames.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+
 		filterExtensions();
 
-		vk::ApplicationInfo ainfo;
-		ainfo.pApplicationName = "";
-		ainfo.applicationVersion = 0;
-		ainfo.pEngineName = "happy";
-		ainfo.engineVersion = 1;
-		ainfo.apiVersion = VK_API_VERSION_1_0;
+		createInstance();
 
-		vk::InstanceCreateInfo iinfo;
-		iinfo.pApplicationInfo = &ainfo;
-		iinfo.enabledLayerCount = (uint32_t)m_VkLayerNames.size();
-		iinfo.ppEnabledLayerNames = m_VkLayerNames.data();
+		createDebugReporter();
 
-		m_pInstance = make_shared<vk::Instance>(vk::createInstance(iinfo));
+		createPhysicalDevice();
 
-		OutputDebugStringA("[startup] created vulkan instance\n");
+		createLogicalDevice();
 	}
 
 	void RenderingContext::filterLayers()
 	{
-		uint32_t layerCount;
-		vk::enumerateInstanceLayerProperties(&layerCount, nullptr);
-		std::vector<vk::LayerProperties> availableLayers(layerCount);
-		vk::enumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+		auto availableLayers = vk::enumerateInstanceLayerProperties();
 
 		m_VkLayerNames.erase(remove_if(m_VkLayerNames.begin(), m_VkLayerNames.end(), [&](const char* layerName)
 		{
@@ -81,10 +93,7 @@ namespace happy
 
 	void RenderingContext::filterExtensions()
 	{
-		uint32_t extensionCount;
-		vk::enumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-		std::vector<vk::ExtensionProperties> availableExtensions(extensionCount);
-		vk::enumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
+		auto availableExtensions = vk::enumerateInstanceExtensionProperties();
 
 		m_VkExtensionNames.erase(remove_if(m_VkExtensionNames.begin(), m_VkExtensionNames.end(), [&](const char* layerName)
 		{
@@ -118,6 +127,126 @@ namespace happy
 				return false;
 			}
 		}), m_VkExtensionNames.end());
+	}
+
+	void RenderingContext::createInstance()
+	{
+		vk::ApplicationInfo ainfo;
+		ainfo.pApplicationName = "";
+		ainfo.applicationVersion = 0;
+		ainfo.pEngineName = "happy";
+		ainfo.engineVersion = 1;
+		ainfo.apiVersion = VK_API_VERSION_1_0;
+
+		// vk instance creation
+		{
+			vk::InstanceCreateInfo info;
+			info.pApplicationInfo = &ainfo;
+			info.enabledLayerCount = (uint32_t)m_VkLayerNames.size();
+			info.ppEnabledLayerNames = m_VkLayerNames.data();
+			info.enabledExtensionCount = (uint32_t)m_VkExtensionNames.size();
+			info.ppEnabledExtensionNames = m_VkExtensionNames.data();
+
+			m_pInstance = make_shared<vk::Instance>(vk::createInstance(info));
+			OutputDebugStringA("[startup] created vulkan instance\n");
+		}
+	}
+
+	void RenderingContext::createDebugReporter()
+	{
+		if (m_VkLayerNames.size() > 0)
+		{
+			vk::DebugReportCallbackCreateInfoEXT info;
+			info.flags = vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning;
+			info.pfnCallback = debugCallback;
+
+			//m_pInstance->createDebugReportCallbackEXT(info);
+			//vkCreateDebugReportCallbackEXT
+		}
+	}
+
+	void RenderingContext::createPhysicalDevice()
+	{
+		auto devices = m_pInstance->enumeratePhysicalDevices();
+		if (devices.size() == 0)
+		{
+			OutputDebugStringA("[error] no vulkan capable gpu available\n");
+			OutputDebugStringA("terminating.. \n");
+			std::terminate();
+		}
+
+		unsigned best = 0;
+
+		for (auto device : devices)
+		{
+			auto properties = device.getProperties();
+			
+			auto indices = findPhysicalDeviceQueueIndices(&device);
+			if (indices.isCompatible())
+			{
+				unsigned score = 1;
+				if (properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) score += 100;
+				if (properties.deviceType == vk::PhysicalDeviceType::eIntegratedGpu) score += 10;
+				if (properties.deviceType == vk::PhysicalDeviceType::eOther) score += 5;
+				if (properties.deviceType == vk::PhysicalDeviceType::eVirtualGpu) score += 2;
+				if (properties.deviceType == vk::PhysicalDeviceType::eCpu) score += 1;
+
+				if (score > best)
+				{
+					best = score;
+					m_pPhysicalDevice = make_shared<vk::PhysicalDevice>(device);
+					m_QueueFamilyIndices = indices;
+				}
+			}
+		}
+
+		if (!m_pPhysicalDevice)
+		{
+			OutputDebugStringA("[error] no suitable gpu available\n");
+			OutputDebugStringA("terminating.. \n");
+			std::terminate();
+		}
+	}
+
+	RenderingContext::QueueFamilyIndices RenderingContext::findPhysicalDeviceQueueIndices(vk::PhysicalDevice* pDevice)
+	{
+		QueueFamilyIndices indices;
+		
+		auto queueFamilies = pDevice->getQueueFamilyProperties();
+		int i = 0;
+
+		for (const auto& queueFamily : queueFamilies)
+		{
+			if (queueFamily.queueCount > 0)
+			{
+				if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics) indices.graphics = i;
+			}
+
+			i++;
+		}
+
+		return indices;
+	}
+
+	void RenderingContext::createLogicalDevice()
+	{
+		float grahpicsQueuePriorities[] = { 1.0f };
+
+		vector<vk::DeviceQueueCreateInfo> queueInfos(1);
+		queueInfos[0].queueFamilyIndex = m_QueueFamilyIndices.graphics;
+		queueInfos[0].queueCount = 1;
+		queueInfos[0].pQueuePriorities = grahpicsQueuePriorities;
+
+		vk::PhysicalDeviceFeatures features;
+		vk::DeviceCreateInfo info;
+		info.pQueueCreateInfos = queueInfos.data();
+		info.queueCreateInfoCount = (uint32_t)queueInfos.size();
+		info.pEnabledFeatures = &features;
+		info.enabledExtensionCount = 0;
+		info.enabledLayerCount = m_VkLayerNames.size();
+		info.ppEnabledLayerNames = m_VkLayerNames.data();
+
+		m_pDevice = make_shared<vk::Device>(m_pPhysicalDevice->createDevice(info));
 	}
 
 	void RenderingContext::attach(HWND hWnd)
