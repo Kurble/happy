@@ -30,109 +30,6 @@ namespace happy
 		return VK_FALSE;
 	}
 
-	RenderingContext::RenderingContext(HINSTANCE instance, HWND wnd)
-	{
-		m_private = make_shared<vk_private>();
-
-		m_private->m_VkLayerNames = 
-		{ 
-			"VK_LAYER_LUNARG_standard_validation",
-		};
-		
-		m_private->filterLayers();
-
-		m_private->m_VkExtensionNames =
-		{
-			VK_KHR_SURFACE_EXTENSION_NAME,
-			VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-		};
-		if (m_private->m_VkLayerNames.size() > 0) m_private->m_VkExtensionNames.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-		
-		m_private->filterExtensions();
-
-		m_private->m_VkDeviceExtensionNames =
-		{
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-		};
-
-		m_private->createInstance();
-
-		m_private->createDebugReporter();
-
-		m_private->createSurface(instance, wnd);
-
-		m_private->createPhysicalDevice();
-
-		m_private->createLogicalDevice();
-
-		{
-			vk::SemaphoreCreateInfo info;
-			m_private->m_ImageReadySignal = m_private->m_Device.createSemaphore(info);
-			m_private->m_FrameReadySignal = m_private->m_Device.createSemaphore(info);
-		}
-
-		m_private->createSwapChain();
-
-		m_private->createSwapChainImageViews();
-	}
-
-	void RenderingContext::acquire()
-	{
-		auto imageResult = m_private->m_Device.acquireNextImageKHR(m_private->m_SwapChain, UINT64_MAX, m_private->m_ImageReadySignal, VK_NULL_HANDLE);
-		switch (imageResult.result)
-		{
-		case vk::Result::eSuccess:
-			break;
-
-		case vk::Result::eSuboptimalKHR:
-			break;
-
-		case vk::Result::eErrorOutOfDateKHR:
-			m_private->createSwapChain();
-			break;
-		}
-	}
-
-	void RenderingContext::present()
-	{
-		// todo vk
-	}
-
-	void RenderingContext::resize(unsigned int width, unsigned int height)
-	{
-	}
-
-	unsigned int RenderingContext::getWidth() const
-	{
-		return m_private->m_Width;
-	}
-
-	unsigned int RenderingContext::getHeight() const
-	{
-		return m_private->m_Height;
-	}
-
-	ID3D11Device* RenderingContext::getDevice() const 
-	{
-		return nullptr;
-	}
-
-	ID3D11DeviceContext* RenderingContext::getContext() const
-	{
-		return nullptr;
-	}
-
-	TimedDeviceContext RenderingContext::getContext(const char *zone) const
-	{
-		return TimedDeviceContext(nullptr, zone, [] {});
-	}
-
-	ID3D11RenderTargetView* RenderingContext::getBackBuffer() const
-	{
-		return nullptr;
-	}
-
 	struct RenderingContext::vk_private
 	{
 		std::vector<const char*> m_VkLayerNames;
@@ -148,11 +45,15 @@ namespace happy
 		vk::DebugReportCallbackEXT m_DebugReportCB;
 		vk::Instance m_Instance;
 		vk::Format m_SwapChainFormat;
-
+		vk::RenderPass m_RenderPass;
+		
 		vector<vk::Image> m_SwapChainImages;
+		vector<vk::ImageView> m_SwapChainImageViews;
+		vector<vk::Framebuffer> m_FrameBuffers;
 		vector<vk::Queue> m_Queues;
 		uint32_t m_GraphicsQueueIndex;
 		uint32_t m_PresentQueueIndex;
+		uint32_t m_SwapChainCurrentImageIndex;
 
 		struct QueueFamilyIndices
 		{
@@ -461,6 +362,9 @@ namespace happy
 			info.clipped = true;
 			info.oldSwapchain = m_SwapChain;
 
+			m_Width = swapChainSize.width;
+			m_Height = swapChainSize.height;
+
 			uint32_t deviceQueueFamilies[] = { (uint32_t)m_QueueFamilyIndices.graphics, (uint32_t)m_QueueFamilyIndices.present };
 			if (m_GraphicsQueueIndex != m_PresentQueueIndex)
 			{
@@ -476,9 +380,77 @@ namespace happy
 			m_SwapChainFormat = vk::Format::eR8G8B8A8Unorm;
 		}
 
+		void createRenderPass()
+		{
+			vk::AttachmentDescription colorAttachment;
+			colorAttachment.format = m_SwapChainFormat;
+			colorAttachment.samples = vk::SampleCountFlagBits::e1;
+			colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+			colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+			colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+			colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+			colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
+			colorAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+
+			vk::AttachmentReference colorAttachmentRef;
+			colorAttachmentRef.attachment = 0;
+			colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
+
+			vk::SubpassDescription subpass;
+			subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
+			subpass.colorAttachmentCount = 1;
+			subpass.pColorAttachments = &colorAttachmentRef;
+
+			vk::RenderPassCreateInfo info;
+			info.attachmentCount = 1;
+			info.pAttachments = &colorAttachment;
+			info.subpassCount = 1;
+			info.pSubpasses = &subpass;
+
+			m_RenderPass = m_Device.createRenderPass(info);
+		}
+
 		void createSwapChainImageViews()
 		{
-			// todo
+			m_SwapChainImageViews.reserve(m_SwapChainImages.size());
+			m_FrameBuffers.reserve(m_SwapChainImages.size());
+
+			for (auto &image : m_SwapChainImages)
+			{
+				vk::ImageView iv;
+				{
+					vk::ImageViewCreateInfo info;
+					info.image = image;
+					info.viewType = vk::ImageViewType::e2D;
+					info.format = m_SwapChainFormat;
+					info.components.r = vk::ComponentSwizzle::eIdentity;
+					info.components.g = vk::ComponentSwizzle::eIdentity;
+					info.components.b = vk::ComponentSwizzle::eIdentity;
+					info.components.a = vk::ComponentSwizzle::eIdentity;
+					info.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+					info.subresourceRange.baseMipLevel = 0;
+					info.subresourceRange.levelCount = 1;
+					info.subresourceRange.baseArrayLayer = 0;
+					info.subresourceRange.layerCount = 1;
+
+					iv = m_Device.createImageView(info);
+				}
+				m_SwapChainImageViews.push_back(iv);
+
+				vk::Framebuffer fb;
+				{
+					vk::FramebufferCreateInfo info;
+					info.renderPass = m_RenderPass;
+					info.attachmentCount = 1;
+					info.pAttachments = &iv;
+					info.width = m_Width;
+					info.height = m_Height;
+					info.layers = 1;
+
+					fb = m_Device.createFramebuffer(info);
+				}
+				m_FrameBuffers.push_back(fb);
+			}
 		}
 
 		vk::Queue* getGraphicsQueue()
@@ -530,4 +502,109 @@ namespace happy
 		unsigned int m_Width;
 		unsigned int m_Height;
 	};
+
+	RenderingContext::RenderingContext(HINSTANCE instance, HWND wnd)
+	{
+		m_private = make_shared<vk_private>();
+
+		m_private->m_VkLayerNames = 
+		{ 
+			"VK_LAYER_LUNARG_standard_validation",
+		};
+		m_private->filterLayers();
+		m_private->m_VkExtensionNames =
+		{
+			VK_KHR_SURFACE_EXTENSION_NAME,
+			VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		};
+		if (m_private->m_VkLayerNames.size() > 0)
+		{
+			m_private->m_VkExtensionNames.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+		}
+		m_private->filterExtensions();
+		m_private->m_VkDeviceExtensionNames =
+		{
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		};
+		m_private->createInstance();
+		m_private->createDebugReporter();
+		m_private->createSurface(instance, wnd);
+		m_private->createPhysicalDevice();
+		m_private->createLogicalDevice();
+		{
+			vk::SemaphoreCreateInfo info;
+			m_private->m_ImageReadySignal = m_private->m_Device.createSemaphore(info);
+			m_private->m_FrameReadySignal = m_private->m_Device.createSemaphore(info);
+		}
+		m_private->createSwapChain();
+		m_private->createRenderPass();
+		m_private->createSwapChainImageViews();
+	}
+
+	void RenderingContext::acquire()
+	{
+		auto imageResult = m_private->m_Device.acquireNextImageKHR(m_private->m_SwapChain, UINT64_MAX, m_private->m_ImageReadySignal, VK_NULL_HANDLE);
+		switch (imageResult.result)
+		{
+		case vk::Result::eSuccess:
+			break;
+
+		case vk::Result::eSuboptimalKHR:
+			break;
+
+		case vk::Result::eErrorOutOfDateKHR:
+			m_private->createSwapChain();
+			break;
+		}
+
+		m_private->m_SwapChainCurrentImageIndex = imageResult.value;
+	}
+
+	void RenderingContext::present()
+	{
+		vk::PresentInfoKHR info;
+		info.waitSemaphoreCount = 1;
+		info.pWaitSemaphores = &m_private->m_FrameReadySignal;
+		info.swapchainCount = 1;
+		info.pSwapchains = &m_private->m_SwapChain;
+		info.pImageIndices = &m_private->m_SwapChainCurrentImageIndex;
+		info.pResults = nullptr;
+
+		m_private->m_Queues[m_private->m_PresentQueueIndex].presentKHR(info);
+	}
+
+	void RenderingContext::resize(unsigned int width, unsigned int height)
+	{
+	}
+
+	unsigned int RenderingContext::getWidth() const
+	{
+		return m_private->m_Width;
+	}
+
+	unsigned int RenderingContext::getHeight() const
+	{
+		return m_private->m_Height;
+	}
+
+	ID3D11Device* RenderingContext::getDevice() const 
+	{
+		return nullptr;
+	}
+
+	ID3D11DeviceContext* RenderingContext::getContext() const
+	{
+		return nullptr;
+	}
+
+	TimedDeviceContext RenderingContext::getContext(const char *zone) const
+	{
+		return TimedDeviceContext(nullptr, zone, [] {});
+	}
+
+	ID3D11RenderTargetView* RenderingContext::getBackBuffer() const
+	{
+		return nullptr;
+	}
 }
