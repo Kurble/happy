@@ -222,6 +222,7 @@
     <ClInclude Include="happy.h" />
     <ClInclude Include="MultiTexture.h" />
     <ClInclude Include="PBREnvironment.h" />
+    <ClInclude Include="PipelineBuilder.h" />
     <ClInclude Include="PostProcessItem.h" />
     <ClInclude Include="RendererCommon.hlsli" />
     <ClInclude Include="RenderingContext.h" />

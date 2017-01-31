@@ -86,6 +86,9 @@
     <ClInclude Include="GraphicsTimer.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineBuilder.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
