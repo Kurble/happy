@@ -86,7 +86,7 @@
     <ClInclude Include="GraphicsTimer.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineBuilder.h">
+    <ClInclude Include="PipelineBuilder.hpp">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
