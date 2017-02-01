@@ -212,6 +212,7 @@
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AssetLoaders.h" />
+    <ClInclude Include="AutoDestroy.hpp" />
     <ClInclude Include="Canvas.h" />
     <ClInclude Include="CBuffers.hlsli" />
     <ClInclude Include="Cube.h" />

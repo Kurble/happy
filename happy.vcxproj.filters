@@ -89,6 +89,9 @@
     <ClInclude Include="PipelineBuilder.hpp">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="AutoDestroy.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
