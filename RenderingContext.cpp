@@ -587,24 +587,4 @@ namespace happy
 	{
 		return m_private->m_Height;
 	}
-
-	ID3D11Device* RenderingContext::getDevice() const 
-	{
-		return nullptr;
-	}
-
-	ID3D11DeviceContext* RenderingContext::getContext() const
-	{
-		return nullptr;
-	}
-
-	TimedDeviceContext RenderingContext::getContext(const char *zone) const
-	{
-		return TimedDeviceContext(nullptr, zone, [] {});
-	}
-
-	ID3D11RenderTargetView* RenderingContext::getBackBuffer() const
-	{
-		return nullptr;
-	}
 }

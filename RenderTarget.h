@@ -12,6 +12,11 @@
 
 #include <array>
 
+namespace vk
+{
+	class ImageView;
+}
+
 namespace happy
 {
 	class RenderTarget : public TextureHandle
@@ -28,56 +33,35 @@ namespace happy
 		const float             getHeight() const;
 		const array<float, 4>&  getViewport() const;
 
+		const vk::ImageView*    getOddAttachments() const;
+		const vk::ImageView*    getEvenAttachments() const;
+
 		void                    setView(bb::mat4 &view);
 		void                    setProjection(bb::mat4 &projection);
-		void                    setViewport(array<float, 4> &viewport);
-		void                    setOutput(ID3D11RenderTargetView* target);
+		void                    setViewport(bb::vec2 offset, bb::vec2 size);
+
+		static const size_t     gUVBufferIdx       = 0;
+		static const size_t     gTangentBufferIdx  = 1;
+		static const size_t     gVelocityBufferIdx = 2;
+		static const size_t     gDepthStencilIdx   = 3;
+		static const size_t     gHistory0          = 4;
+		static const size_t     gHistory1          = 5;
+		static const size_t     gPostProcess0      = 6;
+		static const size_t     gPostProcess1      = 7;
+						       
+		static const size_t     gChannelCount      = 8;
+						       
+		static const size_t     MultiSamples       = 8;
 
 	private:
-		friend class DeferredRenderer;
-
-		ID3D11RenderTargetView* historyRTV() const;
-		ID3D11ShaderResourceView* historySRV() const;
-		ID3D11ShaderResourceView* currentSRV() const;
-
-		static const size_t GBuf_Graphics0Idx    = 0; // albedo.rgb, emissive
-		static const size_t GBuf_Graphics1Idx    = 1; // normal.xyz
-		static const size_t GBuf_Graphics2Idx    = 2; // specular.rgb, gloss
-		static const size_t GBuf_VelocityIdx     = 3; // velocity.xy
-		static const size_t GBuf_OcclusionIdx    = 4; // ssao
-		static const size_t GBuf_DepthStencilIdx = 5; // depth, stencil
-
-		static const size_t GBuf_ChannelCount    = 6;
-
-		static const size_t MultiSamples = 8;
+		friend class  DeferredRenderer;
 
 		RenderingContext* m_pRenderContext;
 
-		struct TargetPair
-		{
-			ComPtr<ID3D11RenderTargetView>   rtv;
-			ComPtr<ID3D11ShaderResourceView> srv;
-		};
+		uint32_t m_LastUsedHistoryBuffer = 0;
 
-		array<float, 4> m_ViewPortArray;
-		D3D11_VIEWPORT m_ViewPort;
-		D3D11_VIEWPORT m_BlurViewPort;
-		bb::mat4 m_View;
-		bb::mat4 m_Projection;
-		bb::mat4 m_ViewHistory;
-		bb::mat4 m_ProjectionHistory;
+		struct rt_private;
 
-		unsigned m_JitterIndex = 0;
-		bb::vec2 m_Jitter[MultiSamples];
-
-		ID3D11RenderTargetView* m_pOutputTarget;
-
-		TargetPair m_GraphicsBuffer[GBuf_ChannelCount];
-		TargetPair m_HistoryBuffer[2];
-		TargetPair m_PostBuffer[2];
-		ComPtr<ID3D11DepthStencilView> m_pDepthBufferView;
-		ComPtr<ID3D11DepthStencilView> m_pDepthBufferViewReadOnly;
-
-		unsigned m_LastUsedHistoryBuffer = 0;
+		shared_ptr<rt_private> m_private;
 	};
 }
