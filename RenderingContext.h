@@ -27,7 +27,8 @@ namespace happy
 		
 		vk::PhysicalDevice* getPhysicalDevice() const;
 		vk::Device* getDevice() const;
-		vk::Framebuffer* getFramebuffer() const;
+
+		size_t getSwapChainImageCount() const;
 
 	private:
 		struct vk_private;

@@ -6,18 +6,11 @@ namespace happy
 {
 	void PostProcessItem::setInputSlot(Slot buffer, unsigned slot)
 	{
-		switch (buffer)
-		{
-		case Frame: m_SceneInputSlot = slot;  break;
-		case PreviousFrame: m_PreviousFrameInputSlot = slot; break;
-		case Depth: m_DepthInputSlot = slot;  break;
-		case Normals: m_NormalsInputSlot = slot; break;
-		case Velocity: m_VelocityInputSlot = slot;  break;
-		}
+		//
 	}
 
 	void PostProcessItem::addInputSlot(const TextureHandle &texture, unsigned slot)
 	{
-		m_InputSlots.emplace_back(slot, texture.getTextureId());
+		//
 	}
 }

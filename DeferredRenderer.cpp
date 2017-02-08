@@ -32,9 +32,8 @@ namespace happy
 			makeFramebuffers();
 		}
 
-		vk::RenderPass m_RenderPass;
-		vk::Framebuffer m_FramebufferOdd;
-		vk::Framebuffer m_FramebufferEven;
+		vk::RenderPass          m_RenderPass;
+		vector<vk::Framebuffer> m_FramebufferCycle;
 
 		void makeRenderPass()
 		{
@@ -161,16 +160,16 @@ namespace happy
 		{
 			vk::FramebufferCreateInfo info;
 			info.renderPass = m_RenderPass;
-			info.attachmentCount = RenderTarget::gChannelCount;
+			info.attachmentCount = m_pRenderTarget->getAttachmentCount();
 			info.width = m_pRenderTarget->getWidth();
 			info.height = m_pRenderTarget->getHeight();
 			info.layers = 1;
 
-			info.pAttachments = m_pRenderTarget->getOddAttachments();
-			m_FramebufferOdd = m_pRenderContext->getDevice()->createFramebuffer(info);
-
-			info.pAttachments = m_pRenderTarget->getEvenAttachments();
-			m_FramebufferEven = m_pRenderContext->getDevice()->createFramebuffer(info);
+			for (size_t i = 0; i < m_pRenderTarget->getAttachmentPermutationCount(); ++i)
+			{
+				info.pAttachments = m_pRenderTarget->getAttachmentPermutation(i);
+				m_FramebufferCycle.push_back(m_pRenderContext->getDevice()->createFramebuffer(info));
+			}
 		}
 	};
 

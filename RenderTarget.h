@@ -22,9 +22,15 @@ namespace happy
 	class RenderTarget : public TextureHandle
 	{
 	public:
-		RenderTarget(RenderingContext *context, unsigned width, unsigned height, bool hiresEffects);
+		enum Type
+		{
+			RenderToBackbuffer,
+			RenderToTexture,
+		};
 
-		void resize(unsigned width, unsigned height, bool hiresEffects);
+		RenderTarget(RenderingContext *context, Type type, unsigned width, unsigned height);
+
+		void resize(unsigned width, unsigned height);
 
 		const RenderingContext* getContext() const;
 		const bb::mat4&         getView() const;
@@ -33,8 +39,9 @@ namespace happy
 		const float             getHeight() const;
 		const array<float, 4>&  getViewport() const;
 
-		const vk::ImageView*    getOddAttachments() const;
-		const vk::ImageView*    getEvenAttachments() const;
+		const size_t            getAttachmentCount() const;
+		const size_t            getAttachmentPermutationCount() const;
+		const vk::ImageView*    getAttachmentPermutation(size_t index) const;
 
 		void                    setView(bb::mat4 &view);
 		void                    setProjection(bb::mat4 &projection);
