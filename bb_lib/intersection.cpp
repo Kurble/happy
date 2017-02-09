@@ -242,7 +242,7 @@ namespace bb
 		return false;
 	}
 
-	bool rayAABBIntersection(const ray &ray, const vec3 &aa, const vec3 &bb)
+	bool rayAABBIntersection(const ray &ray, const vec3 &aa, const vec3 &bb, float *result)
 	{
 		vec3 dir = ray.p1 - ray.p0;
 		float tmin = (aa.x - ray.p0.x) / dir.x;
@@ -277,6 +277,12 @@ namespace bb
 
 		if (tzmax < tmax)
 			tmax = tzmax;
+
+		if (result)
+		{
+			*result = tmax;
+			if (tmin > 0) *result = tmin;
+		}
 
 		return true;
 	}
