@@ -15,9 +15,11 @@
 #include "CompiledShaders\VertexPositionNormalTexcoord.h"
 #include "CompiledShaders\VertexPositionNormalTangentBinormalTexcoord.h"
 #include "CompiledShaders\VertexPositionNormalTangentBinormalTexcoordIndicesWeights.h"
+#include "CompiledShaders\WidgetsPositionColor.h"
 #include "CompiledShaders\GeometryPS.h"
 #include "CompiledShaders\GeometryAlphaStippledPS.h"
 #include "CompiledShaders\DecalsPS.h"
+#include "CompiledShaders\WidgetsPS.h"
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
@@ -392,9 +394,11 @@ namespace happy
 		CreateVertexShader<VertexPositionNormalTexcoord>(pRenderContext->getDevice(), m_pVSPositionNormalTexcoord, m_pILPositionNormalTexcoord, g_shVertexPositionNormalTexcoord);
 		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoord>(pRenderContext->getDevice(), m_pVSPositionNormalTangentBinormalTexcoord, m_pILPositionNormalTangentBinormalTexcoord, g_shVertexPositionNormalTangentBinormalTexcoord);
 		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoordIndicesWeights>(pRenderContext->getDevice(), m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights, m_pILPositionNormalTangentBinormalTexcoordIndicesWeights, g_shVertexPositionNormalTangentBinormalTexcoordIndicesWeights);
+		CreateVertexShader<VertexPositionColor>(pRenderContext->getDevice(), m_pVSWidgetsPositionColor, m_pILPositionColor, g_shWidgetsPositionColor);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSGeometry, g_shGeometryPS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSGeometryAlphaStippled, g_shGeometryAlphaStippledPS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSDecals, g_shDecalsPS);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSWidgets, g_shWidgetsPS);
 
 		// Rendering shaders
 		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSScreenQuad, m_pILScreenQuad, g_shScreenQuadVS);

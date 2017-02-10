@@ -8,6 +8,7 @@
 #include "PostProcessItem.h"
 #include "RenderTarget.h"
 #include "RenderQueue.h"
+#include "WidgetBuffer.hpp"
 
 namespace happy
 {
@@ -51,8 +52,11 @@ namespace happy
 		void renderStaticMeshList(const vector<RenderQueue::MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
 		void renderSkinList(const vector<SkinRenderItem> &renderList) const;
 		void renderLighting(const RenderQueue *scene, RenderTarget *target) const;
+		void renderWidgets(const RenderQueue *scene, RenderTarget *target) const;
+		void renderAA(const RenderQueue *scene, RenderTarget *target) const;
 		void renderScreenSpacePass(ID3D11PixelShader *ps, ID3D11RenderTargetView* rtv, ID3D11Buffer** constBuffers, ID3D11ShaderResourceView** srvs, ID3D11SamplerState** samplers) const;
 		void renderPostProcessing(const RenderQueue *scene, RenderTarget *target) const;
+		void setScreenSpaceRendering() const;
 
 		//=========================================================
 		// State
@@ -65,16 +69,19 @@ namespace happy
 		//=========================================================
 		ComPtr<ID3D11RasterizerState>     m_pRasterState;
 		ComPtr<ID3D11InputLayout>         m_pILPositionTexcoord;
+		ComPtr<ID3D11InputLayout>         m_pILPositionColor;
 		ComPtr<ID3D11InputLayout>         m_pILPositionNormalTexcoord;
 		ComPtr<ID3D11InputLayout>         m_pILPositionNormalTangentBinormalTexcoord;
 		ComPtr<ID3D11InputLayout>         m_pILPositionNormalTangentBinormalTexcoordIndicesWeights;
 		ComPtr<ID3D11VertexShader>        m_pVSPositionTexcoord;
+		ComPtr<ID3D11VertexShader>        m_pVSWidgetsPositionColor;
 		ComPtr<ID3D11VertexShader>        m_pVSPositionNormalTexcoord;
 		ComPtr<ID3D11VertexShader>        m_pVSPositionNormalTangentBinormalTexcoord;
 		ComPtr<ID3D11VertexShader>        m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights;
 		ComPtr<ID3D11PixelShader>         m_pPSGeometry;
 		ComPtr<ID3D11PixelShader>         m_pPSGeometryAlphaStippled;
 		ComPtr<ID3D11PixelShader>         m_pPSDecals;
+		ComPtr<ID3D11PixelShader>         m_pPSWidgets;
 		ComPtr<ID3D11SamplerState>        m_pGSampler;
 		ComPtr<ID3D11Buffer>              m_pCBScene;
 		ComPtr<ID3D11Buffer>              m_pCBObject;
@@ -101,5 +108,7 @@ namespace happy
 		ComPtr<ID3D11InputLayout>         m_pILPointLighting;
 		ComPtr<ID3D11PixelShader>         m_pPSPointLighting;
 		ComPtr<ID3D11Buffer>              m_pCBPointLighting;
+		WidgetBuffer<VertexPositionColor> m_BufLineWidgets;
+		WidgetBuffer<VertexPositionColor> m_BufTriWidgets;
 	};
 }

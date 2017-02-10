@@ -16,6 +16,7 @@ namespace happy
 		m_Decals.clear();
 		m_PointLights.clear();
 		m_PostProcessItems.clear();
+		m_Lines.clear();
 	}
 
 	void RenderQueue::pushSkinRenderItem(const SkinRenderItem &skin)
@@ -73,6 +74,11 @@ namespace happy
 	void RenderQueue::pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const bb::mat4 &transform, const StencilMask filter)
 	{
 		m_Decals.emplace_back(texture, normalMap, transform, filter);
+	}
+
+	void RenderQueue::pushLineWidget(const bb::vec3 &from, const bb::vec3 &to, const bb::vec4 &color)
+	{
+		m_Lines.emplace_back(from, to, color);
 	}
 
 	void RenderQueue::pushPostProcessItem(const PostProcessItem &proc)

@@ -12,6 +12,8 @@ namespace happy
 	DeferredRenderer::DeferredRenderer(const RenderingContext* pRenderContext, const RendererConfiguration config)
 		: m_pRenderContext(pRenderContext)
 		, m_Config(config)
+		, m_BufLineWidgets(pRenderContext->getDevice(), 1024)
+		, m_BufTriWidgets(pRenderContext->getDevice(), 1536)
 	{
 		createStates(pRenderContext);
 		createGeometries(pRenderContext);
@@ -63,18 +65,12 @@ namespace happy
 		renderGeometry(scene, target);
 
 		// Prepare pipeline for screen space rendering
-		UINT stride = sizeof(VertexPositionTexcoord);
-		UINT offset = 0;
-		context->OMSetDepthStencilState(m_pLightingDepthStencilState.Get(), 0);
-		context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		context->IASetInputLayout(m_pILScreenQuad.Get());
-		context->VSSetShader(m_pVSScreenQuad.Get(), nullptr, 0);
-		context->VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
-		context->IASetVertexBuffers(0, 1, m_pScreenQuadBuffer.GetAddressOf(), &stride, &offset);
+		setScreenSpaceRendering();
 
 		// Perform screen space rendering
 		renderLighting(scene, target);
+		renderWidgets(scene, target);
+		renderAA(scene, target);
 		renderPostProcessing(scene, target);
 
 		// Reset SRVs since we need them as output next frame
@@ -86,6 +82,21 @@ namespace happy
 		target->m_LastUsedHistoryBuffer %= 2;
 		target->m_JitterIndex += 1;
 		target->m_JitterIndex %= RenderTarget::MultiSamples;
+	}
+
+	void DeferredRenderer::setScreenSpaceRendering() const
+	{
+		auto context = m_pRenderContext->getContext();
+
+		UINT stride = sizeof(VertexPositionTexcoord);
+		UINT offset = 0;
+		context->OMSetDepthStencilState(m_pLightingDepthStencilState.Get(), 0);
+		context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		context->IASetInputLayout(m_pILScreenQuad.Get());
+		context->VSSetShader(m_pVSScreenQuad.Get(), nullptr, 0);
+		context->VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+		context->IASetVertexBuffers(0, 1, m_pScreenQuadBuffer.GetAddressOf(), &stride, &offset);
 	}
 
 	void DeferredRenderer::renderGeometry(const RenderQueue *scene, RenderTarget *target) const
@@ -351,7 +362,67 @@ namespace happy
 		srvs[6] = scene->m_Environment.getLightingSRV();
 		srvs[7] = scene->m_Environment.getEnvironmentSRV();
 		constBuffers[2] = nullptr;
-		renderScreenSpacePass(m_pPSGlobalLighting.Get(), target->m_PostBuffer[0].rtv.Get(), constBuffers, srvs, samplers);
+		renderScreenSpacePass(m_pPSGlobalLighting.Get(), target->m_PostBuffer[0].rtv.Get(), constBuffers, srvs, samplers);	
+	}
+
+	void DeferredRenderer::renderWidgets(const RenderQueue *scene, RenderTarget *target) const
+	{
+		auto context = m_pRenderContext->getContext("DeferredRenderer::renderWidgets");
+
+		if (scene->m_Lines.size() > 0)
+		{
+			ID3D11ShaderResourceView* srvs[8] = { 0 };
+
+			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+			context->IASetInputLayout(m_pILPositionColor.Get()); 
+			context->VSSetShader(m_pVSWidgetsPositionColor.Get(), nullptr, 0);
+			context->VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+			context->PSSetShader(m_pPSWidgets.Get(), nullptr, 0);
+			context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
+			context->PSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+			context->PSSetShaderResources(0, 8, srvs);
+			context->OMSetRenderTargets(1, target->m_PostBuffer[0].rtv.GetAddressOf(), target->m_pDepthBufferView.Get());
+			context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
+			context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+
+			m_BufLineWidgets.begin(context);
+			m_BufLineWidgets.draw(context, scene->m_Lines.data(), scene->m_Lines.size(), 2,
+				[](VertexPositionColor* vertices, const RenderQueue::LineWidgetItem* objects, size_t count)
+				{
+					for (size_t i=0; i<count; ++i)
+					{
+						vertices[i * 2 + 0].pos   = objects[i].m_From;
+						vertices[i * 2 + 0].color = objects[i].m_Color;
+						vertices[i * 2 + 1].pos   = objects[i].m_To;
+						vertices[i * 2 + 1].color = objects[i].m_Color;
+					}
+				}
+			);
+			m_BufLineWidgets.end(context);
+
+			// restore screen space rendering
+			setScreenSpaceRendering();
+		}
+	}
+
+	void DeferredRenderer::renderAA(const RenderQueue *scene, RenderTarget *target) const
+	{
+		auto context = m_pRenderContext->getContext("DeferredRenderer::renderAA");
+
+		ID3D11Buffer* constBuffers[] =
+		{
+			m_pCBScene.Get(),
+			nullptr,
+			nullptr,
+		};
+
+		ID3D11ShaderResourceView* srvs[8] = { 0 };
+
+		ID3D11SamplerState* samplers[] =
+		{
+			m_pScreenSampler.Get(),
+			m_pGSampler.Get()
+		};
 
 		//=========================================================
 		// TAA
@@ -379,7 +450,7 @@ namespace happy
 			srvs[4] = nullptr;
 			srvs[5] = nullptr;
 			srvs[6] = nullptr;
-			srvs[7] = nullptr;	
+			srvs[7] = nullptr;
 			constBuffers[2] = m_pCBTAA.Get();
 			renderScreenSpacePass(m_pPSTAA.Get(), target->historyRTV(), constBuffers, srvs, samplers);
 		}

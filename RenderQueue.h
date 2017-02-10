@@ -19,6 +19,7 @@ namespace happy
 		void pushSkinRenderItem(const SkinRenderItem &skin);
 		void pushDecal(const TextureHandle &texture, const bb::mat4 &transform, const StencilMask filter);
 		void pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const bb::mat4 &transform, const StencilMask filter);
+		void pushLineWidget(const bb::vec3 &from, const bb::vec3 &to, const bb::vec4 &color);
 		void pushLight(const bb::vec3 &position, const bb::vec3 &color, const float radius, const float falloff);
 		void pushPostProcessItem(const PostProcessItem &proc);
 
@@ -61,6 +62,17 @@ namespace happy
 			float         m_FaloffExponent;
 		};
 		
+		struct LineWidgetItem
+		{
+			LineWidgetItem(const bb::vec3 &from, const bb::vec3 &to, const bb::vec4 &color)
+				: m_From(from.x, from.y, from.z, 1.0f), m_To(to.x, to.y, to.z, 1.0f), m_Color(color)
+			{}
+
+			bb::vec4      m_From;
+			bb::vec4      m_To;
+			bb::vec4      m_Color;
+		};
+
 
 		//=========================================================
 		// Static geometry
@@ -77,6 +89,11 @@ namespace happy
 		//=========================================================
 		vector<SkinRenderItem>  m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights;
 		vector<SkinRenderItem>  m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent;
+
+		//=========================================================
+		// Widgets
+		//=========================================================
+		vector<LineWidgetItem>  m_Lines;
 
 		//=========================================================
 		// Misc.
