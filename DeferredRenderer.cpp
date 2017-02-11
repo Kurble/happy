@@ -433,15 +433,19 @@ namespace happy
 					}
 				);
 				
-				m_BufTriWidgets.draw(context, scene->m_Cones.data(), scene->m_Cones.size(), 24,
+				m_BufTriWidgets.draw(context, scene->m_Cones.data(), scene->m_Cones.size(), 48,
 					[](VertexPositionColor* vertices, const RenderQueue::ConeWidgetItem* objects, size_t count)
 					{
 						for (size_t i = 0; i < count; ++i)
 						{
 							bb::vec4 up = (objects[i].m_To - objects[i].m_From).normalized();
-							bb::vec4 right = { -up.y, up.x, up.z, 0.0f };
+							bb::vec4 right = up.z < up.x ? bb::vec4(-up.y, up.x, up.z, 0.0f) : bb::vec4(up.x, -up.z, up.y, 0.0f);
 							bb::vec3 _fwd = bb::vec3(up.x, up.y, up.z).cross(bb::vec3(right.x, right.y, right.z));
 							bb::vec4 forward = { _fwd.x, _fwd.y, _fwd.z, 0.0f };
+
+							bb::vec4 light = objects[i].m_Color;
+							bb::vec4 dark = light * 0.75f;
+							dark.w = light.w;
 
 							for (int j = 0; j < 8; ++j)
 							{
@@ -449,12 +453,18 @@ namespace happy
 								float jj = ((j + 0) % 8) / 1.2732f; 
 								float kk = ((j + 1) % 8) / 1.2732f;
 
-								vertices[i * 24 + j * 3 + 0].pos   = objects[i].m_To;
-								vertices[i * 24 + j * 3 + 0].color = objects[i].m_Color;
-								vertices[i * 24 + j * 3 + 1].pos = objects[i].m_From + ((right * sinf(jj)) + (forward * cosf(jj))) * objects[i].m_Radius;
-								vertices[i * 24 + j * 3 + 1].color = objects[i].m_Color;
-								vertices[i * 24 + j * 3 + 2].pos = objects[i].m_From + ((right * sinf(kk)) + (forward * cosf(kk))) * objects[i].m_Radius;
-								vertices[i * 24 + j * 3 + 2].color = objects[i].m_Color;
+								vertices[i * 48 + j * 6 + 0].pos   = objects[i].m_To;
+								vertices[i * 48 + j * 6 + 0].color = light;
+								vertices[i * 48 + j * 6 + 1].pos = objects[i].m_From + ((right * sinf(jj)) + (forward * cosf(jj))) * objects[i].m_Radius;
+								vertices[i * 48 + j * 6 + 1].color = light;
+								vertices[i * 48 + j * 6 + 2].pos = objects[i].m_From + ((right * sinf(kk)) + (forward * cosf(kk))) * objects[i].m_Radius;
+								vertices[i * 48 + j * 6 + 2].color = light;
+								vertices[i * 48 + j * 6 + 3].pos = objects[i].m_From + ((right * sinf(jj)) + (forward * cosf(jj))) * objects[i].m_Radius;
+								vertices[i * 48 + j * 6 + 3].color = dark;
+								vertices[i * 48 + j * 6 + 4].pos = objects[i].m_From;
+								vertices[i * 48 + j * 6 + 4].color = dark;
+								vertices[i * 48 + j * 6 + 5].pos = objects[i].m_From + ((right * sinf(kk)) + (forward * cosf(kk))) * objects[i].m_Radius;
+								vertices[i * 48 + j * 6 + 5].color = dark;
 							}
 						}
 					}
