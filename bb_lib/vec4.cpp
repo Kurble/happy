@@ -8,6 +8,7 @@ namespace bb
 {
 	vec4::vec4() {}
 	vec4::vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+	vec4::vec4(const vec3 &pos) : x(pos.x), y(pos.y), z(pos.z), w(1.0f) {}
 
 	void vec4::set(const float x, const float y, const float z, const float w)
 	{
@@ -156,14 +157,19 @@ namespace bb
 		return rotation * b;
 	}
 
-	vec4 vec4::operator*(const float& scalar)
+	vec4 vec4::operator*(const float& scalar) const
 	{
 		return{ x*scalar, y*scalar, z*scalar, w*scalar };
 	}
 
-	vec4 vec4::operator+(const vec4& b)
+	vec4 vec4::operator+(const vec4& b) const
 	{
 		return{ x + b.x, y + b.y, z + b.z, w + b.w };
+	}
+
+	vec4 vec4::operator-(const vec4& b) const
+	{
+		return{ x - b.x, y - b.y, z - b.z, w - b.w };
 	}
 
 	float& vec4::operator[](int i) 

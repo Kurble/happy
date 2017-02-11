@@ -17,6 +17,10 @@ namespace happy
 		m_PointLights.clear();
 		m_PostProcessItems.clear();
 		m_Lines.clear();
+		m_Quads.clear();
+		m_Cones.clear();
+		m_Cubes.clear();
+		m_Spheres.clear();
 	}
 
 	void RenderQueue::pushSkinRenderItem(const SkinRenderItem &skin)
@@ -79,6 +83,26 @@ namespace happy
 	void RenderQueue::pushLineWidget(const bb::vec3 &from, const bb::vec3 &to, const bb::vec4 &color)
 	{
 		m_Lines.emplace_back(from, to, color);
+	}
+
+	void RenderQueue::pushQuadWidget(const bb::vec3 *v, const bb::vec4 &color)
+	{
+		m_Quads.emplace_back(v, color);
+	}
+
+	void RenderQueue::pushConeWidget(const bb::vec3 &from, const bb::vec3 &to, const float radius, const bb::vec4 &color)
+	{
+		m_Cones.emplace_back(from, to, radius, color);
+	}
+
+	void RenderQueue::pushCubeWidget(const bb::vec3 &pos, const float size, const bb::vec4 &color)
+	{
+		m_Cubes.emplace_back(pos, size, color);
+	}
+
+	void RenderQueue::pushSphereWidget(const bb::vec3 &pos, const float size, const bb::vec4 &color)
+	{
+		m_Spheres.emplace_back(pos, size, color);
 	}
 
 	void RenderQueue::pushPostProcessItem(const PostProcessItem &proc)

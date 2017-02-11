@@ -8,6 +8,7 @@ namespace bb
 	{
 		vec4();
 		vec4(float x, float y, float z, float w);
+		vec4(const vec3 &pos);
 
 		void set(const float x, const float y, const float z, const float w);
 
@@ -35,9 +36,11 @@ namespace bb
 
 		vec3 operator*(const vec3& b);
 
-		vec4 operator*(const float& scalar);
+		vec4 operator*(const float& scalar) const;
 
-		vec4 operator+(const vec4& b);
+		vec4 operator+(const vec4& b) const;
+
+		vec4 operator-(const vec4& b) const;
 
 		float& operator[](int i);
 

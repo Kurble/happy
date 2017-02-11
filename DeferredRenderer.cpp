@@ -369,11 +369,16 @@ namespace happy
 	{
 		auto context = m_pRenderContext->getContext("DeferredRenderer::renderWidgets");
 
-		if (scene->m_Lines.size() > 0)
+		bool lines = scene->m_Lines.size() > 0;
+		bool tris  = scene->m_Quads.size() > 0 
+			      || scene->m_Cones.size() > 0
+				  || scene->m_Cubes.size() > 0
+			      || scene->m_Spheres.size() > 0;
+
+		if (lines || tris)
 		{
 			ID3D11ShaderResourceView* srvs[8] = { 0 };
 
-			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 			context->IASetInputLayout(m_pILPositionColor.Get()); 
 			context->VSSetShader(m_pVSWidgetsPositionColor.Get(), nullptr, 0);
 			context->VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
@@ -385,20 +390,77 @@ namespace happy
 			context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
 			context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
-			m_BufLineWidgets.begin(context);
-			m_BufLineWidgets.draw(context, scene->m_Lines.data(), scene->m_Lines.size(), 2,
-				[](VertexPositionColor* vertices, const RenderQueue::LineWidgetItem* objects, size_t count)
-				{
-					for (size_t i=0; i<count; ++i)
+			if (lines)
+			{
+				context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+				m_BufLineWidgets.begin(context);
+				m_BufLineWidgets.draw(context, scene->m_Lines.data(), scene->m_Lines.size(), 2,
+					[](VertexPositionColor* vertices, const RenderQueue::LineWidgetItem* objects, size_t count)
 					{
-						vertices[i * 2 + 0].pos   = objects[i].m_From;
-						vertices[i * 2 + 0].color = objects[i].m_Color;
-						vertices[i * 2 + 1].pos   = objects[i].m_To;
-						vertices[i * 2 + 1].color = objects[i].m_Color;
+						for (size_t i = 0; i < count; ++i)
+						{
+							vertices[i * 2 + 0].pos   = objects[i].m_From;
+							vertices[i * 2 + 0].color = objects[i].m_Color;
+							vertices[i * 2 + 1].pos   = objects[i].m_To;
+							vertices[i * 2 + 1].color = objects[i].m_Color;
+						}
 					}
-				}
-			);
-			m_BufLineWidgets.end(context);
+				);
+				m_BufLineWidgets.end(context);
+			}
+			if (tris)
+			{
+				context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				m_BufTriWidgets.begin(context);
+				m_BufTriWidgets.draw(context, scene->m_Quads.data(), scene->m_Quads.size(), 6,
+					[](VertexPositionColor* vertices, const RenderQueue::QuadWidgetItem* objects, size_t count)
+					{
+						for (size_t i = 0; i < count; ++i)
+						{
+							vertices[i * 6 + 0].pos = objects[i].m_V[0];
+							vertices[i * 6 + 0].color = objects[i].m_Color;
+							vertices[i * 6 + 1].pos = objects[i].m_V[1];
+							vertices[i * 6 + 1].color = objects[i].m_Color;
+							vertices[i * 6 + 2].pos = objects[i].m_V[2];
+							vertices[i * 6 + 2].color = objects[i].m_Color;
+							vertices[i * 6 + 3].pos = objects[i].m_V[0];
+							vertices[i * 6 + 3].color = objects[i].m_Color;
+							vertices[i * 6 + 4].pos = objects[i].m_V[2];
+							vertices[i * 6 + 4].color = objects[i].m_Color;
+							vertices[i * 6 + 5].pos = objects[i].m_V[3];
+							vertices[i * 6 + 5].color = objects[i].m_Color;
+						}
+					}
+				);
+				
+				m_BufTriWidgets.draw(context, scene->m_Cones.data(), scene->m_Cones.size(), 24,
+					[](VertexPositionColor* vertices, const RenderQueue::ConeWidgetItem* objects, size_t count)
+					{
+						for (size_t i = 0; i < count; ++i)
+						{
+							bb::vec4 up = (objects[i].m_To - objects[i].m_From).normalized();
+							bb::vec4 right = { -up.y, up.x, up.z, 0.0f };
+							bb::vec3 _fwd = bb::vec3(up.x, up.y, up.z).cross(bb::vec3(right.x, right.y, right.z));
+							bb::vec4 forward = { _fwd.x, _fwd.y, _fwd.z, 0.0f };
+
+							for (int j = 0; j < 8; ++j)
+							{
+								// 8 / 2pi = 1.2732
+								float jj = ((j + 0) % 8) / 1.2732f; 
+								float kk = ((j + 1) % 8) / 1.2732f;
+
+								vertices[i * 24 + j * 3 + 0].pos   = objects[i].m_To;
+								vertices[i * 24 + j * 3 + 0].color = objects[i].m_Color;
+								vertices[i * 24 + j * 3 + 1].pos = objects[i].m_From + ((right * sinf(jj)) + (forward * cosf(jj))) * objects[i].m_Radius;
+								vertices[i * 24 + j * 3 + 1].color = objects[i].m_Color;
+								vertices[i * 24 + j * 3 + 2].pos = objects[i].m_From + ((right * sinf(kk)) + (forward * cosf(kk))) * objects[i].m_Radius;
+								vertices[i * 24 + j * 3 + 2].color = objects[i].m_Color;
+							}
+						}
+					}
+				);
+				m_BufTriWidgets.end(context);
+			}
 
 			// restore screen space rendering
 			setScreenSpaceRendering();
