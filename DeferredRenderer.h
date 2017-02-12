@@ -82,6 +82,7 @@ namespace happy
 		ComPtr<ID3D11PixelShader>         m_pPSGeometryAlphaStippled;
 		ComPtr<ID3D11PixelShader>         m_pPSDecals;
 		ComPtr<ID3D11PixelShader>         m_pPSWidgets;
+		ComPtr<ID3D11PixelShader>         m_pPSOccludedWidgets;
 		ComPtr<ID3D11SamplerState>        m_pGSampler;
 		ComPtr<ID3D11Buffer>              m_pCBScene;
 		ComPtr<ID3D11Buffer>              m_pCBObject;
@@ -89,6 +90,7 @@ namespace happy
 		ComPtr<ID3D11DepthStencilState>   m_pGBufferDepthStencilState;
 		ComPtr<ID3D11DepthStencilState>   m_pLightingDepthStencilState;
 		ComPtr<ID3D11DepthStencilState>   m_pDecalsDepthStencilState;
+		ComPtr<ID3D11DepthStencilState>   m_pOccludedWidgetsState;
 		ComPtr<ID3D11BlendState>          m_pDecalBlendState;
 		ComPtr<ID3D11BlendState>          m_pWidgetsBlendState;
 		ComPtr<ID3D11SamplerState>        m_pScreenSampler;

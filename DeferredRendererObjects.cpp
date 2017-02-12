@@ -20,6 +20,7 @@
 #include "CompiledShaders\GeometryAlphaStippledPS.h"
 #include "CompiledShaders\DecalsPS.h"
 #include "CompiledShaders\WidgetsPS.h"
+#include "CompiledShaders\OccludedWidgetsPS.h"
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
@@ -110,6 +111,25 @@ namespace happy
 			desc.BackFace = desc.FrontFace;
 			desc.BackFace.StencilFunc = D3D11_COMPARISON_NEVER;
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateDepthStencilState(&desc, &m_pGBufferDepthStencilState));
+		}
+
+		// occluded widgets depth stencil state
+		{
+			D3D11_DEPTH_STENCIL_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.DepthEnable = true;
+			desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+			desc.DepthFunc = D3D11_COMPARISON_GREATER;
+			desc.StencilEnable = true;
+			desc.StencilReadMask = 0x00;
+			desc.StencilWriteMask = 0xff;
+			desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+			desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+			desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+			desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
+			desc.BackFace = desc.FrontFace;
+			desc.BackFace.StencilFunc = D3D11_COMPARISON_NEVER;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateDepthStencilState(&desc, &m_pOccludedWidgetsState));
 		}
 
 		// Decals depth stencil state
@@ -399,6 +419,7 @@ namespace happy
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSGeometryAlphaStippled, g_shGeometryAlphaStippledPS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSDecals, g_shDecalsPS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSWidgets, g_shWidgetsPS);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSOccludedWidgets, g_shOccludedWidgetsPS);
 
 		// Rendering shaders
 		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSScreenQuad, m_pILScreenQuad, g_shScreenQuadVS);

@@ -377,103 +377,176 @@ namespace happy
 
 		if (lines || tris)
 		{
-			ID3D11ShaderResourceView* srvs[8] = { 0 };
-
-			context->IASetInputLayout(m_pILPositionColor.Get()); 
-			context->VSSetShader(m_pVSWidgetsPositionColor.Get(), nullptr, 0);
-			context->VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
-			context->PSSetShader(m_pPSWidgets.Get(), nullptr, 0);
-			context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
-			context->PSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
-			context->PSSetShaderResources(0, 8, srvs);
-			context->OMSetRenderTargets(1, target->m_PostBuffer[0].rtv.GetAddressOf(), target->m_pDepthBufferView.Get());
-			context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
-			context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-
-			if (lines)
+			for (int pass = 0; pass < 2; ++pass)
 			{
-				context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-				m_BufLineWidgets.begin(context);
-				m_BufLineWidgets.draw(context, scene->m_Lines.data(), scene->m_Lines.size(), 2,
-					[](VertexPositionColor* vertices, const RenderQueue::LineWidgetItem* objects, size_t count)
-					{
-						for (size_t i = 0; i < count; ++i)
-						{
-							vertices[i * 2 + 0].pos   = objects[i].m_From;
-							vertices[i * 2 + 0].color = objects[i].m_Color;
-							vertices[i * 2 + 1].pos   = objects[i].m_To;
-							vertices[i * 2 + 1].color = objects[i].m_Color;
-						}
-					}
-				);
-				m_BufLineWidgets.end(context);
-			}
-			if (tris)
-			{
-				context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-				m_BufTriWidgets.begin(context);
-				m_BufTriWidgets.draw(context, scene->m_Quads.data(), scene->m_Quads.size(), 6,
-					[](VertexPositionColor* vertices, const RenderQueue::QuadWidgetItem* objects, size_t count)
-					{
-						for (size_t i = 0; i < count; ++i)
-						{
-							vertices[i * 6 + 0].pos = objects[i].m_V[0];
-							vertices[i * 6 + 0].color = objects[i].m_Color;
-							vertices[i * 6 + 1].pos = objects[i].m_V[1];
-							vertices[i * 6 + 1].color = objects[i].m_Color;
-							vertices[i * 6 + 2].pos = objects[i].m_V[2];
-							vertices[i * 6 + 2].color = objects[i].m_Color;
-							vertices[i * 6 + 3].pos = objects[i].m_V[0];
-							vertices[i * 6 + 3].color = objects[i].m_Color;
-							vertices[i * 6 + 4].pos = objects[i].m_V[2];
-							vertices[i * 6 + 4].color = objects[i].m_Color;
-							vertices[i * 6 + 5].pos = objects[i].m_V[3];
-							vertices[i * 6 + 5].color = objects[i].m_Color;
-						}
-					}
-				);
-				
-				m_BufTriWidgets.draw(context, scene->m_Cones.data(), scene->m_Cones.size(), 48,
-					[](VertexPositionColor* vertices, const RenderQueue::ConeWidgetItem* objects, size_t count)
-					{
-						for (size_t i = 0; i < count; ++i)
-						{
-							bb::vec4 up = (objects[i].m_To - objects[i].m_From).normalized();
-							bb::vec4 right = up.z < up.x ? bb::vec4(-up.y, up.x, up.z, 0.0f) : bb::vec4(up.x, -up.z, up.y, 0.0f);
-							bb::vec3 _fwd = bb::vec3(up.x, up.y, up.z).cross(bb::vec3(right.x, right.y, right.z));
-							bb::vec4 forward = { _fwd.x, _fwd.y, _fwd.z, 0.0f };
+				ID3D11ShaderResourceView* srvs[8] = { 0 };
 
-							bb::vec4 light = objects[i].m_Color;
-							bb::vec4 dark = light * 0.75f;
-							dark.w = light.w;
+				context->IASetInputLayout(m_pILPositionColor.Get()); 
+				context->VSSetShader(m_pVSWidgetsPositionColor.Get(), nullptr, 0);
+				context->VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+				context->PSSetShader(pass == 1 ? m_pPSOccludedWidgets.Get() : m_pPSWidgets.Get(), nullptr, 0);
+				context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
+				context->PSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+				context->PSSetShaderResources(0, 8, srvs);
+				context->OMSetRenderTargets(1, target->m_PostBuffer[0].rtv.GetAddressOf(), target->m_pDepthBufferView.Get());
+				context->OMSetDepthStencilState(pass == 1 ? m_pOccludedWidgetsState.Get() : m_pGBufferDepthStencilState.Get(), 0);
+				context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
-							for (int j = 0; j < 8; ++j)
+				if (lines)
+				{
+					context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+					m_BufLineWidgets.begin(context);
+					m_BufLineWidgets.draw(context, scene->m_Lines.data(), scene->m_Lines.size(), 2,
+						[](VertexPositionColor* vertices, const RenderQueue::LineWidgetItem* objects, size_t count)
+						{
+							for (size_t i = 0; i < count; ++i)
 							{
-								// 8 / 2pi = 1.2732
-								float jj = ((j + 0) % 8) / 1.2732f; 
-								float kk = ((j + 1) % 8) / 1.2732f;
-
-								vertices[i * 48 + j * 6 + 0].pos   = objects[i].m_To;
-								vertices[i * 48 + j * 6 + 0].color = light;
-								vertices[i * 48 + j * 6 + 1].pos = objects[i].m_From + ((right * sinf(jj)) + (forward * cosf(jj))) * objects[i].m_Radius;
-								vertices[i * 48 + j * 6 + 1].color = light;
-								vertices[i * 48 + j * 6 + 2].pos = objects[i].m_From + ((right * sinf(kk)) + (forward * cosf(kk))) * objects[i].m_Radius;
-								vertices[i * 48 + j * 6 + 2].color = light;
-								vertices[i * 48 + j * 6 + 3].pos = objects[i].m_From + ((right * sinf(jj)) + (forward * cosf(jj))) * objects[i].m_Radius;
-								vertices[i * 48 + j * 6 + 3].color = dark;
-								vertices[i * 48 + j * 6 + 4].pos = objects[i].m_From;
-								vertices[i * 48 + j * 6 + 4].color = dark;
-								vertices[i * 48 + j * 6 + 5].pos = objects[i].m_From + ((right * sinf(kk)) + (forward * cosf(kk))) * objects[i].m_Radius;
-								vertices[i * 48 + j * 6 + 5].color = dark;
+								vertices[i * 2 + 0].pos   = objects[i].m_From;
+								vertices[i * 2 + 0].color = objects[i].m_Color;
+								vertices[i * 2 + 1].pos   = objects[i].m_To;
+								vertices[i * 2 + 1].color = objects[i].m_Color;
 							}
 						}
-					}
-				);
-				m_BufTriWidgets.end(context);
-			}
+					);
+					m_BufLineWidgets.end(context);
+				}
+				if (tris)
+				{
+					context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+					m_BufTriWidgets.begin(context);
+					m_BufTriWidgets.draw(context, scene->m_Quads.data(), scene->m_Quads.size(), 12,
+						[](VertexPositionColor* vertices, const RenderQueue::QuadWidgetItem* objects, size_t count)
+						{
+							for (size_t i = 0; i < count; ++i)
+							{
+								vertices[i * 12 +  0].pos = objects[i].m_V[0];
+								vertices[i * 12 +  0].color = objects[i].m_Color;
+								vertices[i * 12 +  1].pos = objects[i].m_V[1];
+								vertices[i * 12 +  1].color = objects[i].m_Color;
+								vertices[i * 12 +  2].pos = objects[i].m_V[2];
+								vertices[i * 12 +  2].color = objects[i].m_Color;
+								vertices[i * 12 +  3].pos = objects[i].m_V[0];
+								vertices[i * 12 +  3].color = objects[i].m_Color;
+								vertices[i * 12 +  4].pos = objects[i].m_V[2];
+								vertices[i * 12 +  4].color = objects[i].m_Color;
+								vertices[i * 12 +  5].pos = objects[i].m_V[3];
+								vertices[i * 12 +  5].color = objects[i].m_Color;
+								vertices[i * 12 +  6].pos = objects[i].m_V[1];
+								vertices[i * 12 +  6].color = objects[i].m_Color;
+								vertices[i * 12 +  7].pos = objects[i].m_V[0];
+								vertices[i * 12 +  7].color = objects[i].m_Color;
+								vertices[i * 12 +  8].pos = objects[i].m_V[2];
+								vertices[i * 12 +  8].color = objects[i].m_Color;
+								vertices[i * 12 +  9].pos = objects[i].m_V[2];
+								vertices[i * 12 +  9].color = objects[i].m_Color;
+								vertices[i * 12 + 10].pos = objects[i].m_V[0];
+								vertices[i * 12 + 10].color = objects[i].m_Color;
+								vertices[i * 12 + 11].pos = objects[i].m_V[3];
+								vertices[i * 12 + 11].color = objects[i].m_Color;
+							}
+						}
+					);
+				
+					m_BufTriWidgets.draw(context, scene->m_Cones.data(), scene->m_Cones.size(), 48,
+						[](VertexPositionColor* vertices, const RenderQueue::ConeWidgetItem* objects, size_t count)
+						{
+							for (size_t i = 0; i < count; ++i)
+							{
+								bb::vec4 up = (objects[i].m_To - objects[i].m_From).normalized();
+								bb::vec4 right = up.z < up.x ? bb::vec4(-up.y, up.x, up.z, 0.0f) : bb::vec4(up.x, -up.z, up.y, 0.0f);
+								bb::vec3 _fwd = bb::vec3(up.x, up.y, up.z).cross(bb::vec3(right.x, right.y, right.z));
+								bb::vec4 forward = { _fwd.x, _fwd.y, _fwd.z, 0.0f };
 
-			// restore screen space rendering
-			setScreenSpaceRendering();
+								bb::vec4 light = objects[i].m_Color;
+								bb::vec4 dark = light * 0.75f;
+								dark.w = light.w;
+
+								for (int j = 0; j < 8; ++j)
+								{
+									// 8 / 2pi = 1.2732
+									float jj = ((j + 0) % 8) / 1.2732f; 
+									float kk = ((j + 1) % 8) / 1.2732f;
+
+									vertices[i * 48 + j * 6 + 0].pos   = objects[i].m_To;
+									vertices[i * 48 + j * 6 + 0].color = (j%2)?dark:light;
+									vertices[i * 48 + j * 6 + 1].pos = objects[i].m_From + ((right * sinf(jj)) + (forward * cosf(jj))) * objects[i].m_Radius;
+									vertices[i * 48 + j * 6 + 1].color = (j % 2) ? dark : light;
+									vertices[i * 48 + j * 6 + 2].pos = objects[i].m_From + ((right * sinf(kk)) + (forward * cosf(kk))) * objects[i].m_Radius;
+									vertices[i * 48 + j * 6 + 2].color = (j % 2) ? dark : light;
+									vertices[i * 48 + j * 6 + 3].pos = objects[i].m_From + ((right * sinf(jj)) + (forward * cosf(jj))) * objects[i].m_Radius;
+									vertices[i * 48 + j * 6 + 3].color = (j % 2) ? light : dark;
+									vertices[i * 48 + j * 6 + 4].pos = objects[i].m_From;
+									vertices[i * 48 + j * 6 + 4].color = (j % 2) ? light : dark;
+									vertices[i * 48 + j * 6 + 5].pos = objects[i].m_From + ((right * sinf(kk)) + (forward * cosf(kk))) * objects[i].m_Radius;
+									vertices[i * 48 + j * 6 + 5].color = (j % 2) ? light : dark;
+								}
+							}
+						}
+					);
+
+					m_BufTriWidgets.draw(context, scene->m_Cubes.data(), scene->m_Cubes.size(), 36,
+						[](VertexPositionColor* vertices, const RenderQueue::SimpleWidgetItem* objects, size_t count)
+						{
+							for (size_t i = 0; i < count; ++i)
+							{
+								bb::vec4 light = objects[i].m_Color;
+								bb::vec4 dark = light * 0.75f;
+								dark.w = light.w;
+
+								const bb::vec4 &pos = objects[i].m_Pos;
+								const float    &size = objects[i].m_Size;
+
+								bb::vec4 cube[8] = 
+								{
+									{ pos.x - size, pos.y - size, pos.z - size, 1.0f },
+									{ pos.x - size, pos.y - size, pos.z + size, 1.0f },
+									{ pos.x - size, pos.y + size, pos.z - size, 1.0f },
+									{ pos.x - size, pos.y + size, pos.z + size, 1.0f },
+									{ pos.x + size, pos.y - size, pos.z - size, 1.0f },
+									{ pos.x + size, pos.y - size, pos.z + size, 1.0f },
+									{ pos.x + size, pos.y + size, pos.z - size, 1.0f },
+									{ pos.x + size, pos.y + size, pos.z + size, 1.0f },
+								};
+
+								static const int indices[24] =
+								{
+									0, 1, 5, 4,
+									2, 3, 1, 0,
+									6, 7, 3, 2,
+									4, 5, 7, 6,
+									1, 3, 7, 5,
+									2, 0, 4, 6,
+								};
+
+								for (int j = 0; j < 6; ++j)
+								{
+									// 8 / 2pi = 1.2732
+									float jj = ((j + 0) % 8) / 1.2732f;
+									float kk = ((j + 1) % 8) / 1.2732f;
+
+									vertices[i * 36 + j * 6 + 0].pos = cube[indices[j * 4 + 0]];
+									vertices[i * 36 + j * 6 + 0].color = light;
+									vertices[i * 36 + j * 6 + 1].pos = cube[indices[j * 4 + 1]];
+									vertices[i * 36 + j * 6 + 1].color = light;
+									vertices[i * 36 + j * 6 + 2].pos = cube[indices[j * 4 + 2]];
+									vertices[i * 36 + j * 6 + 2].color = light;
+									vertices[i * 36 + j * 6 + 3].pos = cube[indices[j * 4 + 0]];
+									vertices[i * 36 + j * 6 + 3].color = dark;
+									vertices[i * 36 + j * 6 + 4].pos = cube[indices[j * 4 + 2]];
+									vertices[i * 36 + j * 6 + 4].color = dark;
+									vertices[i * 36 + j * 6 + 5].pos = cube[indices[j * 4 + 3]];
+									vertices[i * 36 + j * 6 + 5].color = dark;
+								}
+							}
+						}
+					);
+
+					m_BufTriWidgets.end(context);
+				}
+
+				// restore screen space rendering
+				if (pass == 1) setScreenSpaceRendering();
+			}
 		}
 	}
 
