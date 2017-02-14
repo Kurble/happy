@@ -16,8 +16,9 @@ VSOut main(VSIn input)
 {
 	VSOut output;
 
-	output.position = mul(jitteredView, input.position);
-	output.position = mul(jitteredProjection, output.position);
+	output.position = mul(currentView, input.position);
+	output.position = mul(currentProjection, output.position);
+	output.position.z -= 0.01f;
 	output.color = input.color;
 
 	return output;

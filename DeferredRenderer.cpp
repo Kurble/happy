@@ -68,10 +68,11 @@ namespace happy
 		setScreenSpaceRendering();
 
 		// Perform screen space rendering
+		ID3D11RenderTargetView *finalOutput = nullptr;
 		renderLighting(scene, target);
-		renderWidgets(scene, target);
 		renderAA(scene, target);
-		renderPostProcessing(scene, target);
+		renderPostProcessing(scene, target, &finalOutput);
+		renderWidgets(scene, target, finalOutput);
 
 		// Reset SRVs since we need them as output next frame
 		vector<ID3D11ShaderResourceView*> srvs(8, nullptr);
@@ -365,7 +366,7 @@ namespace happy
 		renderScreenSpacePass(m_pPSGlobalLighting.Get(), target->m_PostBuffer[0].rtv.Get(), constBuffers, srvs, samplers);	
 	}
 
-	void DeferredRenderer::renderWidgets(const RenderQueue *scene, RenderTarget *target) const
+	void DeferredRenderer::renderWidgets(const RenderQueue *scene, RenderTarget *target, ID3D11RenderTargetView *rtv) const
 	{
 		auto context = m_pRenderContext->getContext("DeferredRenderer::renderWidgets");
 
@@ -388,7 +389,7 @@ namespace happy
 				context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
 				context->PSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
 				context->PSSetShaderResources(0, 8, srvs);
-				context->OMSetRenderTargets(1, target->m_PostBuffer[0].rtv.GetAddressOf(), target->m_pDepthBufferView.Get());
+				context->OMSetRenderTargets(1, &rtv, target->m_pDepthBufferView.Get());
 				context->OMSetDepthStencilState(pass == 1 ? m_pOccludedWidgetsState.Get() : m_pGBufferDepthStencilState.Get(), 0);
 				context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
@@ -543,9 +544,6 @@ namespace happy
 
 					m_BufTriWidgets.end(context);
 				}
-
-				// restore screen space rendering
-				if (pass == 1) setScreenSpaceRendering();
 			}
 		}
 	}
@@ -601,7 +599,7 @@ namespace happy
 		}
 	}
 
-	void DeferredRenderer::renderPostProcessing(const RenderQueue *scene, RenderTarget *target) const
+	void DeferredRenderer::renderPostProcessing(const RenderQueue *scene, RenderTarget *target, ID3D11RenderTargetView** finalOut) const
 	{
 		auto context = m_pRenderContext->getContext("DeferredRenderer::renderPostProcessing");
 
@@ -626,6 +624,8 @@ namespace happy
 				{
 					target->m_Handle = target->m_PostBuffer[pptarget].srv.Get();
 				}
+
+				if (finalOut) *finalOut = rtvs[0];
 			}
 
 			ID3D11ShaderResourceView* srvs[8] = { 0 };

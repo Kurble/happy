@@ -52,10 +52,10 @@ namespace happy
 		void renderStaticMeshList(const vector<RenderQueue::MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
 		void renderSkinList(const vector<SkinRenderItem> &renderList) const;
 		void renderLighting(const RenderQueue *scene, RenderTarget *target) const;
-		void renderWidgets(const RenderQueue *scene, RenderTarget *target) const;
+		void renderWidgets(const RenderQueue *scene, RenderTarget *target, ID3D11RenderTargetView *rtv) const;
 		void renderAA(const RenderQueue *scene, RenderTarget *target) const;
 		void renderScreenSpacePass(ID3D11PixelShader *ps, ID3D11RenderTargetView* rtv, ID3D11Buffer** constBuffers, ID3D11ShaderResourceView** srvs, ID3D11SamplerState** samplers) const;
-		void renderPostProcessing(const RenderQueue *scene, RenderTarget *target) const;
+		void renderPostProcessing(const RenderQueue *scene, RenderTarget *target, ID3D11RenderTargetView** finalOut) const;
 		void setScreenSpaceRendering() const;
 
 		//=========================================================

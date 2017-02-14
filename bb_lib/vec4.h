@@ -31,6 +31,8 @@ namespace bb
 		static vec4 rotationBetween(const vec3& a, const vec3& b, const vec3& axis, const bool snap = false);
 
 		static vec4 lookAt(const vec3& source, const vec3& dest);
+		
+		static vec4 quatSnap(const vec4 &quat, const float angle);
 
 		bool operator==(const vec4 &b) const;
 

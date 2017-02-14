@@ -143,6 +143,25 @@ namespace bb
 			cosf(rotAngle*0.5f));
 	}
 
+	vec4 vec4::quatSnap(const vec4 &quat, const float snapAngle)
+	{
+		float angle = acosf(quat.w) * 2.0f;
+		vec3 axis = 
+		{
+			quat.x / sinf(angle * 0.5f),
+			quat.y / sinf(angle * 0.5f),
+			quat.z / sinf(angle * 0.5f)
+		};
+
+		angle = (floorf(angle / snapAngle)) * snapAngle;
+
+		return vec4(
+			axis.x * sinf(angle*0.5f),
+			axis.y * sinf(angle*0.5f),
+			axis.z * sinf(angle*0.5f),
+			cosf(angle*0.5f));
+	}
+
 	bool vec4::operator==(const vec4 &b) const
 	{
 		return (b.x == x && b.y == y && b.z == z && b.w == w);
