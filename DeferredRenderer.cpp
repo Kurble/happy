@@ -391,7 +391,7 @@ namespace happy
 				context->PSSetShaderResources(0, 8, srvs);
 				context->OMSetRenderTargets(1, &rtv, target->m_pDepthBufferView.Get());
 				context->OMSetDepthStencilState(pass == 1 ? m_pOccludedWidgetsState.Get() : m_pGBufferDepthStencilState.Get(), 0);
-				context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+				context->OMSetBlendState(m_pDecalBlendState.Get(), nullptr, 0xffffffff);
 
 				if (lines)
 				{
