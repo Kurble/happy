@@ -454,9 +454,12 @@ namespace happy
 							for (size_t i = 0; i < count; ++i)
 							{
 								bb::vec4 up = (objects[i].m_To - objects[i].m_From).normalized();
-								bb::vec4 right = up.z < up.x ? bb::vec4(-up.y, up.x, up.z, 0.0f) : bb::vec4(up.x, -up.z, up.y, 0.0f);
-								bb::vec3 _fwd = bb::vec3(up.x, up.y, up.z).cross(bb::vec3(right.x, right.y, right.z));
-								bb::vec4 forward = { _fwd.x, _fwd.y, _fwd.z, 0.0f };
+								bb::vec4 right = bb::vec3(up.x, up.y, up.z).perpendicular().normalized();
+								bb::vec4 forward = bb::vec3(up.x, up.y, up.z).cross(bb::vec3(right.x, right.y, right.z));
+
+								up.w = 0;
+								right.w = 0;
+								forward.w = 0;
 
 								bb::vec4 light = objects[i].m_Color;
 								bb::vec4 dark = light * 0.75f;

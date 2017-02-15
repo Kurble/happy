@@ -17,6 +17,8 @@ namespace bb
 
 		vec3 normalized() const;
 
+		vec3 perpendicular() const;
+
 		vec3 cross(const vec3& c) const;
 
 		vec3 operator*(const float& scalar) const;

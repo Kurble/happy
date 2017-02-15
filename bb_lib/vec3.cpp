@@ -43,6 +43,13 @@ namespace bb
 		return r;
 	}
 
+	vec3 vec3::perpendicular() const
+	{
+		if (x <= y && x <= z) return cross({ 1, 0, 0 });
+		if (y <= x && y <= z) return cross({ 0, 1, 0 });
+		else                  return cross({ 0, 0, 1 });
+	}
+
 	vec3 vec3::cross(const vec3& c) const
 	{
 		vec3 a;
