@@ -39,8 +39,8 @@ namespace bb
 		void inverse();
 		void identity();
 		void interpolate(mat4& other, float x);
-		vec3 unproject(vec3 v, float* viewport);
-		vec2 project(vec3 v, float* viewport);
+		vec3 unproject(vec3 v, float* viewport) const;
+		vec2 project(vec3 v, float* viewport) const;
 		void setRow(int r, vec4 val);
 
 		float m[16];

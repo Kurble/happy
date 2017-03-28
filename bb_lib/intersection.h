@@ -25,6 +25,6 @@ namespace bb
 	// 3D intersections
 	//--------------------------------------------------------------------------------------------------------------------------
 
-	bool rayCylinderIntersection(const ray &ray, const vec3 &position, const float &radius, const float &height);
+	bool rayCylinderIntersection(const ray &ray, const vec3 &position, const float &radius, const float &height, float *result = nullptr);
 	bool rayAABBIntersection(const ray &ray, const vec3 &aa, const vec3 &bb, float *result = nullptr);
 }

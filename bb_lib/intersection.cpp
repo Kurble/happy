@@ -209,7 +209,7 @@ namespace bb
 		) == 0;
 	}
 
-	bool rayCylinderIntersection(const ray &ray, const vec3 &position, const float &radius, const float &height)
+	bool rayCylinderIntersection(const ray &ray, const vec3 &position, const float &radius, const float &height, float *result)
 	{
 		vec2 d = vec2(ray.p0.x, ray.p0.y) - vec2(position.x, position.y);
 		vec2 D = vec2(ray.p1.x - ray.p0.x, ray.p1.y - ray.p0.y);
@@ -233,6 +233,8 @@ namespace bb
 		t[1] = (-b + sqrtDisc) * invA;
 
 		float h[2] = { lerp(ray.p0, ray.p1, t[0]).z, lerp(ray.p0, ray.p1, t[1]).z };
+
+		if (result) *result = fminf(h[0], h[1]);
 
 		if (h[0] >= position.z && h[0] <= position.z + height) return true;
 		if (h[1] >= position.z && h[1] <= position.z + height) return true;

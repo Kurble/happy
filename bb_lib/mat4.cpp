@@ -458,7 +458,7 @@ namespace bb
 		}
 	}
 
-	vec3 mat4::unproject(vec3 _v, float* viewport) {
+	vec3 mat4::unproject(vec3 _v, float* viewport) const {
 		mat4 i = *this;
 		i.inverse();
 
@@ -475,7 +475,7 @@ namespace bb
 		return vec3(o.x*factor, o.y*factor, o.z*factor);
 	}
 
-	vec2 mat4::project(vec3 _v, float* viewport) {
+	vec2 mat4::project(vec3 _v, float* viewport) const {
 		//vec4 v(_v.x, _v.y, _v.z, 1.0f);
 		//vec4 o = (*this) * v;
 
