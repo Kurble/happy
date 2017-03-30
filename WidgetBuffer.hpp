@@ -89,7 +89,7 @@ namespace happy
 			UINT offsets = 0;
 			ID3D11Buffer* buffer = m_pVertexBuffer.Get();
 			pContext->IASetVertexBuffers(0, 1, &buffer, &strides, &offsets);
-			pContext->Draw(m_Offset, 0);
+			pContext->Draw((UINT)m_Offset, 0);
 		}
 		
 		ComPtr<ID3D11Buffer> m_pVertexBuffer;

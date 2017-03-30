@@ -268,7 +268,7 @@ void loadAnim(FbxScene *scene, FbxMesh *mesh, string &animOut)
 
 			fps = (float)localInterval.GetDuration().GetFrameRate(timeMode);
 			frameCount = max(frameCount, (unsigned)localInterval.GetDuration().GetFrameCount(timeMode));
-			frameCountPrecise = fmaxf(frameCountPrecise, localInterval.GetDuration().GetFrameCountPrecise(timeMode));
+			frameCountPrecise = fmaxf(frameCountPrecise, (float)localInterval.GetDuration().GetFrameCountPrecise(timeMode));
 		}
 
 		cout << "Exporting animation with " << boneCount << " bones and " << frameCount << " frames." << endl;

@@ -9,7 +9,7 @@ namespace happy
 		: m_pRenderContext(context)
 		, m_pOutputTarget(nullptr)
 	{
-		for (size_t i = 0; i < MultiSamples; ++i)
+		for (int i = 0; i < MultiSamples; ++i)
 		{
 			m_Jitter[i].x = halton(3, i) - 0.5f;
 			m_Jitter[i].y = halton(2, i) - 0.5f;

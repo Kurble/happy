@@ -221,7 +221,7 @@ namespace happy
 			objectCB.alpha = elem.m_Alpha;
 			updateConstantBuffer(context, m_pCBObject.Get(), objectCB);
 
-			UINT stride = elem.m_Mesh.getVertexStride();
+			UINT stride = (UINT) elem.m_Mesh.getVertexStride();
 			UINT offset = 0;
 			ID3D11Buffer* buffer = elem.m_Mesh.getVtxBuffer();
 

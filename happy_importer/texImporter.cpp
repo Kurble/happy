@@ -528,7 +528,8 @@ vector<unsigned>  && CreateWICTextureFromFile(
 {
 	if (!fileName)
 	{
-		return{};
+		vector<unsigned> empty = {};
+		return std::move(empty);
 	}
 
 	IWICImagingFactory* pWIC = _GetWIC();
