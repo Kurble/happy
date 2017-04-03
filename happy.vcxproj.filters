@@ -243,6 +243,7 @@
     <ClCompile Include="GraphicsTimer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DeferredShadingPBR.hlsli">
