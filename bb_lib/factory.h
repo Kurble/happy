@@ -44,7 +44,7 @@ namespace bb
 			return m_Factories.at(name);
 		}
 
-		std::unique_ptr<base> create(std::string &name)
+		std::unique_ptr<base> create(std::string name)
 		{
 			return m_Factories.at(name)->create();
 		}
