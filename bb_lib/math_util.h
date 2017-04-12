@@ -6,7 +6,7 @@ namespace bb
 
 	template <class T> T lerp(T a, T b, float x)
 	{
-		return a*(1 - x) + b*x;
+		return a + (b - a) * x;
 	}
 
 	template <typename T> T swap_endian(T u)
