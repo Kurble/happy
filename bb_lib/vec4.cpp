@@ -167,6 +167,21 @@ namespace bb
 		return (b.x == x && b.y == y && b.z == z && b.w == w);
 	}
 
+	bool vec4::operator <(const vec4 &b) const
+	{
+		if (x == b.x)
+			if (y == b.y)
+				if (z == b.z)
+					return w < b.w;
+				else
+					return z < b.z;
+			else
+				return y < b.y;
+		else
+			return x < b.x;
+				
+	}
+
 	vec3 vec4::operator*(const vec3& b)
 	{
 		mat3 rotation;

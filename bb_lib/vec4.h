@@ -36,6 +36,8 @@ namespace bb
 
 		bool operator==(const vec4 &b) const;
 
+		bool operator <(const vec4 &b) const;
+
 		vec3 operator*(const vec3& b);
 
 		vec4 operator*(const float& scalar) const;

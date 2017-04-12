@@ -13,6 +13,7 @@
     <ClInclude Include="factory.h" />
     <ClInclude Include="spatial_hash_map.h" />
     <ClInclude Include="halton.h" />
+    <ClInclude Include="geometry_util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vec2.cpp" />
@@ -24,5 +25,6 @@
     <ClCompile Include="intersection.cpp" />
     <ClCompile Include="spatial_hash_map.cpp" />
     <ClCompile Include="halton.cpp" />
+    <ClCompile Include="geometry_util.cpp" />
   </ItemGroup>
 </Project>

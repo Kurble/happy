@@ -155,6 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="factory.h" />
+    <ClInclude Include="geometry_util.h" />
     <ClInclude Include="halton.h" />
     <ClInclude Include="mat3.h" />
     <ClInclude Include="mat4.h" />
@@ -168,6 +169,7 @@
     <ClInclude Include="vec4.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="geometry_util.cpp" />
     <ClCompile Include="halton.cpp" />
     <ClCompile Include="mat3.cpp" />
     <ClCompile Include="mat4.cpp" />
