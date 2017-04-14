@@ -6,6 +6,8 @@
 
 #define CLASS_WITH_FACTORY(T, base) class T; namespace { bb::spec_factory<T, base>::auto_register _create##T(#T); } class T: public base
 
+#define CLASS_WITH_FACTORY_NAMED(T, base, name) class T; namespace { bb::spec_factory<T, base>::auto_register _create##T(name); } class T: public base
+
 namespace bb
 {
 	template <typename base> struct generic_factory
