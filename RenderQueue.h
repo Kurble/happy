@@ -3,7 +3,7 @@
 #include "RenderingContext.h"
 #include "RenderMesh.h"
 #include "PBREnvironment.h"
-#include "SkinController.h"
+#include "MeshController.h"
 #include "PostProcessItem.h"
 
 namespace happy

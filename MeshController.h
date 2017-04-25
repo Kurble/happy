@@ -14,6 +14,8 @@ namespace happy
 {
 	using StencilMask = uint8_t;
 
+	class RenderQueue;
+
 	struct SkinRenderItem
 	{
 		RenderSkin m_Skin;
@@ -32,10 +34,10 @@ namespace happy
 		bb::mat4 m_CurrentWorld;
 	};
 
-	class SkinController
+	class MeshController
 	{
 	public:
-		void setSkin(RenderSkin &skin);
+		void setMesh(shared_ptr<RenderMesh> mesh);
 		void setRenderGroups(StencilMask &groups);
 		void setAlpha(float alpha);
 
@@ -49,8 +51,7 @@ namespace happy
 		bb::mat4 &worldMatrix();
 
 		void update(system_clock::time_point time);
-
-		const SkinRenderItem& getRenderItem() const;
+		void render(RenderQueue &queue) const;
 
 	private:
 		struct anim_state
@@ -70,7 +71,11 @@ namespace happy
 			bool m_Looped;
 		};
 
-		SkinRenderItem     m_RenderItem;
+		shared_ptr<RenderMesh> m_Mesh;
+
+		bool m_Static = false;
+
+		SkinRenderItem m_RenderItem;
 		vector<anim_state> m_States;
 	};
 }

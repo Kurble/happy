@@ -9,6 +9,10 @@ namespace happy
 	class RenderMesh
 	{
 	public:
+		virtual ~RenderMesh() { }
+
+		virtual shared_ptr<RenderMesh> clone() const { return make_shared<RenderMesh>(*this); }
+
 		template <typename Vtx, typename Idx> void setGeometry(const RenderingContext *pRenderContext, Vtx* vertices, size_t vtxCount, Idx* indices, size_t idxCount)
 		{
 			m_IndexCount = idxCount;

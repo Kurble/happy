@@ -22,7 +22,8 @@ static bb::vec2 toVec2(const FbxVector2 &fbx)
 	return bb::vec2((float)fbx.mData[0], (float)fbx.mData[1]);
 }
 
-void calculateTangents(happy::VertexPositionNormalTangentBinormalTexcoordIndicesWeights *vertices, unsigned count)
+template <class V>
+void calculateTangents(V *vertices, unsigned count)
 {
 	bb::vec2 uv1 = (vertices[1].texcoord - vertices[0].texcoord).normalized() * bb::vec2(1, -1);
 	bb::vec2 uv2 = (vertices[2].texcoord - vertices[0].texcoord).normalized() * bb::vec2(1, -1);
@@ -62,11 +63,95 @@ void calculateTangents(happy::VertexPositionNormalTangentBinormalTexcoordIndices
 	}
 }
 
-void loadStatic(FbxMesh *mesh, string &staticOut)
+void loadStatic(FbxMesh *mesh, string &staticOut, float scale)
 {
 	vector<happy::VertexPositionNormalTangentBinormalTexcoord> uniqueVertices;
+	unsigned controlPointCount = mesh->GetControlPointsCount();
+	for (unsigned cp = 0; cp < controlPointCount; ++cp)
+	{
+		happy::VertexPositionNormalTangentBinormalTexcoord v;
+		v.pos = toVec4(mesh->GetControlPointAt(cp)) * scale;
+		v.pos.w = 1.0f;
+		v.normal = bb::vec3(0, 0, 0);
+		v.tangent = bb::vec3(0, 0, 0);
+		v.binormal = bb::vec3(0, 0, 0);
+		v.texcoord = bb::vec2(0, 0);
+		uniqueVertices.push_back(v);
+	}
 
-	//
+	cout << "Exporting static mesh" << endl;
+
+	ofstream fout;
+	fout.open(staticOut.c_str(), ios::out | ios::binary);
+	fout.write((const char*)&IMPORTER_VERSION, sizeof(uint32_t));
+	fout.write((const char*)&MESHTYPE_STATIC, sizeof(uint32_t));
+
+	vector<happy::VertexPositionNormalTangentBinormalTexcoord> meshVertices;
+	vector<happy::Index16> meshIndices;
+
+	FbxStringList uvSets;
+	mesh->GetUVSetNames(uvSets);
+	const char *uvSetName = nullptr;
+	if (uvSets.GetCount() > 0)
+	{
+		uvSetName = uvSets.GetItemAt(0)->mString.Buffer();
+	}
+
+	unsigned polys = mesh->GetPolygonCount();
+	for (unsigned p = 0; p < polys; ++p)
+	{
+		unsigned firstIdx = (unsigned)meshVertices.size();
+		unsigned vertices = mesh->GetPolygonSize(p);
+		for (unsigned v = 0; v < vertices; ++v)
+		{
+			unsigned uniqueVertexIndex = mesh->GetPolygonVertex(p, v);
+			auto meshVertex = uniqueVertices.at(uniqueVertexIndex);
+
+			FbxVector4 v4;
+			FbxVector2 v2;
+			bool um;
+
+			mesh->GetPolygonVertexNormal(p, v, v4);
+			meshVertex.normal = toVec3(v4);
+			if (uvSetName)
+			{
+				mesh->GetPolygonVertexUV(p, v, uvSetName, v2, um);
+				meshVertex.texcoord = toVec2(v2);
+				meshVertex.texcoord.y = 1.0f - meshVertex.texcoord.y;
+			}
+
+			meshVertices.push_back(meshVertex);
+		}
+
+		calculateTangents(&meshVertices[firstIdx], vertices);
+
+		for (unsigned tri = 1; tri < vertices - 1; ++tri)
+		{
+			meshIndices.push_back(firstIdx);
+			meshIndices.push_back(firstIdx + tri + 1);
+			meshIndices.push_back(firstIdx + tri);
+		}
+	}
+
+	uint32_t exportVertexCount = (uint32_t)meshVertices.size();
+	uint32_t exportIndexCount = (uint32_t)meshIndices.size();
+
+	fout.write((const char*)&exportVertexCount, sizeof(uint32_t));
+	for (unsigned v = 0; v < exportVertexCount; ++v)
+	{
+		fout.write((const char*)&meshVertices[v].pos, sizeof(bb::vec4));
+		fout.write((const char*)&meshVertices[v].normal, sizeof(bb::vec3));
+		fout.write((const char*)&meshVertices[v].tangent, sizeof(bb::vec3));
+		fout.write((const char*)&meshVertices[v].binormal, sizeof(bb::vec3));
+		fout.write((const char*)&meshVertices[v].texcoord, sizeof(bb::vec2));
+	}
+
+	fout.write((const char*)&exportIndexCount, sizeof(uint32_t));
+	for (unsigned i = 0; i < exportVertexCount; ++i)
+	{
+		fout.write((const char*)&meshIndices[i], sizeof(happy::Index16));
+	}
+	fout.close();
 }
 
 void loadSkin(FbxMesh *mesh, string &skinOut)
@@ -305,21 +390,23 @@ void loadAnim(FbxScene *scene, FbxMesh *mesh, string &animOut)
 	}
 }
 
-void loadNode(FbxScene *scene, FbxNode *fbxNode, string &staticOut, string &skinOut, string &animOut)
+void loadNode(FbxScene *scene, FbxNode *fbxNode, string &staticOut, string &skinOut, string &animOut, float scale)
 {
+	cout << "Processing node \"" << fbxNode->GetName() << "\"..." << endl;
+
 	int numAttributes = fbxNode->GetNodeAttributeCount();
 	for (int i = 0; i < numAttributes; i++)
 	{
 		FbxNodeAttribute *nodeAttributeFbx = fbxNode->GetNodeAttributeByIndex(i);
 		FbxNodeAttribute::EType attributeType = nodeAttributeFbx->GetAttributeType();
 
-		cout << "Processing node \"" << fbxNode->GetName() << "\"..." << endl;
+		cout << "    Node attribute: " << nodeAttributeFbx->GetTypeName() << endl;
 
 		switch (attributeType)
 		{
 		case FbxNodeAttribute::eMesh:
 		{
-			if (staticOut.length() > 0) loadStatic((FbxMesh*)nodeAttributeFbx, staticOut);
+			if (staticOut.length() > 0) loadStatic((FbxMesh*)nodeAttributeFbx, staticOut, scale);
 
 			if (skinOut.length() > 0) loadSkin((FbxMesh*)nodeAttributeFbx, skinOut);
 
@@ -333,7 +420,7 @@ void loadNode(FbxScene *scene, FbxNode *fbxNode, string &staticOut, string &skin
 	int numChildren = fbxNode->GetChildCount();
 	for (int i = 0; i < numChildren; i++)
 	{
-		loadNode(scene, fbxNode->GetChild(i), skinOut, animOut);
+		loadNode(scene, fbxNode->GetChild(i), staticOut, skinOut, animOut, scale);
 	}
 }
 
@@ -372,6 +459,6 @@ int fbxImporter(string fbxPath, string staticOut, string skinOut, string animOut
 	options.mConvertCameraClipPlanes = true;
 	dstFsu.ConvertScene(scene, options);
 
-	loadNode(scene, scene->GetRootNode(), staticOut, skinOut, animOut);
+	loadNode(scene, scene->GetRootNode(), staticOut, skinOut, animOut, scale);
 	return 0;
 }

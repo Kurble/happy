@@ -225,7 +225,7 @@
     <ClInclude Include="RenderSkin.h" />
     <ClInclude Include="RenderTarget.h" />
     <ClInclude Include="Resources.h" />
-    <ClInclude Include="SkinController.h" />
+    <ClInclude Include="MeshController.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stdafx.h" />
@@ -483,6 +483,7 @@
     <ClCompile Include="DeferredRenderer.cpp" />
     <ClCompile Include="DeferredRendererObjects.cpp" />
     <ClCompile Include="GraphicsTimer.cpp" />
+    <ClCompile Include="MeshLoader.cpp" />
     <ClCompile Include="MultiTexture.cpp" />
     <ClCompile Include="ObjLoader.cpp" />
     <ClCompile Include="PBREnvironment.cpp" />
@@ -493,8 +494,7 @@
     <ClCompile Include="RenderSkin.cpp" />
     <ClCompile Include="RenderTarget.cpp" />
     <ClCompile Include="Resources.cpp" />
-    <ClCompile Include="SkinController.cpp" />
-    <ClCompile Include="SkinLoader.cpp" />
+    <ClCompile Include="MeshController.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

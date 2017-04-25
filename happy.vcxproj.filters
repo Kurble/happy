@@ -41,9 +41,6 @@
     <ClInclude Include="Animation.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="SkinController.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="TextureHandle.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -87,6 +84,9 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="WidgetBuffer.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshController.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
@@ -204,9 +204,6 @@
     <ClCompile Include="Resources.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="SkinLoader.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="AnimationLoader.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -214,9 +211,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Animation.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="SkinController.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Canvas.cpp">
@@ -244,6 +238,12 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="MeshLoader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshController.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="DeferredShadingPBR.hlsli">

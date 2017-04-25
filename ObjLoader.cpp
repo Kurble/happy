@@ -3,7 +3,7 @@
 
 namespace happy
 {
-	unique_ptr<RenderMesh> loadRenderMeshFromObjFile(RenderingContext *pRenderContext, fs::path objPath)
+	shared_ptr<RenderMesh> loadRenderMeshFromObjFile(RenderingContext *pRenderContext, fs::path objPath)
 	{
 		ifstream fin(objPath.c_str());
 
@@ -181,7 +181,7 @@ namespace happy
 			}
 		}
 
-		unique_ptr<RenderMesh> mesh = make_unique<RenderMesh>();
+		shared_ptr<RenderMesh> mesh = make_shared<RenderMesh>();
 		mesh->setGeometry<VertexPositionNormalTangentBinormalTexcoord, Index16>(
 			pRenderContext, 
 			vertices.data(), vertices.size(), 

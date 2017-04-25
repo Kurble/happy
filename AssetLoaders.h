@@ -10,11 +10,11 @@ namespace fs = std::experimental::filesystem;
 
 namespace happy
 {
-	unique_ptr<RenderMesh> loadRenderMeshFromObjFile(RenderingContext *pRenderContext, fs::path filePath);
+	shared_ptr<RenderMesh> loadRenderMeshFromObjFile(RenderingContext *pRenderContext, fs::path filePath);
 
-	unique_ptr<RenderMesh> loadRenderMeshFromHappyFile(RenderingContext *pRenderContext, fs::path filePath);
+	shared_ptr<RenderMesh> loadRenderMeshFromHappyFile(RenderingContext *pRenderContext, fs::path filePath);
 
-	unique_ptr<Animation>  loadAnimationFromDanceFile(RenderingContext *pRenderContext, fs::path filePath);
+	Animation              loadAnimationFromDanceFile(RenderingContext *pRenderContext, fs::path filePath);
 
 	ComPtr<ID3D11ShaderResourceView> loadCubemap(RenderingContext *pRenderContext, fs::path filePath[6]);
 

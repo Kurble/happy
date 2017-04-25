@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 			if (option == "-fm") fm = val;
 		}
 
-		if (skin.size() || anim.size())
+		if (mesh.size() || skin.size() || anim.size())
 			if (int rv = fbxImporter(fbx, mesh, skin, anim, scale)) return rv;
 		if (texture.size()) 
 			if (int rv = texImporter(nm, rm, fm, texture)) return rv;

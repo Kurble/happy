@@ -51,7 +51,7 @@ namespace happy
 			}
 		}
 
-		if (multitextureDef.empty())
+		if (!multitextureDef.has_extension())
 			return textureless;
 
 		//-----------------------------------------------
@@ -73,7 +73,7 @@ namespace happy
 
 			if (!found)
 			{
-				textured = make_shared<RenderMesh>(*textureless);
+				textured = textureless->clone();
 				textured->setMultiTexture(getMultiTexture(multitextureDef));
 
 				m_CachedTexturedRenderMeshes.emplace_back(filePath, multitextureDef, textured);
@@ -83,9 +83,9 @@ namespace happy
 		return textured;
 	}
 
-	shared_ptr<Animation> Resources::getAnimation(const fs::path &animPath)
+	Animation Resources::getAnimation(const fs::path &animPath)
 	{
-		shared_ptr<Animation> result;
+		Animation result;
 		bool found = false;
 
 		for (auto it = m_CachedAnimations.begin(); it != m_CachedAnimations.end(); ++it)

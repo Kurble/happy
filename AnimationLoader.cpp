@@ -10,7 +10,7 @@ namespace happy
 		return val;
 	}
 
-	unique_ptr<Animation> loadAnimationFromDanceFile(RenderingContext *pRenderContext, fs::path animPath)
+	Animation loadAnimationFromDanceFile(RenderingContext *pRenderContext, fs::path animPath)
 	{
 		std::ifstream fin(animPath.c_str(), std::ios::in | std::ios::binary);
 
@@ -30,8 +30,8 @@ namespace happy
 			}
 		}
 
-		unique_ptr<Animation> anim = make_unique<Animation>();
-		anim->setAnimation(pRenderContext, animation, boneCount, frameCount, framerate);
+		Animation anim;
+		anim.setAnimation(pRenderContext, animation, boneCount, frameCount, framerate);
 		return anim;
 	}
 }

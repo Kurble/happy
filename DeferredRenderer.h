@@ -2,7 +2,7 @@
 
 #include "RenderingContext.h"
 #include "RenderMesh.h"
-#include "SkinController.h"
+#include "MeshController.h"
 #include "PBREnvironment.h"
 #include "TextureHandle.h"
 #include "PostProcessItem.h"

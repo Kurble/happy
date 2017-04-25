@@ -35,7 +35,7 @@ namespace happy
 
 		shared_ptr<RenderMesh> getMesh(const fs::path &filePath, const fs::path &multitextureDef);
 
-		shared_ptr<Animation> getAnimation(const fs::path &animationPath);
+		Animation getAnimation(const fs::path &animationPath);
 
 		TextureHandle getCubemap(const fs::path filePath[6]);
 
@@ -99,7 +99,7 @@ namespace happy
 		vector<pair<fs::path, ComPtr<ID3D11ShaderResourceView>>> m_CachedTextures;
 		vector<pair<fs::path, MultiTexture>> m_CachedMultiTextures;
 		vector<pair<fs::path, shared_ptr<RenderMesh>>> m_CachedRenderMeshes;
-		vector<pair<fs::path, shared_ptr<Animation>>> m_CachedAnimations;
 		vector<tuple<fs::path, fs::path, shared_ptr<RenderMesh>>> m_CachedTexturedRenderMeshes;
+		vector<pair<fs::path, Animation>> m_CachedAnimations;
 	};
 }

@@ -1,6 +1,7 @@
-#include "SkinController.h"
 #include "stdafx.h"
-#include "SkinController.h"
+#include "MeshController.h"
+#include "RenderQueue.h"
+#include "RenderSkin.h"
 
 #include <algorithm>
 
@@ -16,9 +17,19 @@ namespace happy
 		return target;
 	}
 
-	void SkinController::setSkin(RenderSkin &skin)
+	void MeshController::setMesh(shared_ptr<RenderMesh> mesh)
 	{
-		m_RenderItem.m_Skin = skin;
+		m_Mesh = mesh;
+
+		if (auto skin = dynamic_cast<RenderSkin*>(mesh.get()))
+		{
+			m_RenderItem.m_Skin = *skin;
+			m_Static = false;
+		}
+		else
+		{
+			m_Static = true;
+		}
 
 		m_RenderItem.m_Alpha = 1.0f;
 		m_RenderItem.m_AnimationCount = 1;
@@ -34,17 +45,17 @@ namespace happy
 		m_RenderItem.m_PreviousWorld = m_RenderItem.m_CurrentWorld;
 	}
 
-	void SkinController::setAlpha(float alpha)
+	void MeshController::setAlpha(float alpha)
 	{
 		m_RenderItem.m_Alpha = alpha;
 	}
 
-	void SkinController::setRenderGroups(StencilMask &groups)
+	void MeshController::setRenderGroups(StencilMask &groups)
 	{
 		m_RenderItem.m_Groups = groups;
 	}
 
-	int SkinController::addAnimation(string name, Animation animation)
+	int MeshController::addAnimation(string name, Animation animation)
 	{
 		anim_state state;
 
@@ -62,7 +73,7 @@ namespace happy
 		return (int)(m_States.size() - 1);
 	}
 
-	int SkinController::getAnimationIndex(string name)
+	int MeshController::getAnimationIndex(string name)
 	{
 		for (unsigned index = 0; index < m_States.size(); ++index)
 		{
@@ -71,12 +82,12 @@ namespace happy
 		return -1;
 	}
 
-	void SkinController::setAnimationTimer(int id, system_clock::time_point start, system_clock::duration offset)
+	void MeshController::setAnimationTimer(int id, system_clock::time_point start, system_clock::duration offset)
 	{
 		m_States[id].m_Timer = start - offset;
 	}
 
-	void SkinController::setAnimationBlend(int id, float blend, system_clock::time_point start, float duration)
+	void MeshController::setAnimationBlend(int id, float blend, system_clock::time_point start, float duration)
 	{
 		auto &s = m_States[id];
 
@@ -86,12 +97,12 @@ namespace happy
 		s.m_BlendDuration = duration;
 	}
 
-	void SkinController::setAnimationSpeed(int id, float multiplier)
+	void MeshController::setAnimationSpeed(int id, float multiplier)
 	{
 		m_States[id].m_SpeedMultiplier = multiplier;
 	}
 
-	void SkinController::resetAllAnimationBlends(system_clock::time_point start, float duration)
+	void MeshController::resetAllAnimationBlends(system_clock::time_point start, float duration)
 	{
 		for (auto &s : m_States)
 		{
@@ -102,12 +113,12 @@ namespace happy
 		}
 	}
 
-	bb::mat4 &SkinController::worldMatrix()
+	bb::mat4 &MeshController::worldMatrix()
 	{
 		return m_RenderItem.m_CurrentWorld;
 	}
 
-	void SkinController::update(system_clock::time_point time)
+	void MeshController::update(system_clock::time_point time)
 	{
 		m_RenderItem.m_PreviousBlendAnimation = m_RenderItem.m_CurrentBlendAnimation;
 		m_RenderItem.m_PreviousBlendFrame = m_RenderItem.m_CurrentBlendFrame;
@@ -146,8 +157,11 @@ namespace happy
 		m_RenderItem.m_CurrentBlendAnimation = m_RenderItem.m_CurrentBlendAnimation * (1.0f / total);
 	}
 
-	const SkinRenderItem& SkinController::getRenderItem() const
-	{		
-		return m_RenderItem;
+	void MeshController::render(RenderQueue &queue) const
+	{
+		if (m_Static)
+			queue.pushRenderMesh(*m_Mesh, m_RenderItem.m_CurrentWorld, m_RenderItem.m_Groups);
+		else
+			queue.pushSkinRenderItem(m_RenderItem);
 	}
 }

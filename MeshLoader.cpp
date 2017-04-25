@@ -60,12 +60,10 @@ namespace happy
 		mesh->setGeometry(context, vertices.data(), vertices.size(), indices.data(), indices.size());
 	}
 
-	unique_ptr<RenderMesh> loadRenderMeshFromHappyFile(RenderingContext *pRenderContext, fs::path filePath)
+	shared_ptr<RenderMesh> loadRenderMeshFromHappyFile(RenderingContext *pRenderContext, fs::path filePath)
 	{
 		std::ifstream fin(filePath.c_str(), std::ios::in | std::ios::binary);
-
-		unique_ptr<RenderMesh> result;
-
+		
 		uint32_t version = read<uint32_t>(fin);
 		version;
 		uint32_t type = read<uint32_t>(fin);
@@ -74,19 +72,19 @@ namespace happy
 		{
 		case 0: // static mesh
 		{
-			auto mesh = make_unique<RenderMesh>();
+			RenderMesh mesh;
 
 			//-------------------------------
 			// Geometry
-			loadGeometry<RenderMesh, VertexPositionNormalTangentBinormalTexcoord, Index16>(pRenderContext, mesh.get(), fin);
+			loadGeometry<RenderMesh, VertexPositionNormalTangentBinormalTexcoord, Index16>(pRenderContext, &mesh, fin);
 
-			result = move(mesh);
+			return make_shared<RenderMesh>(mesh);
 		}
 		break;
 
 		case 1: // skin mesh
 		{
-			auto mesh = make_unique<RenderSkin>();
+			RenderSkin mesh;
 
 			//-------------------------------
 			// Bind pose
@@ -99,13 +97,13 @@ namespace happy
 				bind.inverse();
 				bindPose.push_back(bind);
 			}
-			mesh->setBindPose(pRenderContext, bindPose);
+			mesh.setBindPose(pRenderContext, bindPose);
 
 			//-------------------------------
 			// Geometry
-			loadGeometry<RenderSkin, VertexPositionNormalTangentBinormalTexcoordIndicesWeights, Index16>(pRenderContext, mesh.get(), fin);
+			loadGeometry<RenderSkin, VertexPositionNormalTangentBinormalTexcoordIndicesWeights, Index16>(pRenderContext, &mesh, fin);
 			
-			result = move(mesh);
+			return make_shared<RenderSkin>(mesh);
 		}
 		break;
 
@@ -115,7 +113,5 @@ namespace happy
 		}
 		break;
 		}
-
-		return result;
 	}
 }
