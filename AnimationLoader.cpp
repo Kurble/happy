@@ -10,7 +10,7 @@ namespace happy
 		return val;
 	}
 
-	Animation loadAnimFromFile(RenderingContext *pRenderContext, fs::path animPath)
+	unique_ptr<Animation> loadAnimationFromDanceFile(RenderingContext *pRenderContext, fs::path animPath)
 	{
 		std::ifstream fin(animPath.c_str(), std::ios::in | std::ios::binary);
 
@@ -26,13 +26,12 @@ namespace happy
 			for (unsigned b = 0; b < boneCount; ++b)
 			{
 				bb::mat4 pose = read<bb::mat4>(fin);
-				//pose.swapHandedness();
 				animation.push_back(pose);
 			}
 		}
 
-		Animation anim;
-		anim.setAnimation(pRenderContext, animation, boneCount, frameCount, framerate);
+		unique_ptr<Animation> anim = make_unique<Animation>();
+		anim->setAnimation(pRenderContext, animation, boneCount, frameCount, framerate);
 		return anim;
 	}
 }

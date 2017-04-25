@@ -62,6 +62,13 @@ void calculateTangents(happy::VertexPositionNormalTangentBinormalTexcoordIndices
 	}
 }
 
+void loadStatic(FbxMesh *mesh, string &staticOut)
+{
+	vector<happy::VertexPositionNormalTangentBinormalTexcoord> uniqueVertices;
+
+	//
+}
+
 void loadSkin(FbxMesh *mesh, string &skinOut)
 {
 	vector<happy::VertexPositionNormalTangentBinormalTexcoordIndicesWeights> uniqueVertices;
@@ -98,6 +105,8 @@ void loadSkin(FbxMesh *mesh, string &skinOut)
 		}
 
 		fout.open(skinOut.c_str(), ios::out | ios::binary);
+		fout.write((const char*)&IMPORTER_VERSION, sizeof(uint32_t));
+		fout.write((const char*)&MESHTYPE_SKIN, sizeof(uint32_t));
 		fout.write((const char*)&boneCount, sizeof(uint32_t));
 
 		for (unsigned boneIndex = 0; boneIndex < boneCount; ++boneIndex)
@@ -296,7 +305,7 @@ void loadAnim(FbxScene *scene, FbxMesh *mesh, string &animOut)
 	}
 }
 
-void loadNode(FbxScene *scene, FbxNode *fbxNode, string &skinOut, string &animOut)
+void loadNode(FbxScene *scene, FbxNode *fbxNode, string &staticOut, string &skinOut, string &animOut)
 {
 	int numAttributes = fbxNode->GetNodeAttributeCount();
 	for (int i = 0; i < numAttributes; i++)
@@ -310,6 +319,8 @@ void loadNode(FbxScene *scene, FbxNode *fbxNode, string &skinOut, string &animOu
 		{
 		case FbxNodeAttribute::eMesh:
 		{
+			if (staticOut.length() > 0) loadStatic((FbxMesh*)nodeAttributeFbx, staticOut);
+
 			if (skinOut.length() > 0) loadSkin((FbxMesh*)nodeAttributeFbx, skinOut);
 
 			if (animOut.length() > 0) loadAnim(scene, (FbxMesh*)nodeAttributeFbx, animOut);
@@ -326,7 +337,7 @@ void loadNode(FbxScene *scene, FbxNode *fbxNode, string &skinOut, string &animOu
 	}
 }
 
-int fbxImporter(string fbxPath, string skinOut, string animOut, float scale)
+int fbxImporter(string fbxPath, string staticOut, string skinOut, string animOut, float scale)
 {
 	FbxManager    *sdk = FbxManager::Create();
 	FbxIOSettings *ios = FbxIOSettings::Create(sdk, "");
@@ -361,6 +372,6 @@ int fbxImporter(string fbxPath, string skinOut, string animOut, float scale)
 	options.mConvertCameraClipPlanes = true;
 	dstFsu.ConvertScene(scene, options);
 
-	loadNode(scene, scene->GetRootNode(), skinOut, animOut);
+	loadNode(scene, scene->GetRootNode(), staticOut, skinOut, animOut);
 	return 0;
 }

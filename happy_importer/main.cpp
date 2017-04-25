@@ -8,6 +8,7 @@ int main(int argc, char** argv)
 		string exec = argv[0];
 
 		string fbx = "";
+		string mesh = "";
 		string skin = "";
 		string anim = "";
 
@@ -24,6 +25,7 @@ int main(int argc, char** argv)
 			string option = argv[o];
 
 			// outputs
+			if (option == "-m") mesh = val;
 			if (option == "-s") skin = val;
 			if (option == "-a") anim = val;
 			if (option == "-t") texture = val;
@@ -37,7 +39,7 @@ int main(int argc, char** argv)
 		}
 
 		if (skin.size() || anim.size())
-			if (int rv = fbxImporter(fbx, skin, anim, scale)) return rv;
+			if (int rv = fbxImporter(fbx, mesh, skin, anim, scale)) return rv;
 		if (texture.size()) 
 			if (int rv = texImporter(nm, rm, fm, texture)) return rv;
 
@@ -47,6 +49,7 @@ int main(int argc, char** argv)
 	{
 		cout << "usage: happy_importer \\" << endl;
 		cout << "   [-fbx <input>] \\" << endl; 
+		cout << "   [-m <mesh output>] \\" << endl;
 		cout << "   [-s <skin output>] \\" << endl; 
 		cout << "   [-a <anim output>] \\" << endl; 
 		cout << "   [-nm <normal map input>] \\" << endl; 
@@ -57,9 +60,10 @@ int main(int argc, char** argv)
 		std::string base = "C:\\Users\\re-lion\\Documents\\Code\\rts\\";
 
 		fbxImporter(
-			base + "max\\Buildings\\MainBuilding\\export\\Main_Building_Investor.FBX",
-			base + "rts_resources\\Buildings\\SteamBase\\skin.skin",
-			base + "rts_resources\\Buildings\\SteamBase\\idle.anim", 1.0f);
+			base + "rts_export_scripts\\mainBuilding2.FBX",
+			base + "rts_resources\\Buildings\\SteamBase\\mesh.happy",
+			base + "rts_resources\\Buildings\\SteamBase\\skin.happy",
+			base + "rts_resources\\Buildings\\SteamBase\\idle.dance", 1.0f);
 
 		cin.get();
 

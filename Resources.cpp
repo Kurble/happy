@@ -14,67 +14,78 @@ namespace happy
 		return m_pRenderContext;
 	}
 
-	RenderMesh Resources::getRenderMesh(const fs::path &objPath, const fs::path &multitextureDef)
+	shared_ptr<RenderMesh> Resources::getMesh(const fs::path &filePath, const fs::path &multitextureDef)
 	{
-		RenderMesh result;
-		bool found = false;
-
-		for (auto it = m_CachedRenderMeshes.begin(); it != m_CachedRenderMeshes.end(); ++it)
+		//-----------------------------------------------
+		// find render mesh without texture
+		shared_ptr<RenderMesh> textureless;
 		{
-			auto &cached = *it;
-			if (cached.first == objPath)
+			bool found = false;
+
+			for (auto it = m_CachedRenderMeshes.begin(); it != m_CachedRenderMeshes.end(); ++it)
 			{
-				result = cached.second;
-				found = true;
+				auto &cached = *it;
+				if (cached.first == filePath)
+				{
+					textureless = cached.second;
+					found = true;
+				}
+			}
+
+			if (!found)
+			{
+				if (filePath.extension() == ".obj")
+				{
+					textureless = loadRenderMeshFromObjFile(m_pRenderContext, m_BasePath / filePath);
+				}
+				else if (filePath.extension() == ".happy")
+				{
+					textureless = loadRenderMeshFromHappyFile(m_pRenderContext, m_BasePath / filePath);
+				}
+				else
+				{
+					throw std::exception("invalid file format for render mesh");
+				}
+
+				m_CachedRenderMeshes.emplace_back(filePath, textureless);
 			}
 		}
 
-		if (!found)
-		{
-			result = loadRenderMeshFromObj(m_pRenderContext, m_BasePath / objPath);
-			m_CachedRenderMeshes.emplace_back(objPath, result);
-		}
-		
-		if (!multitextureDef.empty())
-		{
-			result.setMultiTexture(getMultiTexture(multitextureDef));
-		}
+		if (multitextureDef.empty())
+			return textureless;
 
-		return result;
-	}
-
-	RenderSkin Resources::getSkin(const fs::path &skinPath, const fs::path &multitextureDef)
-	{
-		RenderSkin result;
-		bool found = false;
-
-		for (auto it = m_CachedRenderSkins.begin(); it != m_CachedRenderSkins.end(); ++it)
+		//-----------------------------------------------
+		// find render mesh with texture
+		shared_ptr<RenderMesh> textured;
 		{
-			auto &cached = *it;
-			if (cached.first == skinPath)
+			bool found = false;
+
+			for (auto it = m_CachedTexturedRenderMeshes.begin(); it != m_CachedTexturedRenderMeshes.end(); ++it)
 			{
-				result = cached.second;
-				found = true;
+				auto &cached = *it;
+				if (get<0>(cached) == filePath &&
+					get<1>(cached) == multitextureDef)
+				{
+					textured = get<2>(cached);
+					found = true;
+				}
+			}
+
+			if (!found)
+			{
+				textured = make_shared<RenderMesh>(*textureless);
+				textured->setMultiTexture(getMultiTexture(multitextureDef));
+
+				m_CachedTexturedRenderMeshes.emplace_back(filePath, multitextureDef, textured);
 			}
 		}
 
-		if (!found)
-		{
-			result = loadSkinFromFile(m_pRenderContext, m_BasePath / skinPath);
-			m_CachedRenderSkins.emplace_back(skinPath, result);
-		}
-
-		if (!multitextureDef.empty())
-		{
-			result.setMultiTexture(getMultiTexture(multitextureDef));
-		}
-		
-		return result;
+		return textured;
 	}
 
-	Animation Resources::getAnimation(const fs::path &animPath)
+	shared_ptr<Animation> Resources::getAnimation(const fs::path &animPath)
 	{
-		Animation result;
+		shared_ptr<Animation> result;
 		bool found = false;
 
 		for (auto it = m_CachedAnimations.begin(); it != m_CachedAnimations.end(); ++it)
@@ -89,7 +100,7 @@ namespace happy
 
 		if (!found)
 		{
-			result = loadAnimFromFile(m_pRenderContext, m_BasePath / animPath);
+			result = loadAnimationFromDanceFile(m_pRenderContext, m_BasePath / animPath);
 			m_CachedAnimations.emplace_back(animPath, result);
 		}
 		return result;
