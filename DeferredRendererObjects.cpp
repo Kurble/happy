@@ -360,8 +360,8 @@ namespace happy
 		// Noise texture
 		{
 			D3D11_TEXTURE2D_DESC desc;
-			desc.Width = 4;
-			desc.Height = 4;
+			desc.Width = 64;
+			desc.Height = 64;
 			desc.MipLevels = 1;
 			desc.ArraySize = 1;
 			desc.Format = DXGI_FORMAT_R8G8_UNORM;
@@ -372,7 +372,7 @@ namespace happy
 			desc.CPUAccessFlags = 0;
 			desc.MiscFlags = 0;
 
-			unsigned char data[4 * 4 * 2];
+			unsigned char data[64 * 64 * 2];
 
 			D3D11_SUBRESOURCE_DATA initData;
 			initData.pSysMem = data;

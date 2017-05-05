@@ -10,8 +10,8 @@ cbuffer CBufferSSAO: register(b2)
 	float3 g_SampleKernel[512];
 };
 
-static const uint  g_uNoiseSize = 4;
-static const float g_fNoiseSize = 4.0f;
+static const uint  g_uNoiseSize = 64;
+static const float g_fNoiseSize = 64.0f;
 
 SamplerState       g_ScreenSampler : register(s0);
 

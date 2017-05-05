@@ -266,19 +266,22 @@ namespace bb
 		if (tymax < tmax)
 			tmax = tymax;
 
-		float tzmin = (aa.z - ray.p0.z) / dir.z;
-		float tzmax = (bb.z - ray.p0.z) / dir.z;
+		if (dir.z)
+		{
+			float tzmin = (aa.z - ray.p0.z) / dir.z;
+			float tzmax = (bb.z - ray.p0.z) / dir.z;
 
-		if (tzmin > tzmax) swap(tzmin, tzmax);
+			if (tzmin > tzmax) swap(tzmin, tzmax);
 
-		if ((tmin > tzmax) || (tzmin > tmax))
-			return false;
+			if ((tmin > tzmax) || (tzmin > tmax))
+				return false;
 
-		if (tzmin > tmin)
-			tmin = tzmin;
+			if (tzmin > tmin)
+				tmin = tzmin;
 
-		if (tzmax < tmax)
-			tmax = tzmax;
+			if (tzmax < tmax)
+				tmax = tzmax;
+		}
 
 		if (result)
 		{
