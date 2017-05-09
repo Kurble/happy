@@ -161,6 +161,7 @@
     <ClInclude Include="mat4.h" />
     <ClInclude Include="math_util.h" />
     <ClInclude Include="ray.h" />
+    <ClInclude Include="serialize.h" />
     <ClInclude Include="spatial_hash_map.h" />
     <ClInclude Include="store.h" />
     <ClInclude Include="intersection.h" />
@@ -173,6 +174,7 @@
     <ClCompile Include="halton.cpp" />
     <ClCompile Include="mat3.cpp" />
     <ClCompile Include="mat4.cpp" />
+    <ClCompile Include="serialize.cpp" />
     <ClCompile Include="spatial_hash_map.cpp" />
     <ClCompile Include="store.cpp" />
     <ClCompile Include="intersection.cpp" />
