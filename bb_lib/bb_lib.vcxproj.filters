@@ -15,6 +15,7 @@
     <ClInclude Include="halton.h" />
     <ClInclude Include="geometry_util.h" />
     <ClInclude Include="serialize.h" />
+    <ClInclude Include="serialize_net.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vec2.cpp" />

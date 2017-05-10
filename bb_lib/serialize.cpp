@@ -1,62 +1,69 @@
 #include "serialize.h"
+#include "serialize_net.h"
 
 #include <fstream>
 
 namespace bb
 {
-	void serialize(std::string& value, BinarySerializer &s)
-	{
-		size_t size = value.size();
-		serialize(size, s);
-		s.put(value.data(), value.size());
-	}
-
-	void serialize(std::string& value, BinaryDeserializer &s)
-	{
-		size_t size;
-		serialize(size, s);
-		value.resize(size);
-		s.get(&value[0], value.size());
-	}
-
 	struct TestStruct
 	{
 		std::string a;
 		float b;
 	};
 
-	template <typename Serializer>
-	void serialize(TestStruct& x, Serializer& s)
+	template <typename Visitor>
+	void serialize(TestStruct& x, Visitor& visit)
 	{
-		serialize(x.a, s);
-		serialize(x.b, s);
+		visit("a", x.a);
+		visit("b", x.b);
+	}
+
+	struct OuterTestStruct
+	{
+		std::vector<std::string> henk;
+		std::map<int, TestStruct> dude;
+	};
+
+	template <typename Visitor>
+	void serialize(OuterTestStruct& x, Visitor& visit)
+	{
+		visit("henk", x.henk);
+		visit("dude", x.dude);
 	}
 
 	void serialize_sanity_check()
 	{
 		{
 			std::ofstream o("test.bb", std::ios::binary);
-			BinarySerializer test = o;
+			BinarySerializer binarySerialize = o;
 
+			OuterTestStruct test;
+			test.henk = { "aap", "noot", "mies" };
+			test.dude[2] = { "derp", 16.0f };
+			serialize(test, binarySerialize);
 
-			std::vector<std::string> vectorOfStrings = { "aap", "noot", "mies" };
+			test.dude[3] = { "lol", 0.0f };
 
-			std::map<int, TestStruct> mapOfTestStruct;
-			mapOfTestStruct[2] = { "derp", 16.0f };
+			tag_modified(test, "dude", o);
 
-			serialize(vectorOfStrings, test);
-			serialize(mapOfTestStruct, test);
+			std::ofstream ot("test.txt");
+			TextSerializer textSerialize = ot;
+			serialize(test, textSerialize);
 		}
 
 		{
 			std::ifstream i("test.bb", std::ios::binary);
-			BinaryDeserializer test = i;
+			OuterTestStruct test;
 
-			std::vector<std::string> vectorOfStrings;
-			std::map<int, TestStruct> mapOfTestStruct;
+			{
+				BinaryDeserializer binaryDeserialize = i;
+				serialize(test, binaryDeserialize);
+			}
 
-			serialize(vectorOfStrings, test);
-			serialize(mapOfTestStruct, test);
+			{
+				UpdateDeserializer updatePack(i);
+				serialize(test, updatePack);
+			}
 
 			void();
 		}

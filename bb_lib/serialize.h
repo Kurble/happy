@@ -11,26 +11,17 @@ namespace bb
 	void serialize_sanity_check();
 
 	//------------------------------------------------------------------------
-	// Tag system
-	struct Tag
-	{
-		const std::string m_Name;
-		const uint32_t    m_ID;
-
-		static Tag make(const char* name);
-
-	private:
-		Tag(std::string name, uint32_t id)
-			: m_Name(name)
-			, m_ID(id) {}
-	};
-
-	//------------------------------------------------------------------------
 	// Generic binary serializer
 	class BinarySerializer
 	{
 	public:
 		BinarySerializer(std::ostream &stream) :m_stream(stream) { }
+
+		template <class T>
+		void operator()(const char*, T& x)
+		{
+			serialize(x, *this);
+		}
 
 		template <typename T> void put(const T& val)
 		{
@@ -47,11 +38,95 @@ namespace bb
 	};
 
 	//------------------------------------------------------------------------
+	// Generic text serializer
+	class TextSerializer
+	{
+	public:
+		TextSerializer(std::ostream &stream) 
+			: m_stream(stream)
+			, m_indentation(0) { }
+
+		template <class T>
+		void operator()(const char* tag, T& x)
+		{
+			line() << tag << " {";
+			indent();
+			serialize(x, *this);
+			unindent();
+			line() << "}";
+		}
+
+		template<typename T>
+		void operator()(const char* tag, std::vector<T>& x)
+		{
+			line() << tag << " ";
+			serialize(x, *this);
+		}
+
+		template<typename K, typename V>
+		void operator()(const char* tag, std::map<K,V>& x)
+		{
+			line() << tag << " ";
+			serialize(x, *this);
+		}
+
+		#define VISIT_FUNDAMENTAL(TYPE)\
+		template<> \
+		void operator()(const char* tag, TYPE& value)\
+		{\
+			line() << tag << " " << value;\
+		}\
+		template<> \
+		void operator()(const char* tag, const TYPE& value)\
+		{\
+			line() << tag << " " << value;\
+		}
+		VISIT_FUNDAMENTAL(int8_t)
+		VISIT_FUNDAMENTAL(uint8_t)
+		VISIT_FUNDAMENTAL(int16_t)
+		VISIT_FUNDAMENTAL(uint16_t)
+		VISIT_FUNDAMENTAL(int32_t)
+		VISIT_FUNDAMENTAL(uint32_t)
+		VISIT_FUNDAMENTAL(int64_t)
+		VISIT_FUNDAMENTAL(uint64_t)
+		VISIT_FUNDAMENTAL(float)
+		VISIT_FUNDAMENTAL(double)
+		VISIT_FUNDAMENTAL(std::string)
+		#undef VISIT_FUNDAMENTAL
+
+		std::ostream& stream() 
+		{ 
+			return m_stream; 
+		}
+
+		std::ostream& line()
+		{
+			m_stream << std::endl;
+			for (int i = 0; i < m_indentation; ++i)
+				m_stream << "    ";
+			return m_stream;
+		}
+
+		void indent() { m_indentation++; }
+		void unindent() { m_indentation--; }
+
+	private:
+		std::ostream &m_stream;
+		int m_indentation;
+	};
+
+	//------------------------------------------------------------------------
 	// Generic binary deserializer
 	class BinaryDeserializer
 	{
 	public:
 		BinaryDeserializer(std::istream &stream) :m_stream(stream) { }
+
+		template <class T>
+		void operator()(const char*, T& x)
+		{
+			serialize(x, *this);
+		}
 
 		template <typename T> void get(T& val)
 		{
@@ -69,33 +144,51 @@ namespace bb
 
 	//------------------------------------------------------------------------
 	// Fundamental serializers
-	#define INSTANTIATE_SERIALIZE_FUNDAMENTAL(TYPE)\
-	inline void serialize(TYPE value, BinarySerializer &s)\
-	{\
-		s.put(value); \
-	}\
-	inline void serialize(TYPE& value, BinaryDeserializer &s)\
-	{\
-		s.get(value); \
+	#define SERIALIZE_FUNDAMENTAL(TYPE)\
+		inline void serialize(TYPE  value, BinarySerializer &s)\
+		{ \
+			s.put(value); \
+		} \
+		inline void serialize(TYPE& value, BinaryDeserializer &s)\
+		{ \
+			s.get(value); \
+		}
+	SERIALIZE_FUNDAMENTAL(int8_t)
+	SERIALIZE_FUNDAMENTAL(uint8_t)
+	SERIALIZE_FUNDAMENTAL(int16_t)
+	SERIALIZE_FUNDAMENTAL(uint16_t)
+	SERIALIZE_FUNDAMENTAL(int32_t)
+	SERIALIZE_FUNDAMENTAL(uint32_t)
+	SERIALIZE_FUNDAMENTAL(int64_t)
+	SERIALIZE_FUNDAMENTAL(uint64_t)
+	SERIALIZE_FUNDAMENTAL(float)
+	SERIALIZE_FUNDAMENTAL(double)
+	#undef SERIALIZE_FUNDAMENTAL
+
+	//------------------------------------------------------------------------
+	// string serialize
+	inline 
+	void serialize(std::string& value, BinarySerializer &s)
+	{
+		size_t size = value.size();
+		serialize(size, s);
+		s.put(value.data(), value.size());
 	}
-
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(int8_t)
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(uint8_t)
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(int16_t)
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(uint16_t)
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(int32_t)
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(uint32_t)
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(int64_t)
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(uint64_t)
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(float)
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(double)
-	INSTANTIATE_SERIALIZE_FUNDAMENTAL(bool)
-
-	#undef DECLARE_SERIALIZE_FUNDAMENTAL
-
-	void serialize(std::string& value, BinarySerializer &s);
-	void serialize(std::string& value, BinaryDeserializer &s);
-
+	inline
+	void serialize(std::string& value, TextSerializer &s)
+	{
+		s.stream() << "\"" << value << "\"";
+	}
+	//------------------------------------------------------------------------
+	// string deserialize
+	inline 
+	void serialize(std::string& value, BinaryDeserializer &s)
+	{
+		size_t size;
+		serialize(size, s);
+		value.resize(size);
+		s.get(&value[0], value.size());
+	}
 	//------------------------------------------------------------------------
 	// vector serialize
 	template<typename T>
@@ -108,6 +201,21 @@ namespace bb
 			serialize(x[i], s);
 		}
 	}
+	template<typename T>
+	void serialize(std::vector<T> &x, TextSerializer &s)
+	{
+		s.stream() << "[";
+		s.indent();
+		for (auto &elem : x)
+		{
+			s.line();
+			serialize(elem, s);
+		}
+		s.unindent();
+		s.line() << "]";
+	}
+	//------------------------------------------------------------------------
+	// vector deserialize
 	template<typename T>
 	void serialize(std::vector<T> &x, BinaryDeserializer &s)
 	{
@@ -122,22 +230,14 @@ namespace bb
 			serialize(x[i], s);
 		}
 	}
-
 	//------------------------------------------------------------------------
-	// pair serialize
-	template<typename A, typename B>
-	void serialize(std::pair<A, B> &x, BinarySerializer &s)
+	// pair serialize/deserialize
+	template<typename A, typename B, typename Visitor>
+	void serialize(std::pair<A, B> &x, Visitor &visit)
 	{
-		serialize(x.first, s);
-		serialize(x.second, s);
+		visit("first", x.first);
+		visit("second", x.second);
 	}
-	template<typename A, typename B>
-	void serialize(std::pair<A, B> &x, BinaryDeserializer &s)
-	{
-		serialize(x.first, s);
-		serialize(x.second, s);
-	}
-
 	//------------------------------------------------------------------------
 	// map serialize
 	template<typename K, typename V>
@@ -150,6 +250,25 @@ namespace bb
 			serialize(kv, s);
 		}
 	}
+	template<typename K, typename V>
+	void serialize(std::map<K, V> &x, TextSerializer &s)
+	{
+		s.stream() << "[";
+		s.indent();
+		for (auto &elem : x)
+		{
+			s.line() << "{";
+			s.indent();
+			serialize(elem, s);
+			s.unindent();
+			s.line() << "}";
+
+		}
+		s.unindent();
+		s.line() << "]";
+	}
+	//------------------------------------------------------------------------
+	// map deserialize
 	template<typename K, typename V>
 	void serialize(std::map<K, V> &x, BinaryDeserializer &s)
 	{
