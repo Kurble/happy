@@ -1,4 +1,4 @@
-#include "serialize.h"
+#include "net.hpp"
 
 #include <fstream>
 
@@ -40,14 +40,14 @@ namespace bb
 			OuterTestStruct test;
 			test.henk = { "aap", "noot", "mies" };
 			test.dude[2] = { "derp", 16.0f };
-			net_replace(textSerialize, test);
+			partial::serialize_replace(textSerialize, test);
 
 			std::string obj = "troll";
-			net_vector_push_back(textSerialize, test, "henk", obj);
-			net_vector_erase(textSerialize, test, "henk", 1);
+			partial::serialize_vector_push_back(textSerialize, test, "henk", obj);
+			partial::serialize_vector_erase(textSerialize, test, "henk", 1);
 
 			test.dude[3] = { "lol", 0.0f };
-			net_member_modify(textSerialize, test, "dude");
+			partial::serialize_member_modify(textSerialize, test, "dude");
 		}
 
 		{
@@ -56,10 +56,10 @@ namespace bb
 			TextDeserializer textDeserialize = i;
 			
 			OuterTestStruct test;
-			net_receive(textDeserialize, test);
-			net_receive(textDeserialize, test);
-			net_receive(textDeserialize, test);
-			net_receive(textDeserialize, test);
+			partial::deserialize(textDeserialize, test);
+			partial::deserialize(textDeserialize, test);
+			partial::deserialize(textDeserialize, test);
+			partial::deserialize(textDeserialize, test);
 
 			void();
 		}

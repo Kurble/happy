@@ -14,10 +14,15 @@
     <ClInclude Include="spatial_hash_map.h" />
     <ClInclude Include="halton.h" />
     <ClInclude Include="geometry_util.h" />
-    <ClInclude Include="serialize_net.h" />
-    <ClInclude Include="serialize_binary.h" />
-    <ClInclude Include="serialize.h" />
-    <ClInclude Include="serialize_text.h" />
+    <ClInclude Include="net_context.hpp" />
+    <ClInclude Include="net.hpp" />
+    <ClInclude Include="net_server.hpp" />
+    <ClInclude Include="net_client.hpp" />
+    <ClInclude Include="serialize.hpp" />
+    <ClInclude Include="serialize_binary.hpp" />
+    <ClInclude Include="serialize_partial.hpp" />
+    <ClInclude Include="serialize_text.hpp" />
+    <ClInclude Include="net_node.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vec2.cpp" />

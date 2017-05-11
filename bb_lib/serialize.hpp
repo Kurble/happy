@@ -6,9 +6,9 @@
 #include <vector>
 #include <map>
 
-#include "serialize_binary.h"
-#include "serialize_text.h"
-#include "serialize_net.h"
+#include "serialize_binary.hpp"
+#include "serialize_text.hpp"
+#include "serialize_partial.hpp"
 
 namespace bb
 {
