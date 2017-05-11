@@ -20,11 +20,9 @@ namespace bb
 			};
 
 			struct Unused { };
-
-			struct Unused2 { };
 		}
 
-		template <typename Serializer>
+		template <typename Serializer, typename key_t = Unused, typename val_t = Unused>
 		struct UpdateVisitor
 		{
 		public:
@@ -34,128 +32,104 @@ namespace bb
 			Serializer &ser;
 			std::string &tag;
 			UpdateOp op;
+			key_t key;
+			val_t val;
 
-			template <class T>
-			void operator()(const char* found_tag, T& x)
-			{
-				if (tag.compare(found_tag) == 0)
-					ser(found_tag, x);
-			}
-		};
+			template <typename T> void acquire_val(T&) { /* used in deserialization, will be filled in */ }
+			template <typename T> void acquire_key(T&) { /* used in deserialization, will be filled in */ }
 
-		template <typename Serializer, typename elem_t = Unused>
-		struct VectorVisitor
-		{
-		public:
-			VectorVisitor(Serializer &ser, std::string &tag, UpdateOp op)
-				: ser(ser), tag(tag), op(op) { }
-
-			Serializer &ser;
-			std::string &tag;
-			UpdateOp op;
-			size_t ind;
-			elem_t elem;
+			template <> void acquire_val(val_t& v) { v = val; }
+			template <> void acquire_key(key_t& k) { k = key; }
 
 			template <typename T>
 			void operator()(const char* found_tag, T& x)
 			{
 				if (tag.compare(found_tag) == 0)
 				{
-					throw std::exception("std::vector<E> expected");
+					switch (op)
+					{
+					case UpdateOp::Update:
+					{
+						ser(found_tag, x);
+						break;
+					}
+					default:
+					{
+						throw std::exception("invalid type found");
+					}
+					}
 				}
 			}
 
-			template <typename E> void acquire(E& e) { /* used in deserialization, will be filled in */ }
-
-			template <> void acquire(elem_t& e) { e = elem; }
-
-			template <typename E>
-			void operator()(const char* found_tag, std::vector<E>& x)
+			template <typename T>
+			void operator()(const char* found_tag, std::vector<T>& x)
 			{
 				if (tag.compare(found_tag) == 0)
 				{
 					switch (op)
 					{
-					case UpdateOp::AppendVector:
-					{
-						E e;
-						acquire(e);
-						ser("elem", e);
-						x.push_back(e);
-						break;
-					}
-					case UpdateOp::InsertVector:
-					{
-						E e;
-						acquire(e);
-						ser("index", ind);
-						ser("elem", e);
-						x.insert(x.begin() + ind, e);
-						break;
-					}
+						case UpdateOp::Update:
+						{
+							ser(found_tag, x);
+							break;
+						}
+						case UpdateOp::AppendVector:
+						{
+							T elem; acquire_val(elem);
+							ser("elem", elem);
+							x.push_back(elem);
+							break;
+						}
+						case UpdateOp::InsertVector:
+						{
+							size_t index; acquire_key(index);
+							T elem; acquire_val(elem);
+							ser("index", index);
+							ser("elem", elem);
+							x.insert(x.begin() + index, elem);
+							break;
+						}
 
-					case UpdateOp::EraseVector:
-					{
-						ser("index", ind);
-						x.erase(x.begin() + ind);
-						break;
-					}
+						case UpdateOp::EraseVector:
+						{
+							size_t index; acquire_key(index);
+							ser("index", index);
+							x.erase(x.begin() + index);
+							break;
+						}
 
-					case UpdateOp::ClearVector:
-					{
-						x.clear();
-						break;
-					}
+						case UpdateOp::ClearVector:
+						{
+							x.clear();
+							break;
+						}
 
-					default:
-					{
-						throw std::exception("invalid operation specified");
-						break;
-					}
+						default:
+						{
+							throw std::exception("invalid operation specified");
+							break;
+						}
 					}
 				}
 			}
-		};
 
-		template <typename Serializer, typename key_t = Unused2, typename val_t = Unused>
-		struct MapVisitor
+			template <typename K, typename V>
+			void operator()(const char* found_tag, std::map<K, V>& x)
 			{
-			public:
-				MapVisitor(Serializer &ser, std::string &tag, UpdateOp op)
-					: ser(ser), tag(tag), op(op) { }
-
-				Serializer &ser;
-				std::string &tag;
-				UpdateOp op;
-				key_t key;
-				val_t val;
-
-				template <typename T>
-				void operator()(const char* found_tag, T& x)
+				if (tag.compare(found_tag) == 0)
 				{
-					if (tag.compare(found_tag) == 0)
+					switch (op)
 					{
-						throw std::exception("std::map<key_t, val_t> expected");
-					}
-				}
-
-				template <typename E> void acquire(E& e) { /* used in deserialization, will be filled in */ }
-
-				template <> void acquire(key_t& k) { k = key; }
-				template <> void acquire(val_t& v) { v = val; }
-
-				template <typename K, typename V>
-				void operator()(const char* found_tag, std::map<K, V>& x)
-				{
-					if (tag.compare(found_tag) == 0)
-					{
-						switch (op)
+						case UpdateOp::Update:
 						{
+							ser(found_tag, x);
+							break;
+						}
 						case UpdateOp::InsertMap:
 						{
 							std::pair<K, V> keyval;
-							acquire(keyval.first);
-							acquire(keyval.second);
+							acquire_key(keyval.first);
+							acquire_val(keyval.second);
 							ser("elem", keyval);
 							x.insert(keyval);
 							break;
@@ -163,10 +137,9 @@ namespace bb
 
 						case UpdateOp::EraseMap:
 						{
-							K key;
-							acquire(key);
-							ser("key", key);
-							x.erase(key);
+							K it; acquire_key(it);
+							ser("key", it);
+							x.erase(it);
 							break;
 						}
 
@@ -178,14 +151,13 @@ namespace bb
 
 						default:
 						{
-							throw std::exception("invalid operation specified");
+							throw std::exception("invalid type found");
 							break;
-						}
 						}
 					}
 				}
-			};
-		
+			}
+		};		
 
 		template <typename Serializer, typename T>
 		void deserialize(Serializer& ser, T& object)
@@ -197,40 +169,31 @@ namespace bb
 
 			switch (op)
 			{
-			case UpdateOp::Replace:
-			{
-				ser("root", object);
-				break;
-			}
+				case UpdateOp::Replace:
+				{
+					ser("root", object);
+					break;
+				}
 
-			case UpdateOp::Update:
-			{
-				ser("tag", tag);
-				UpdateVisitor<Serializer> visitor(ser, tag, op);
-				reflect(visitor, object);
-				break;
-			}
+				case UpdateOp::Update:
+				case UpdateOp::AppendVector:
+				case UpdateOp::InsertVector:
+				case UpdateOp::EraseVector:
+				case UpdateOp::ClearVector:
+				case UpdateOp::InsertMap:
+				case UpdateOp::EraseMap:
+				case UpdateOp::ClearMap:
+				{
+					ser("tag", tag);
+					UpdateVisitor<Serializer> visitor(ser, tag, op);
+					reflect(visitor, object);
+					break;
+				}
 
-			case UpdateOp::AppendVector:
-			case UpdateOp::InsertVector:
-			case UpdateOp::EraseVector:
-			case UpdateOp::ClearVector:
-			{
-				ser("tag", tag);
-				VectorVisitor<Serializer> visitor(ser, tag, op);
-				reflect(visitor, object);
-				break;
-			}
-
-			case UpdateOp::InsertMap:
-			case UpdateOp::EraseMap:
-			case UpdateOp::ClearMap:
-			{
-				ser("tag", tag);
-				MapVisitor<Serializer> visitor(ser, tag, op);
-				reflect(visitor, object);
-				break;
-			}
+				default:
+				{
+					throw std::exception("invalid operation");
+				}
 			}
 		}
 
@@ -259,8 +222,8 @@ namespace bb
 		{
 			std::string tag = _tag;
 
-			VectorVisitor<Serializer, E> visitor(ser, tag, UpdateOp::AppendVector);
-			visitor.elem = elem;
+			UpdateVisitor<Serializer, Unused, E> visitor(ser, tag, UpdateOp::AppendVector);
+			visitor.val = elem;
 
 			ser("op", visitor.op);
 			ser("tag", visitor.tag);
@@ -272,9 +235,9 @@ namespace bb
 		{
 			std::string tag = _tag;
 
-			VectorVisitor<Serializer, E> visitor(ser, tag, UpdateOp::InsertVector);
-			visitor.ind = index;
-			visitor.elem = elem;
+			UpdateVisitor<Serializer, size_t, E> visitor(ser, tag, UpdateOp::InsertVector);
+			visitor.key = index;
+			visitor.val = elem;
 
 			ser("op", visitor.op);
 			ser("tag", visitor.tag);
@@ -286,8 +249,8 @@ namespace bb
 		{
 			std::string tag = _tag;
 
-			VectorVisitor<Serializer> visitor(ser, tag, UpdateOp::EraseVector);
-			visitor.ind = index;
+			UpdateVisitor<Serializer, size_t, Unused> visitor(ser, tag, UpdateOp::EraseVector);
+			visitor.key = index;
 
 			ser("op", visitor.op);
 			ser("tag", visitor.tag);
@@ -299,7 +262,7 @@ namespace bb
 		{
 			std::string tag = _tag;
 
-			VectorVisitor<Serializer> visitor(ser, tag, UpdateOp::ClearVector);
+			UpdateVisitor<Serializer, Unused, Unused> visitor(ser, tag, UpdateOp::ClearVector);
 
 			ser("op", visitor.op);
 			ser("tag", visitor.tag);
@@ -311,7 +274,7 @@ namespace bb
 		{
 			std::string tag = _tag;
 
-			MapVisitor<Serializer, K, V> visitor(ser, tag, UpdateOp::InsertMap);
+			UpdateVisitor<Serializer, K, V> visitor(ser, tag, UpdateOp::InsertMap);
 			visitor.key = key;
 			visitor.val = val;
 
@@ -325,7 +288,7 @@ namespace bb
 		{
 			std::string tag = _tag;
 
-			MapVisitor<Serializer, K> visitor(ser, tag, UpdateOp::EraseMap);
+			UpdateVisitor<Serializer, K, Unused> visitor(ser, tag, UpdateOp::EraseMap);
 			visitor.key = key;
 
 			ser("op", visitor.op);
@@ -338,7 +301,7 @@ namespace bb
 		{
 			std::string tag = _tag;
 
-			MapVisitor<Serializer> visitor(ser, tag, UpdateOp::ClearMap);
+			UpdateVisitor<Serializer, Unused, Unused> visitor(ser, tag, UpdateOp::ClearMap);
 
 			ser("op", visitor.op);
 			ser("tag", visitor.tag);
