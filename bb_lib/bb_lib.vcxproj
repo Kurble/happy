@@ -162,7 +162,9 @@
     <ClInclude Include="math_util.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="serialize.h" />
+    <ClInclude Include="serialize_binary.h" />
     <ClInclude Include="serialize_net.h" />
+    <ClInclude Include="serialize_text.h" />
     <ClInclude Include="spatial_hash_map.h" />
     <ClInclude Include="store.h" />
     <ClInclude Include="intersection.h" />

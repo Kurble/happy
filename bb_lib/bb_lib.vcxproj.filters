@@ -14,8 +14,10 @@
     <ClInclude Include="spatial_hash_map.h" />
     <ClInclude Include="halton.h" />
     <ClInclude Include="geometry_util.h" />
-    <ClInclude Include="serialize.h" />
     <ClInclude Include="serialize_net.h" />
+    <ClInclude Include="serialize_binary.h" />
+    <ClInclude Include="serialize.h" />
+    <ClInclude Include="serialize_text.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vec2.cpp" />
