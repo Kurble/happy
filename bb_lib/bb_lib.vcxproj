@@ -182,6 +182,7 @@
     <ClCompile Include="halton.cpp" />
     <ClCompile Include="mat3.cpp" />
     <ClCompile Include="mat4.cpp" />
+    <ClCompile Include="net_node.cpp" />
     <ClCompile Include="serialize.cpp" />
     <ClCompile Include="spatial_hash_map.cpp" />
     <ClCompile Include="store.cpp" />

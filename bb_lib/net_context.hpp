@@ -7,8 +7,6 @@ namespace bb
 		class context
 		{
 		public:
-			typedef size_t node_id;
-
 			virtual ~context() { }
 
 		private:

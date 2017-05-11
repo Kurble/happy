@@ -51,6 +51,21 @@ namespace bb
 		}
 
 		{
+			std::ofstream o("test.txt", std::ios::binary);
+			std::ifstream i("");
+
+			
+			bb::net::client<TextDeserializer, TextSerializer> serverConnection = { TextDeserializer(i), TextSerializer(o) };
+			bb::net::node rootNode = { 0, &serverConnection };
+
+			int a = 0;
+			float b = 0.2f;
+			std::string c = "derp";
+
+			serverConnection.rpc(rootNode, "destroyUniverse", a, b, c);
+		}
+
+		{
 			std::ifstream i("test.bb", std::ios::binary);
 			BinaryDeserializer binaryDeserialize = i;
 			TextDeserializer textDeserialize = i;
