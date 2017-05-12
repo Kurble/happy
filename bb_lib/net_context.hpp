@@ -12,7 +12,7 @@ namespace bb
 			template <class T, typename... ARGS>
 			std::shared_ptr<node<T>> make_node(node_id id, ARGS&&... args)
 			{
-				return std::make_shared<node<T>>(this, node<T>::get_type_id(), id, T(std::forward<ARGS>(args)...));
+				return std::make_shared<node<T>>(this, node<T>::get_type_id(), id, std::forward<ARGS>(args)...);
 			}
 
 		private:

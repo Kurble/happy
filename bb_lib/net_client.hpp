@@ -41,6 +41,7 @@ namespace bb
 
 			Deserializer m_svr_in;
 			Serializer m_svr_out;
+			std::shared_ptr<polymorphic_node> m_root;
 		};
 	}
 }

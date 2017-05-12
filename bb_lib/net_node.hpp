@@ -49,11 +49,13 @@ namespace bb
 			friend class context;
 
 		public:
-			node(context* context, const char* type_id, node_id node_id, T && value)
+
+			template <typename... ARGS>
+			node(context* context, const char* type_id, node_id node_id, ARGS&&... value)
 				: m_context(context)
 				, m_type_id(type_id)
 				, m_node_id(node_id)
-				, m_value(std::move(value)) { }
+				, m_value(std::forward<ARGS>(value)...) { }
 
 			virtual ~node() { }
 
