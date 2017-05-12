@@ -107,7 +107,7 @@ namespace bb
 
 						default:
 						{
-							throw std::exception("invalid operation specified");
+							throw std::exception("invalid type found");
 							break;
 						}
 					}

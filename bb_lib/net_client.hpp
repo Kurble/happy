@@ -12,8 +12,8 @@ namespace bb
 				: m_svr_in(std::move(svr_in))
 				, m_svr_out(std::move(svr_out)) { }
 
-			template <typename... ARGS>
-			void rpc(node& object, const char* tag, ARGS&... args)
+			template <typename T, typename... ARGS>
+			void rpc(T& object, const char* tag, ARGS&... args)
 			{
 				node_id nodeId = object.get_node_id();
 				std::string rpcTag = tag;

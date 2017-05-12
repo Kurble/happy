@@ -4,6 +4,7 @@ namespace bb
 {
 	namespace net
 	{
+		/*
 		node::node(node_id id, context* context)
 		{
 			//
@@ -17,5 +18,6 @@ namespace bb
 		{
 			//
 		}
+		*/
 	}
 }
