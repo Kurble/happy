@@ -51,6 +51,7 @@ namespace bb
 					{
 						case UpdateOp::Update:
 						{
+							acquire_val(x);
 							m_serializer(found_tag, x);
 							break;
 						}
@@ -71,6 +72,7 @@ namespace bb
 					{
 						case UpdateOp::Update:
 						{
+							acquire_val(x);
 							m_serializer(found_tag, x);
 							break;
 						}
@@ -123,6 +125,7 @@ namespace bb
 					{
 						case UpdateOp::Update:
 						{
+							acquire_val(x);
 							m_serializer(found_tag, x);
 							break;
 						}
@@ -161,6 +164,46 @@ namespace bb
 		};		
 
 		template <typename Serializer, typename T>
+		void deserialize(Serializer& ser, std::shared_ptr<T>& object)
+		{
+			std::string tag;
+			UpdateOp op;
+
+			ser("op", op);
+
+			std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(object);
+
+			switch (op)
+			{
+				case UpdateOp::Replace:
+				{
+					ser("val", object);
+					break;
+				}
+
+				case UpdateOp::Update:
+				case UpdateOp::AppendVector:
+				case UpdateOp::InsertVector:
+				case UpdateOp::EraseVector:
+				case UpdateOp::ClearVector:
+				case UpdateOp::InsertMap:
+				case UpdateOp::EraseMap:
+				case UpdateOp::ClearMap:
+				{
+					ser("tag", tag);
+					UpdateVisitor<Serializer> visitor(ser, tag.c_str(), op, nullptr, nullptr);
+					object->reflect(visitor);
+					break;
+				}
+
+				default:
+				{
+					throw std::exception("invalid operation");
+				}
+			}
+		}
+
+		template <typename Serializer, typename T>
 		void deserialize(Serializer& ser, T& object)
 		{
 			std::string tag;
@@ -172,7 +215,7 @@ namespace bb
 			{
 				case UpdateOp::Replace:
 				{
-					ser("root", object);
+					ser("val", object);
 					break;
 				}
 
@@ -203,13 +246,14 @@ namespace bb
 		{
 			UpdateOp op = UpdateOp::Replace;
 			ser("op", op);
-			ser("root", object);
+			//ser("root", object);
+			reflect(ser, object);
 		}
 
-		template <typename Serializer, typename T>
-		void serialize_member_modify(Serializer& ser, T& object, const char* tag)
+		template <typename Serializer, typename T, typename E>
+		void serialize_member_modify(Serializer& ser, T& object, const char* tag, E& val)
 		{
-			UpdateVisitor<Serializer> visitor(ser, tag, UpdateOp::Update);
+			UpdateVisitor<Serializer> visitor(ser, tag, UpdateOp::Update, nullptr, (void*)&elem);
 			ser("op", visitor.m_operation);
 			ser("tag", visitor.m_tag);
 			reflect(visitor, object);

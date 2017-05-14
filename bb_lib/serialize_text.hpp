@@ -18,6 +18,11 @@ namespace bb
 			write(x);
 		}
 
+		operator bool()
+		{
+			return true;
+		}
+
 	private:
 		// arithmetic types
 		template <typename T>
@@ -81,6 +86,19 @@ namespace bb
 			line() << "]";
 		}
 
+		// net::node serialization
+		template <typename T>
+		void write(std::shared_ptr<T> &x)
+		{
+			std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(x);
+
+			stream() << "{";
+			indent();
+			n->reflect(*this);
+			unindent();
+			line() << "}";
+		}
+
 		std::ostream& stream()
 		{
 			return m_stream;
@@ -114,8 +132,9 @@ namespace bb
 	class TextDeserializer
 	{
 	public:
-		TextDeserializer(std::istream &stream)
-			: m_stream(stream) { }
+		TextDeserializer(std::istream &stream, net::node_factory_base<TextDeserializer>* factory = nullptr)
+			: m_stream(stream)
+			, m_node_factory(factory) { }
 		
 		template <typename T>
 		void operator()(const char* tag_expected, T &x)
@@ -126,6 +145,12 @@ namespace bb
 			assert_exc(tag.compare(tag_expected) == 0, "wrong tag found");
 
 			read(x);
+		}
+
+		operator bool()
+		{
+			m_stream.peek();
+			return m_stream.rdbuf()->in_avail() > 0;
 		}
 
 	private:
@@ -151,7 +176,7 @@ namespace bb
 		{
 			assert_exc(get() == '{', "expected '{'");
 			reflect(*this ,x);
-			assert_exc(get() == '}', "expected '{'");
+			assert_exc(get() == '}', "expected '}'");
 		}
 
 		// string deserialization
@@ -192,6 +217,23 @@ namespace bb
 			assert_exc(get() == ']', "expected ']'");
 		}
 
+		// net::node deserialization
+		template <typename T>
+		void read(std::shared_ptr<T> &x)
+		{
+			assert_exc(get() == '{', "expected '{'");
+			if (x.get() == nullptr)
+			{
+				x = std::dynamic_pointer_cast<T, net::polymorphic_node>(m_node_factory->make_node(*this));
+			}
+			else
+			{
+				std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(x);
+				n->reflect(*this);
+			}
+			assert_exc(get() == '}', "expected '}'");
+		}
+
 		char get()
 		{
 			char c;
@@ -207,5 +249,6 @@ namespace bb
 		}
 
 		std::istream &m_stream;
+		net::node_factory_base<TextDeserializer>* m_node_factory;
 	};
 }

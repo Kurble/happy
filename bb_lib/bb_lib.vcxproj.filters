@@ -36,6 +36,5 @@
     <ClCompile Include="halton.cpp" />
     <ClCompile Include="geometry_util.cpp" />
     <ClCompile Include="serialize.cpp" />
-    <ClCompile Include="net_node.cpp" />
   </ItemGroup>
 </Project>

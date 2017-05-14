@@ -4,35 +4,14 @@
 
 namespace bb
 {
-	struct TestStruct
-	{
-		std::string a;
-		float b;
-
-		template <typename Visitor>
-		void reflect(Visitor &visit)
-		{
-			visit("a", a);
-			visit("b", b);
-		}
-	};
-	
-	struct OuterTestStruct
-	{
-		std::vector<std::string> henk;
-		std::map<int, TestStruct> dude;
-
-		template <typename Visitor>
-		void reflect(Visitor& visit)
-		{
-			visit("henk", henk);
-			visit("dude", dude);
-		}
-	};
+	using Clt = bb::net::client<TextDeserializer, TextSerializer>;
+	using Svr = bb::net::server<TextDeserializer, TextSerializer>;
 
 	class TestNode
 	{
 	public:
+		virtual ~TestNode() { }
+
 		std::string test_a;
 		std::string test_b;
 		std::string test_c;
@@ -51,10 +30,15 @@ namespace bb
 	class DerivedTestNode : public TestNode
 	{
 	public:
+		virtual ~DerivedTestNode() { }
+
+		std::vector<std::shared_ptr<TestNode>> test_recurse;
+
 		template <typename VISITOR>
 		void reflect(VISITOR& visit)
 		{
 			TestNode::reflect(visit);
+			visit("test_recurse", test_recurse);
 		}
 
 		static bb::net::type_id get_type_id() { return "DerivedTestNode"; }
@@ -62,60 +46,40 @@ namespace bb
 
 	void serialize_sanity_check()
 	{
-		{  
-			std::ofstream o("test.bb", std::ios::binary);
-			BinarySerializer binarySerialize = o;
-			TextSerializer textSerialize = o;
-
-			OuterTestStruct test;
-			test.henk = { "aap", "noot", "mies" };
-			test.dude[2] = { "derp", 16.0f };
-			partial::serialize_replace(textSerialize, test);
-
-			std::string obj = "troll";
-			partial::serialize_vector_push_back(textSerialize, test, "henk", obj);
-			partial::serialize_vector_erase(textSerialize, test, "henk", 1);
-
-			test.dude[3] = { "lol", 0.0f };
-			partial::serialize_member_modify(textSerialize, test, "dude");
-		}
-
 		{
-			std::ofstream o("test.txt", std::ios::binary);
+			std::ofstream o("server-test.txt", std::ios::binary);
 			std::ifstream i("");
-			
-			bb::net::client<TextDeserializer, TextSerializer> serverConnection = { TextDeserializer(i), TextSerializer(o) };
-			//std::shared_ptr<bb::net::polymorphic_node> rootNode = std::make_shared<bb::net::node<TestNode>>(0, &serverConnection);
-			std::shared_ptr<bb::net::polymorphic_node> rootNode = serverConnection.make_node<DerivedTestNode>(0);
 
+			Svr server;
 
-			// test polymorphic reflect
+			// example: client logs in
 			{
-				TextSerializer textSerialize = o;
-				reflect(textSerialize, rootNode);
-			}
+				auto connected = server.make_root_node<DerivedTestNode>();
+				connected->test_a = "var a";
+				connected->test_b = "var b";
+				connected->test_c = "var c";
+				server.add_client(i, o, connected);
 
-			// test an rpc
-			{
-				int a = 0;
-				float b = 0.2f;
-				std::string c = "derp";
-				serverConnection.rpc(*rootNode, "destroyUniverse", a, b, c);
+				auto sub = server.make_node<DerivedTestNode>(connected);
+				connected->vector_push_back("test_recurse", sub);
+
+				sub->member_modify("test_a", std::string("test"));
 			}
 		}
 
 		{
-			std::ifstream i("test.bb", std::ios::binary);
-			BinaryDeserializer binaryDeserialize = i;
-			TextDeserializer textDeserialize = i;
-			
-			OuterTestStruct test;
-			partial::deserialize(textDeserialize, test);
-			partial::deserialize(textDeserialize, test);
-			partial::deserialize(textDeserialize, test);
-			partial::deserialize(textDeserialize, test);
+			std::ofstream o("client-test.txt", std::ios::binary);
+			std::ifstream i("server-test.txt", std::ios::binary);
 
-			void();
+			Clt serverConnection = { i, o };
+			serverConnection.register_node_type<TestNode>();
+			serverConnection.register_node_type<DerivedTestNode>();
+			serverConnection.update();
+
+			auto root = serverConnection.cast<DerivedTestNode>(serverConnection.get_root());
+
+			int count = 5;
+			root->rpc("petKittens", count);
 		}
 	}
 }

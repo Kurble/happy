@@ -57,6 +57,19 @@ namespace bb
 				reflect(*this, elem);
 		}
 
+		// net::node serialization
+		template <typename T>
+		void operator()(const char*, std::shared_ptr<T> &x)
+		{
+			std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(x);
+			n->reflect(*this);
+		}
+
+		operator bool()
+		{
+			return true;
+		}
+
 	private:
 		template <typename T> void put(const T& val)
 		{
@@ -70,16 +83,15 @@ namespace bb
 
 		std::ostream &m_stream;
 	};
-
 	
-
 	//------------------------------------------------------------------------
 	// Generic binary deserializer
 	class BinaryDeserializer
 	{
 	public:
-		BinaryDeserializer(std::istream &stream) 
-			: m_stream(stream) { }
+		BinaryDeserializer(std::istream &stream, net::node_factory_base<BinaryDeserializer>* factory = nullptr)
+			: m_stream(stream)
+			, m_node_factory(factory) { }
 
 		// arithmetic types
 		template <typename T>
@@ -145,6 +157,26 @@ namespace bb
 			}
 		}
 
+		// net::node deserialization
+		template <typename T>
+		void operator()(const char* tag, std::shared_ptr<T> &x)
+		{
+			if (x.get() == nullptr)
+			{
+				x = std::dynamic_pointer_cast<T, net::polymorphic_node>(m_node_factory->make_node(*this));
+			}
+			else
+			{
+				std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(x);
+				n->reflect(*this);
+			}
+		}
+
+		operator bool()
+		{
+			return m_stream.rdbuf()->in_avail() > 0;
+		}
+
 	private:
 		template <typename T> void get(T& val)
 		{
@@ -157,5 +189,6 @@ namespace bb
 		}
 
 		std::istream &m_stream;
+		net::node_factory_base<BinaryDeserializer>* m_node_factory;
 	};
 };

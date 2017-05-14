@@ -7,15 +7,25 @@ namespace bb
 		class context
 		{
 		public:
+			context() { }
 			virtual ~context() { }
 
-			template <class T, typename... ARGS>
-			std::shared_ptr<node<T>> make_node(node_id id, ARGS&&... args)
+			class node_base : public polymorphic_node
 			{
-				return std::make_shared<node<T>>(this, node<T>::get_type_id(), id, std::forward<ARGS>(args)...);
-			}
+			protected:
+				node_base(context* context, const char* type_id, node_id node_id)
+					: m_context(context)
+					, m_type_id(type_id)
+					, m_node_id(node_id) { }
 
-		private:
+				virtual ~node_base() { }
+
+				context*    m_context;
+				std::string m_type_id;
+				node_id     m_node_id;
+			};
+
+		protected:
 			std::unordered_map<node_id, std::weak_ptr<polymorphic_node>> m_objects;
 		};
 	}
