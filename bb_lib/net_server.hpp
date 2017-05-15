@@ -172,12 +172,12 @@ namespace bb
 			};
 
 			template <class T>
-			using node_type = std::shared_ptr<node<T, server_node_base>>;
+			using node_type = std::shared_ptr<node<T, server_node_base, std::true_type>>;
 
 			template <class T>
 			node_type<T> make_root_node()
 			{
-				node_type<T> n = std::make_shared<node<T, server_node_base>>(this, T::get_type_id(), m_node_id_counter++);
+				node_type<T> n = std::make_shared<node<T, server_node_base, std::true_type>>(this, T::get_type_id(), m_node_id_counter++);
 
 				m_objects.emplace(n->get_node_id(), n);
 
@@ -187,7 +187,7 @@ namespace bb
 			template <class T, class P>
 			node_type<T> make_node(std::shared_ptr<P> parent)
 			{
-				node_type<T> n = std::make_shared<node<T, server_node_base>>(this, T::get_type_id(), m_node_id_counter++);
+				node_type<T> n = std::make_shared<node<T, server_node_base, std::true_type>>(this, T::get_type_id(), m_node_id_counter++);
 
 				m_objects.emplace(n->get_node_id(), n);
 
@@ -199,7 +199,7 @@ namespace bb
 			template <class T>
 			node_type<T> cast(std::shared_ptr<polymorphic_node> x)
 			{
-				return std::dynamic_pointer_cast<node<T, server_node_base>, polymorphic_node>(x);
+				return std::dynamic_pointer_cast<node<T, server_node_base, std::true_type>, polymorphic_node>(x);
 			}
 
 			template <class T>

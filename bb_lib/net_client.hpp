@@ -50,12 +50,12 @@ namespace bb
 			};
 
 			template <class T>
-			using node_type = std::shared_ptr<node<T, client_node_base>>;
+			using node_type = std::shared_ptr<node<T, client_node_base, std::false_type>>;
 
 			template <class T>
 			node_type<T> cast(std::shared_ptr<polymorphic_node> x)
 			{
-				return std::dynamic_pointer_cast<node<T, client_node_base>, polymorphic_node>(x);
+				return std::dynamic_pointer_cast<node<T, client_node_base, std::false_type>, polymorphic_node>(x);
 			}
 
 			template <class T>
@@ -88,7 +88,6 @@ namespace bb
 						{
 							throw std::exception("node expired!!!");
 						}
-
 					}
 					else
 					{
@@ -100,7 +99,7 @@ namespace bb
 
 			std::shared_ptr<polymorphic_node> get_root() { return m_root; }
 
-		public:
+		private:
 			class sub_factory_base
 			{
 			public:
@@ -112,7 +111,7 @@ namespace bb
 			{
 				std::shared_ptr<polymorphic_node> make_node(context* context, const char* type_id, node_id node_id, Deserializer& deserializer) const override
 				{
-					auto n = std::make_shared<node<T, client_node_base>>(context, type_id, node_id);
+					auto n = std::make_shared<node<T, client_node_base, std::false_type>>(context, type_id, node_id);
 					n->__user_reflect(deserializer);
 					return n;
 				}

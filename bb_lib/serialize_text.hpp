@@ -14,7 +14,7 @@ namespace bb
 		template <typename T>
 		void operator()(const char* tag, T &x)
 		{
-			line() << tag << " ";
+			stream(m_indentation) << tag << " ";
 			write(x);
 		}
 
@@ -28,62 +28,57 @@ namespace bb
 		template <typename T>
 		typename std::enable_if<std::is_arithmetic<T>::value, void>::type write(T x)
 		{
-			stream() << x;
+			stream() << x << std::endl;
 		}
 
 		// enums
 		template <typename T>
 		typename std::enable_if<std::is_enum<T>::value, void>::type write(T x)
 		{
-			stream() << (size_t)x;
+			stream() << (size_t)x << std::endl;
 		}
 
 		// dispatch serialization to reflect API
 		template <class T>
 		typename std::enable_if<!std::is_arithmetic<T>::value && !std::is_enum<T>::value, void>::type write(T &x)
 		{
-			stream() << "{";
-			indent();
+			stream() << "{" << std::endl;
+			m_indentation++;
 			reflect(*this, x);
-			unindent();
-			line() << "}";
+			stream(--m_indentation) << "}" << std::endl;
 		}
 
 		// string serialization
 		template <>
 		void write(std::string &x)
 		{
-			stream() << "\"" << x << "\"";
+			stream() << "\"" << x << "\"" << std::endl;
 		}
 
 		// vector serialization
 		template <typename T>
 		void write(std::vector<T> &x)
 		{
-			stream() << "[";
-			indent();
+			stream() << "[" << std::endl;
+			m_indentation++;
 			for (auto &elem : x)
 			{
-				line();
 				write(elem);
 			}
-			unindent();
-			line() << "]";
+			stream(--m_indentation) << "]" << std::endl;
 		}
 
 		// map serialization
 		template <typename K, typename V>
 		void write(std::map<K, V> &x)
 		{
-			stream() << "[";
-			indent();
+			stream() << "[" << std::endl;
+			m_indentation++;
 			for (auto &elem : x)
 			{
-				line();
 				write(elem);
 			}
-			unindent();
-			line() << "]";
+			stream(--m_indentation) << "]" << std::endl;
 		}
 
 		// net::node serialization
@@ -92,29 +87,20 @@ namespace bb
 		{
 			std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(x);
 
-			stream() << "{";
-			indent();
+			stream() << "{" << std::endl;
+			m_indentation++;
 			n->reflect(*this);
-			unindent();
-			line() << "}";
+			stream(--m_indentation) << "}" << std::endl;
 		}
 
-		std::ostream& stream()
+		std::ostream& stream(int indentation = 0)
 		{
-			return m_stream;
-		}
-
-		std::ostream& line()
-		{
-			m_stream << std::endl;
-			for (int i = 0; i < m_indentation; ++i)
+			for (int i = 0; i < indentation; ++i)
 				m_stream << "  ";
+
 			return m_stream;
 		}
-
-		void indent() { m_indentation++; }
-		void unindent() { m_indentation--; }
-
+		
 		std::ostream &m_stream;
 		int m_indentation;
 	};
@@ -149,7 +135,7 @@ namespace bb
 
 		operator bool()
 		{
-			m_stream.peek();
+			peek();
 			return m_stream.rdbuf()->in_avail() > 0;
 		}
 

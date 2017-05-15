@@ -44,6 +44,24 @@ namespace bb
 		static bb::net::type_id get_type_id() { return "DerivedTestNode"; }
 	};
 
+	class SvrDerivedTestNode : public DerivedTestNode
+	{
+	public:
+		virtual ~SvrDerivedTestNode() { }
+
+		template <typename VISITOR>
+		void reflect_rpc(VISITOR& visit)
+		{
+			//
+		}
+	};
+
+	class CltDerivedTestNode : public DerivedTestNode
+	{
+	public:
+		virtual ~CltDerivedTestNode() { }
+	};
+
 	void serialize_sanity_check()
 	{
 		{
@@ -54,13 +72,13 @@ namespace bb
 
 			// example: client logs in
 			{
-				auto connected = server.make_root_node<DerivedTestNode>();
+				auto connected = server.make_root_node<SvrDerivedTestNode>();
 				connected->test_a = "var a";
 				connected->test_b = "var b";
 				connected->test_c = "var c";
 				server.add_client(i, o, connected);
 
-				auto sub = server.make_node<DerivedTestNode>(connected);
+				auto sub = server.make_node<SvrDerivedTestNode>(connected);
 				connected->vector_push_back("test_recurse", sub);
 
 				sub->member_modify("test_a", std::string("test"));
@@ -73,10 +91,10 @@ namespace bb
 
 			Clt serverConnection = { i, o };
 			serverConnection.register_node_type<TestNode>();
-			serverConnection.register_node_type<DerivedTestNode>();
+			serverConnection.register_node_type<CltDerivedTestNode>();
 			serverConnection.update();
 
-			auto root = serverConnection.cast<DerivedTestNode>(serverConnection.get_root());
+			auto root = serverConnection.cast<CltDerivedTestNode>(serverConnection.get_root());
 
 			int count = 5;
 			root->rpc("petKittens", count);

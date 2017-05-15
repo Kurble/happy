@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
+#include <type_traits>
 
 namespace bb
 {
