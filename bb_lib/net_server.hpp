@@ -203,23 +203,42 @@ namespace bb
 			}
 
 			template <class T>
-			void add_client(std::istream &clt_in, std::ostream &clt_out, node_type<T> clt_root)
+			std::shared_ptr<server_client> add_client(std::istream &clt_in, std::ostream &clt_out, node_type<T> clt_root)
 			{
 				auto client = std::make_shared<server_client>(clt_in, clt_out, clt_root);
 
-				m_clients.push_back(client);
-				clt_root->m_subscribers.push_back(client);
+				clt_root->add_subscriber(client);
 				clt_root->resync();
+
+				return client;
 			}
 
-			void update()
+			void update_client(server_client* clt)
 			{
-				//
+				while (clt->m_clt_in)
+				{
+					node_id id;
+					clt->m_clt_in("node", id);
+
+					// find appropriate node
+					auto it = m_objects.find(id);
+					if (it == m_objects.end())
+					{
+						throw std::exception("node not found");
+					}
+
+					if (auto node = it->second.lock())
+					{
+						node->reflect_rpc(clt->m_clt_in);
+					}
+					else
+					{
+						throw std::exception("node expired!!!");
+					}
+				}
 			}
 
 		private:
-			std::vector<std::shared_ptr<server_client>> m_clients;
-
 			node_id            m_node_id_counter;
 			std::ostringstream m_message_buffer;
 			Serializer         m_message_serializer;

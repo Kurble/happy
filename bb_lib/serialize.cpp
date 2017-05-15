@@ -52,7 +52,13 @@ namespace bb
 		template <typename VISITOR>
 		void reflect_rpc(VISITOR& visit)
 		{
-			//
+			std::string method;
+			visit("rpc", method);
+			if (method == "petKittens")
+			{
+				int count = 0;
+				visit("arg0", count);
+			}
 		}
 	};
 
@@ -64,30 +70,29 @@ namespace bb
 
 	void serialize_sanity_check()
 	{
+		// example: client logs in (svr side)
 		{
-			std::ofstream o("server-test.txt", std::ios::binary);
-			std::ifstream i("");
-
 			Svr server;
 
-			// example: client logs in
-			{
-				auto connected = server.make_root_node<SvrDerivedTestNode>();
-				connected->test_a = "var a";
-				connected->test_b = "var b";
-				connected->test_c = "var c";
-				server.add_client(i, o, connected);
+			std::ifstream i("");
+			std::ofstream o("server-test.txt", std::ios::binary);
 
-				auto sub = server.make_node<SvrDerivedTestNode>(connected);
-				connected->vector_push_back("test_recurse", sub);
+			auto connected = server.make_root_node<SvrDerivedTestNode>();
+			connected->test_a = "var a";
+			connected->test_b = "var b";
+			connected->test_c = "var c";
+			auto client = server.add_client(i, o, connected);
 
-				sub->member_modify("test_a", std::string("test"));
-			}
+			auto sub = server.make_node<SvrDerivedTestNode>(connected);
+			connected->vector_push_back("test_recurse", sub);
+
+			sub->member_modify("test_a", std::string("test"));
 		}
 
+		// example: client logs in (clt side)
 		{
-			std::ofstream o("client-test.txt", std::ios::binary);
 			std::ifstream i("server-test.txt", std::ios::binary);
+			std::ofstream o("client-test.txt", std::ios::binary);
 
 			Clt serverConnection = { i, o };
 			serverConnection.register_node_type<TestNode>();
@@ -98,6 +103,22 @@ namespace bb
 
 			int count = 5;
 			root->rpc("petKittens", count);
+		}
+
+		// example: client from earlier sent an rpc
+		{
+			Svr server;
+
+			std::ifstream i("client-test.txt", std::ios::binary);
+			std::ofstream o("server-test.txt", std::ios::binary);
+
+			auto connected = server.make_root_node<SvrDerivedTestNode>();
+			connected->test_a = "var a";
+			connected->test_b = "var b";
+			connected->test_c = "var c";
+			auto client = server.add_client(i, o, connected);
+
+			server.update_client(client.get());
 		}
 	}
 }

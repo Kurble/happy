@@ -34,7 +34,7 @@ namespace bb
 			template <typename VISITOR>
 			inline void reflect_rpc(VISITOR& visitor)
 			{
-				this->pm_reflect(visitor);
+				this->pm_reflect_rpc(visitor);
 			}
 
 			virtual context* get_context() = 0;
