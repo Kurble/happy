@@ -19,6 +19,43 @@ namespace bb
 		typedef const char* type_id;
 
 		//------------------------------------------------------------------------------------------------------------
+		// Node functionality helpers
+		struct server_utils_tag { };
+		struct client_utils_tag { };
+		template <typename SVR, typename CLT>
+		class node_utils : public server_utils_tag, public client_utils_tag
+		{
+		protected:
+			using server_node_base = typename SVR::server_node_base;
+			using client_node_base = typename CLT::client_node_base;
+			virtual ~node_utils() { }			
+			server_node_base* svrsvc = nullptr;
+			client_node_base* cltsvc = nullptr;
+		};
+		template <typename SVR>
+		class node_utils<SVR, void> : public server_utils_tag
+		{
+		protected:
+			node_utils()
+				: svrsvc(*((server_node_base*)nullptr)) { }
+
+			using server_node_base = typename SVR::server_node_base;
+			virtual ~node_utils() { }
+			server_node_base* svrsvc = nullptr;
+		};
+		template <typename CLT>
+		class node_utils<void, CLT> : public client_utils_tag
+		{
+		protected:
+			node_utils()
+				: cltsvc(*((client_node_base*)nullptr)) { }
+
+			using client_node_base = typename CLT::client_node_base;
+			virtual ~node_utils() { }
+			client_node_base* cltsvc = nullptr;
+		};
+
+		//------------------------------------------------------------------------------------------------------------
 		// Node with unknown type
 		class polymorphic_node : public std::enable_shared_from_this<polymorphic_node>
 		{
@@ -64,7 +101,11 @@ namespace bb
 
 			node(context* context, const char* type_id, node_id node_id)
 				: NODE_IMPL(context, type_id, node_id)
-				, USER_IMPL(/*net nodes must have a default constructor*/) { }
+				, USER_IMPL(/*net nodes must have a default constructor*/) 
+			{
+				link_server<user_type>();
+				link_client<user_type>();
+			}
 
 			virtual ~node() { }
 			
@@ -74,7 +115,7 @@ namespace bb
 				visitor("type_id", m_type_id);
 				visitor("node_id", m_node_id);
 
-				if (m_type_id.compare(USER_IMPL::get_type_id()))
+				if (m_type_id.compare(user_type::get_type_id()))
 				{
 					throw std::exception("different type_id expected!");
 				}
@@ -93,17 +134,35 @@ namespace bb
 			void     pm_reflect(UpdateVisitor<BinaryDeserializer>& visitor) override  { reflect(visitor); }
 			void     pm_reflect(UpdateVisitor<TextSerializer>& visitor) override      { reflect(visitor); }
 			void     pm_reflect(UpdateVisitor<TextDeserializer>& visitor) override    { reflect(visitor); }
-			void     pm_reflect_rpc(RPCVisitor<BinaryDeserializer>& visitor) override { __reflect_rpc<GEN_REFLECT_RPC>(visitor); }
-			void     pm_reflect_rpc(RPCVisitor<TextDeserializer>& visitor) override   { __reflect_rpc<GEN_REFLECT_RPC>(visitor); }
+			void     pm_reflect_rpc(RPCVisitor<BinaryDeserializer>& visitor) override { reflect_rpc<gen_reflect_rpc>(visitor); }
+			void     pm_reflect_rpc(RPCVisitor<TextDeserializer>& visitor) override   { reflect_rpc<gen_reflect_rpc>(visitor); }
 
-			template <typename GEN, typename VISITOR>
-			typename std::enable_if<std::is_same<GEN, std::false_type>::value, void>::type __reflect_rpc(VISITOR& visitor)
+			template <typename IMPL>
+			typename std::enable_if<!std::is_base_of<server_utils_tag, IMPL>::value>::type link_server() { /*...*/ }
+			
+			template <typename IMPL>
+			typename std::enable_if<!std::is_base_of<client_utils_tag, IMPL>::value>::type link_client() { /*...*/ }
+
+			template <typename IMPL>
+			typename std::enable_if<std::is_base_of<server_utils_tag, IMPL>::value>::type link_server()
 			{
-				throw std::exception("trying to process an RPC while this node does support RPC processing!");
+				user_type::svrsvc = dynamic_cast<user_type::server_node_base*>(this);
+			}
+
+			template <typename IMPL>
+			typename std::enable_if<std::is_base_of<client_utils_tag, IMPL>::value>::type link_client()
+			{
+				user_type::cltsvc = dynamic_cast<user_type::client_node_base*>(this);
 			}
 
 			template <typename GEN, typename VISITOR>
-			typename std::enable_if<std::is_same<GEN, std::true_type>::value, void>::type __reflect_rpc(VISITOR& visitor)
+			typename std::enable_if<std::is_same<GEN, std::false_type>::value, void>::type reflect_rpc(VISITOR& visitor)
+			{
+				throw std::exception("trying to process an RPC while this node does not support RPC processing!");
+			}
+
+			template <typename GEN, typename VISITOR>
+			typename std::enable_if<std::is_same<GEN, std::true_type>::value, void>::type reflect_rpc(VISITOR& visitor)
 			{
 				/*
 				* If your node is constructed using bb::net::server::make_node, it requires a reflect_rpc method to be present.

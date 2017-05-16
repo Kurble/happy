@@ -7,7 +7,7 @@ namespace bb
 	using Clt = bb::net::client<TextDeserializer, TextSerializer>;
 	using Svr = bb::net::server<TextDeserializer, TextSerializer>;
 
-	class TestNode
+	class TestNode : public net::node_utils<Svr, Clt>
 	{
 	public:
 		virtual ~TestNode() { }
@@ -56,7 +56,9 @@ namespace bb
 			{
 				int count;
 				params.get(count);
-				void();
+
+				std::string val = std::to_string(count);
+				svrsvc->member_modify("test_a", val);
 			});
 		}
 	};

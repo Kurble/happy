@@ -16,12 +16,7 @@ namespace bb
 			EraseMap,
 			ClearMap,
 		};
-
-		namespace
-		{
-			struct Unused { };
-		}
-
+		
 		template <typename Serializer>
 		struct UpdateVisitor
 		{
