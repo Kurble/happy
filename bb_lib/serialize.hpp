@@ -15,12 +15,12 @@ namespace bb
 		class polymorphic_node;
 
 		template <typename Deserializer>
-		class node_factory_base
+		class node_resolver
 		{
 		public:
-			virtual ~node_factory_base() { }
+			virtual ~node_resolver() { }
 
-			virtual std::shared_ptr<polymorphic_node> make_node(Deserializer& deserializer) = 0;
+			virtual std::shared_ptr<polymorphic_node> resolve(const char* tid, size_t nid) = 0;
 		};
 	}
 }

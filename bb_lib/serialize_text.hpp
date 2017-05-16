@@ -89,6 +89,10 @@ namespace bb
 
 			stream() << "{" << std::endl;
 			m_indentation++;
+			std::string type_id = n->get_type_id();
+			size_t      node_id = n->get_node_id();
+			operator()("type_id", type_id);
+			operator()("node_id", node_id);
 			n->reflect(*this);
 			stream(--m_indentation) << "}" << std::endl;
 		}
@@ -118,9 +122,9 @@ namespace bb
 	class TextDeserializer
 	{
 	public:
-		TextDeserializer(std::istream &stream, net::node_factory_base<TextDeserializer>* factory = nullptr)
+		TextDeserializer(std::istream &stream, net::node_resolver<TextDeserializer>* resolver = nullptr)
 			: m_stream(stream)
-			, m_node_factory(factory) { }
+			, m_node_resolver(resolver) { }
 		
 		template <typename T>
 		void operator()(const char* tag_expected, T &x)
@@ -208,15 +212,16 @@ namespace bb
 		void read(std::shared_ptr<T> &x)
 		{
 			assert_exc(get() == '{', "expected '{'");
-			if (x.get() == nullptr)
-			{
-				x = std::dynamic_pointer_cast<T, net::polymorphic_node>(m_node_factory->make_node(*this));
-			}
-			else
-			{
-				std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(x);
-				n->reflect(*this);
-			}
+
+			std::string type_id;
+			size_t      node_id;
+			operator()("type_id", type_id);
+			operator()("node_id", node_id);
+			auto n = m_node_resolver->resolve(type_id.c_str(), node_id);
+			n->reflect(*this);
+
+			x = std::dynamic_pointer_cast<T, net::polymorphic_node>(n);
+
 			assert_exc(get() == '}', "expected '}'");
 		}
 
@@ -235,6 +240,6 @@ namespace bb
 		}
 
 		std::istream &m_stream;
-		net::node_factory_base<TextDeserializer>* m_node_factory;
+		net::node_resolver<TextDeserializer>* m_node_resolver;
 	};
 }

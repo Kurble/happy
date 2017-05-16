@@ -67,6 +67,11 @@ namespace bb
 	{
 	public:
 		virtual ~CltDerivedTestNode() { }
+
+		void petKittens(int count)
+		{
+			cltsvc->rpc("petKittens", count);
+		}
 	};
 
 	void serialize_sanity_check()
@@ -102,8 +107,7 @@ namespace bb
 
 			auto root = serverConnection.cast<CltDerivedTestNode>(serverConnection.get_root());
 
-			int count = 5;
-			root->rpc("petKittens", count);
+			root->petKittens(5);
 		}
 
 		// example: client from earlier sent an rpc

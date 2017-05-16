@@ -110,7 +110,7 @@ namespace bb
 
 			virtual ~node() { }
 			
-			template <typename VISITOR>
+			/*template <typename VISITOR>
 			void reflect(VISITOR& visitor)
 			{
 				visitor("type_id", m_type_id);
@@ -122,20 +122,20 @@ namespace bb
 				}
 
 				user_type::reflect(visitor);
-			}
+			}*/
 
 			context* get_context() override                                           { return m_context; }
 			node_id  get_node_id() override                                           { return m_node_id; }
 			type_id  get_type_id() override                                           { return user_type::_type_id(); }
 		private:
-			void     pm_reflect(BinarySerializer& visitor) override                   { reflect(visitor); }
-			void     pm_reflect(BinaryDeserializer& visitor) override                 { reflect(visitor); }
-			void     pm_reflect(TextSerializer& visitor) override                     { reflect(visitor); }
-			void     pm_reflect(TextDeserializer& visitor) override                   { reflect(visitor); }
-			void     pm_reflect(UpdateVisitor<BinarySerializer>& visitor) override    { reflect(visitor); }
-			void     pm_reflect(UpdateVisitor<BinaryDeserializer>& visitor) override  { reflect(visitor); }
-			void     pm_reflect(UpdateVisitor<TextSerializer>& visitor) override      { reflect(visitor); }
-			void     pm_reflect(UpdateVisitor<TextDeserializer>& visitor) override    { reflect(visitor); }
+			void     pm_reflect(BinarySerializer& visitor) override                   { user_type::reflect(visitor); }
+			void     pm_reflect(BinaryDeserializer& visitor) override                 { user_type::reflect(visitor); }
+			void     pm_reflect(TextSerializer& visitor) override                     { user_type::reflect(visitor); }
+			void     pm_reflect(TextDeserializer& visitor) override                   { user_type::reflect(visitor); }
+			void     pm_reflect(UpdateVisitor<BinarySerializer>& visitor) override    { user_type::reflect(visitor); }
+			void     pm_reflect(UpdateVisitor<BinaryDeserializer>& visitor) override  { user_type::reflect(visitor); }
+			void     pm_reflect(UpdateVisitor<TextSerializer>& visitor) override      { user_type::reflect(visitor); }
+			void     pm_reflect(UpdateVisitor<TextDeserializer>& visitor) override    { user_type::reflect(visitor); }
 			void     pm_reflect_rpc(RPCVisitor<BinaryDeserializer>& visitor) override { reflect_rpc<gen_reflect_rpc>(visitor); }
 			void     pm_reflect_rpc(RPCVisitor<TextDeserializer>& visitor) override   { reflect_rpc<gen_reflect_rpc>(visitor); }
 

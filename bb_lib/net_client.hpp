@@ -5,7 +5,7 @@ namespace bb
 	namespace net
 	{
 		template <typename DESERIALIZER, typename SERIALIZER>
-		class client : private node_factory_base<DESERIALIZER>, public context
+		class client : private node_resolver<DESERIALIZER>, public context
 		{
 		public:
 			using Deserializer = DESERIALIZER;
@@ -103,37 +103,37 @@ namespace bb
 			class sub_factory_base
 			{
 			public:
-				virtual std::shared_ptr<polymorphic_node> make_node(context*, const char*, node_id, Deserializer&) const = 0;
+				virtual std::shared_ptr<polymorphic_node> make_node(context*, const char*, node_id) const = 0;
 			};
 
 			template <class T>
 			class sub_factory : public sub_factory_base
 			{
-				std::shared_ptr<polymorphic_node> make_node(context* context, const char* type_id, node_id node_id, Deserializer& deserializer) const override
+				std::shared_ptr<polymorphic_node> make_node(context* context, const char* type_id, node_id node_id) const override
 				{
-					auto n = std::make_shared<node<T, client_node_base, std::false_type>>(context, type_id, node_id);
-					n->T::reflect(deserializer);
-					return n;
+					return std::make_shared<node<T, client_node_base, std::false_type>>(context, type_id, node_id);
 				}
 			};
 
-			std::shared_ptr<polymorphic_node> make_node(Deserializer& deserializer) override
+			std::shared_ptr<polymorphic_node> resolve(const char *tid, size_t nid) override
 			{
-				std::string type_id;
-				node_id     node_id;
+				std::shared_ptr<polymorphic_node> x = nullptr;
 
-				// find out what kind of node we're going to make
-				deserializer("type_id", type_id);
-				deserializer("node_id", node_id);
+				auto it = m_objects.find(nid);
+				if (it != m_objects.end()) x = it->second.lock();
 
-				// make node using registered factory
-				auto n = m_factories.at(type_id)->make_node(this, type_id.c_str(), node_id, deserializer);
+				if (x.get() == nullptr)
+				{
+					// make node using registered factory
+					x = m_factories.at(tid)->make_node(this, tid, nid);
 
-				// register the new node
-				m_objects.emplace(node_id, n);
+					// register the new node
+					m_objects[nid] = x;
+				}
 
-				// done!
-				return n;
+				if (strcmp(x->get_type_id(), tid)) throw std::exception("node_id/type_id mismatch");
+
+				return x;
 			}
 
 			Deserializer m_svr_in;
