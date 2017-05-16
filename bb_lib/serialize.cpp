@@ -52,13 +52,12 @@ namespace bb
 		template <typename VISITOR>
 		void reflect_rpc(VISITOR& visit)
 		{
-			std::string method;
-			visit("rpc", method);
-			if (method == "petKittens")
+			visit("petKittens", [&](VISITOR::Params& params)
 			{
-				int count = 0;
-				visit("arg0", count);
-			}
+				int count;
+				params.get(count);
+				void();
+			});
 		}
 	};
 

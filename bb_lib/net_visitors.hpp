@@ -2,23 +2,23 @@
 
 namespace bb
 {
-	namespace partial
+	namespace net
 	{
+		enum class UpdateOp
+		{
+			Replace,
+			Update,
+			AppendVector,
+			InsertVector,
+			EraseVector,
+			ClearVector,
+			InsertMap,
+			EraseMap,
+			ClearMap,
+		};
+
 		namespace
 		{
-			enum class UpdateOp
-			{
-				Replace,
-				Update,
-				AppendVector,
-				InsertVector,
-				EraseVector,
-				ClearVector,
-				InsertMap,
-				EraseMap,
-				ClearMap,
-			};
-
 			struct Unused { };
 		}
 
@@ -38,6 +38,7 @@ namespace bb
 			UpdateOp    m_operation;
 			void*       m_key;
 			void*       m_val;
+			int         m_found = 0;
 			
 			template <typename T> void acquire_key(T& x) { if (m_key) x = *((T*)m_key); }
 			template <typename T> void acquire_val(T& x) { if (m_val) x = *((T*)m_val); }
@@ -47,6 +48,8 @@ namespace bb
 			{
 				if (m_tag.compare(found_tag) == 0)
 				{
+					if (m_found) throw std::exception("duplicate tag detected");
+					m_found++;
 					switch (m_operation)
 					{
 						case UpdateOp::Update:
@@ -68,6 +71,8 @@ namespace bb
 			{
 				if (m_tag.compare(found_tag) == 0)
 				{
+					if (m_found) throw std::exception("duplicate tag detected");
+					m_found++;
 					switch (m_operation)
 					{
 						case UpdateOp::Update:
@@ -121,6 +126,8 @@ namespace bb
 			{
 				if (m_tag.compare(found_tag) == 0)
 				{
+					if (m_found) throw std::exception("duplicate tag detected");
+					m_found++;
 					switch (m_operation)
 					{
 						case UpdateOp::Update:
@@ -163,6 +170,54 @@ namespace bb
 			}
 		};		
 
+		template <typename Serializer>
+		struct ParamListDeserializer
+		{
+			ParamListDeserializer(Serializer &ser)
+				: m_serializer(ser) { }
+
+			Serializer& m_serializer;
+			int         m_arg = 0;
+
+			template <typename T, typename... ARGS>
+			void get(T& arg, ARGS&... args)
+			{
+				std::string elemTag = "arg" + std::to_string(m_arg++);
+				m_serializer(elemTag.c_str(), arg);
+				get(std::forward<ARGS>(args)...);
+			}
+
+		private:
+			void get() { }
+		};
+
+		template <typename Serializer>
+		struct RPCVisitor
+		{
+			RPCVisitor(Serializer &ser, const char *tag)
+				: m_serializer(ser)
+				, m_tag(tag) { }
+
+			Serializer& m_serializer;
+			std::string m_tag;
+			int         m_found = 0;
+
+			using Params = ParamListDeserializer<Serializer>;
+
+			template <typename Fn>
+			void operator()(const char* found_tag, Fn deserialize_rpc)
+			{
+				if (m_tag.compare(found_tag) == 0)
+				{
+					if (m_found) throw std::exception("duplicate tag detected");
+					m_found++;
+					
+					Params p(m_serializer);
+					deserialize_rpc(p);
+				}
+			}
+		};
+
 		template <typename Serializer, typename T>
 		void deserialize(Serializer& ser, std::shared_ptr<T>& object)
 		{
@@ -171,7 +226,7 @@ namespace bb
 
 			ser("op", op);
 
-			std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(object);
+			std::shared_ptr<polymorphic_node> n = std::dynamic_pointer_cast<polymorphic_node, T>(object);
 
 			switch (op)
 			{
@@ -239,87 +294,6 @@ namespace bb
 					throw std::exception("invalid operation");
 				}
 			}
-		}
-
-		template <typename Serializer, typename T>
-		void serialize_replace(Serializer& ser, T& object)
-		{
-			UpdateOp op = UpdateOp::Replace;
-			ser("op", op);
-			//ser("root", object);
-			reflect(ser, object);
-		}
-
-		template <typename Serializer, typename T, typename E>
-		void serialize_member_modify(Serializer& ser, T& object, const char* tag, E& val)
-		{
-			UpdateVisitor<Serializer> visitor(ser, tag, UpdateOp::Update, nullptr, (void*)&elem);
-			ser("op", visitor.m_operation);
-			ser("tag", visitor.m_tag);
-			reflect(visitor, object);
-		}
-
-		template <typename Serializer, typename T, typename E>
-		void serialize_vector_push_back(Serializer& ser, T& object, const char* tag, E& elem)
-		{
-			UpdateVisitor<Serializer> visitor(ser, tag, UpdateOp::AppendVector, nullptr, (void*)&elem);
-			ser("op", visitor.m_operation);
-			ser("tag", visitor.m_tag);
-			reflect(visitor, object);
-		}
-
-		template <typename Serializer, typename T, typename E>
-		void serialize_vector_insert(Serializer& ser, T& object, const char* tag, size_t index, E& elem)
-		{
-			UpdateVisitor<Serializer> visitor(ser, tag, UpdateOp::InsertVector, (void*)&index, (void*)&elem);
-			ser("op", visitor.m_operation);
-			ser("tag", visitor.m_tag);
-			reflect(visitor, object);
-		}
-
-		template <typename Serializer, typename T>
-		void serialize_vector_erase(Serializer& ser, T& object, const char* tag, size_t index)
-		{
-			UpdateVisitor<Serializer> visitor(ser, tag, UpdateOp::EraseVector, (void*)&index, nullptr);
-			ser("op", visitor.m_operation);
-			ser("tag", visitor.m_tag);
-			reflect(visitor, object);
-		}
-
-		template <typename Serializer, typename T>
-		void serialize_vector_clear(Serializer& ser, T& object, const char* tag, size_t index)
-		{
-			UpdateVisitor<Serializer> visitor(ser, tag, UpdateOp::ClearVector, nullptr, nullptr);
-			ser("op", visitor.m_operation);
-			ser("tag", visitor.m_tag);
-			reflect(visitor, object);
-		}
-
-		template <typename Serializer, typename T, typename K, typename V>
-		void serialize_map_insert(Serializer& ser, T& object, const char* tag, K& key, V& val)
-		{
-			UpdateVisitor<Serializer> visitor(ser, tag, UpdateOp::InsertMap, (void*)&key, (void*)&val);
-			ser("op", visitor.m_operation);
-			ser("tag", visitor.m_tag);
-			reflect(visitor, object);
-		}
-
-		template <typename Serializer, typename T, typename K>
-		void serialize_map_erase(Serializer& ser, T& object, const char* tag, K &key)
-		{
-			UpdateVisitor<Serializer> visitor(ser, tag, UpdateOp::EraseMap, (void*)&key, nullptr);
-			ser("op", visitor.m_operation);
-			ser("tag", visitor.m_tag);
-			reflect(visitor, object);
-		}
-
-		template <typename Serializer, typename T>
-		void serialize_map_clear(Serializer& ser, T& object, const char* tag)
-		{
-			UpdateVisitor<Serializer> visitor(ser, tag, UpdateOp::ClearMap, nullptr, nullptr);
-			ser("op", visitor.m_operation);
-			ser("tag", visitor.m_tag);
-			reflect(visitor, object);
 		}
 	}
 }

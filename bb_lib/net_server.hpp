@@ -44,7 +44,7 @@ namespace bb
 
 				void resync()
 				{
-					partial::UpdateOp replace = partial::UpdateOp::Replace;
+					UpdateOp replace = UpdateOp::Replace;
 					m_message_serializer("node", m_node_id);
 					m_message_serializer("op", replace);
 					m_message_serializer("val", shared_from_this());
@@ -54,7 +54,7 @@ namespace bb
 				template <typename T>
 				void member_modify(const char *tag, T& x)
 				{
-					partial::UpdateVisitor<Serializer> visitor(m_message_serializer, tag, partial::UpdateOp::Update, nullptr, (void*)&x);
+					UpdateVisitor<Serializer> visitor(m_message_serializer, tag, UpdateOp::Update, nullptr, (void*)&x);
 					m_message_serializer("node", m_node_id);
 					m_message_serializer("op", visitor.m_operation);
 					m_message_serializer("tag", visitor.m_tag);
@@ -65,7 +65,7 @@ namespace bb
 				template <typename T>
 				void vector_push_back(const char *tag, T& x)
 				{
-					partial::UpdateVisitor<Serializer> visitor(m_message_serializer, tag, partial::UpdateOp::AppendVector, nullptr, (void*)&x);
+					UpdateVisitor<Serializer> visitor(m_message_serializer, tag, UpdateOp::AppendVector, nullptr, (void*)&x);
 					m_message_serializer("node", m_node_id);
 					m_message_serializer("op", visitor.m_operation);
 					m_message_serializer("tag", visitor.m_tag);
@@ -76,7 +76,7 @@ namespace bb
 				template <typename T>
 				void vector_insert(const char* tag, size_t index, T& x)
 				{
-					partial::UpdateVisitor<Serializer> visitor(m_message_serializer, tag, partial::UpdateOp::InsertVector, (void*)&index, (void*)&x);
+					UpdateVisitor<Serializer> visitor(m_message_serializer, tag, UpdateOp::InsertVector, (void*)&index, (void*)&x);
 					m_message_serializer("node", m_node_id);
 					m_message_serializer("op", visitor.m_operation);
 					m_message_serializer("tag", visitor.m_tag);
@@ -86,7 +86,7 @@ namespace bb
 
 				void vector_erase(const char* tag, size_t index)
 				{
-					partial::UpdateVisitor<Serializer> visitor(m_message_serializer, tag, partial::UpdateOp::EraseMap, (void*)&index, nullptr);
+					UpdateVisitor<Serializer> visitor(m_message_serializer, tag, UpdateOp::EraseMap, (void*)&index, nullptr);
 					m_message_serializer("node", m_node_id);
 					m_message_serializer("op", visitor.m_operation);
 					m_message_serializer("tag", visitor.m_tag);
@@ -96,7 +96,7 @@ namespace bb
 
 				void vector_clear(const char* tag)
 				{
-					partial::UpdateVisitor<Serializer> visitor(m_message_serializer, tag, partial::UpdateOp::ClearMap, nullptr, nullptr);
+					UpdateVisitor<Serializer> visitor(m_message_serializer, tag, UpdateOp::ClearMap, nullptr, nullptr);
 					m_message_serializer("node", m_node_id);
 					m_message_serializer("op", visitor.m_operation);
 					m_message_serializer("tag", visitor.m_tag);
@@ -107,7 +107,7 @@ namespace bb
 				template <typename K, typename V>
 				void map_insert(const char* tag, size_t index, K& key, V& value)
 				{
-					partial::UpdateVisitor<Serializer> visitor(m_message_serializer, tag, partial::UpdateOp::InsertMap, (void*)&key, (void*)&value);
+					UpdateVisitor<Serializer> visitor(m_message_serializer, tag, UpdateOp::InsertMap, (void*)&key, (void*)&value);
 					m_message_serializer("node", m_node_id);
 					m_message_serializer("op", visitor.m_operation);
 					m_message_serializer("tag", visitor.m_tag);
@@ -118,7 +118,7 @@ namespace bb
 				template <typename K>
 				void map_erase(const char* tag, K& key)
 				{
-					partial::UpdateVisitor<Serializer> visitor(m_message_serializer, tag, partial::UpdateOp::EraseMap, (void*)key, nullptr);
+					UpdateVisitor<Serializer> visitor(m_message_serializer, tag, UpdateOp::EraseMap, (void*)key, nullptr);
 					m_message_serializer("node", m_node_id);
 					m_message_serializer("op", visitor.m_operation);
 					m_message_serializer("tag", visitor.m_tag);
@@ -128,7 +128,7 @@ namespace bb
 
 				void map_clear(const char* tag)
 				{
-					partial::UpdateVisitor<Serializer> visitor(m_message_serializer, tag, partial::UpdateOp::ClearMap, nullptr, nullptr);
+					UpdateVisitor<Serializer> visitor(m_message_serializer, tag, UpdateOp::ClearMap, nullptr, nullptr);
 					m_message_serializer("node", m_node_id);
 					m_message_serializer("op", visitor.m_operation);
 					m_message_serializer("tag", visitor.m_tag);
@@ -218,7 +218,9 @@ namespace bb
 				while (clt->m_clt_in)
 				{
 					node_id id;
+					std::string tag;
 					clt->m_clt_in("node", id);
+					clt->m_clt_in("rpc", tag);
 
 					// find appropriate node
 					auto it = m_objects.find(id);
@@ -229,7 +231,7 @@ namespace bb
 
 					if (auto node = it->second.lock())
 					{
-						node->reflect_rpc(clt->m_clt_in);
+						node->reflect_rpc(RPCVisitor<Deserializer>(clt->m_clt_in, tag.c_str()));
 					}
 					else
 					{

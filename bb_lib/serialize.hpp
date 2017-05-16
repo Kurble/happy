@@ -27,7 +27,6 @@ namespace bb
 
 #include "serialize_binary.hpp"
 #include "serialize_text.hpp"
-#include "serialize_partial.hpp"
 
 namespace bb
 {

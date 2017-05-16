@@ -82,7 +82,7 @@ namespace bb
 
 						if (auto node = it->second.lock())
 						{
-							partial::deserialize(m_svr_in, node);
+							deserialize(m_svr_in, node);
 						}
 						else
 						{
@@ -92,7 +92,7 @@ namespace bb
 					else
 					{
 						// we don't know anything yet.. assume root is coming in
-						partial::deserialize(m_svr_in, m_root);
+						deserialize(m_svr_in, m_root);
 					}
 				}
 			}
@@ -112,7 +112,7 @@ namespace bb
 				std::shared_ptr<polymorphic_node> make_node(context* context, const char* type_id, node_id node_id, Deserializer& deserializer) const override
 				{
 					auto n = std::make_shared<node<T, client_node_base, std::false_type>>(context, type_id, node_id);
-					n->__user_reflect(deserializer);
+					n->T::reflect(deserializer);
 					return n;
 				}
 			};

@@ -44,14 +44,12 @@ namespace bb
 			virtual void     pm_reflect(BinaryDeserializer& visitor) = 0;
 			virtual void     pm_reflect(TextSerializer& visitor) = 0;
 			virtual void     pm_reflect(TextDeserializer& visitor) = 0;
-			virtual void     pm_reflect(partial::UpdateVisitor<BinarySerializer>& visitor) = 0;
-			virtual void     pm_reflect(partial::UpdateVisitor<BinaryDeserializer>& visitor) = 0;
-			virtual void     pm_reflect(partial::UpdateVisitor<TextSerializer>& visitor) = 0;
-			virtual void     pm_reflect(partial::UpdateVisitor<TextDeserializer>& visitor) = 0;
-			virtual void     pm_reflect_rpc(BinarySerializer& visitor) = 0;
-			virtual void     pm_reflect_rpc(BinaryDeserializer& visitor) = 0;
-			virtual void     pm_reflect_rpc(TextSerializer& visitor) = 0;
-			virtual void     pm_reflect_rpc(TextDeserializer& visitor) = 0;
+			virtual void     pm_reflect(UpdateVisitor<BinarySerializer>& visitor) = 0;
+			virtual void     pm_reflect(UpdateVisitor<BinaryDeserializer>& visitor) = 0;
+			virtual void     pm_reflect(UpdateVisitor<TextSerializer>& visitor) = 0;
+			virtual void     pm_reflect(UpdateVisitor<TextDeserializer>& visitor) = 0;
+			virtual void     pm_reflect_rpc(RPCVisitor<BinaryDeserializer>& visitor) = 0;
+			virtual void     pm_reflect_rpc(RPCVisitor<TextDeserializer>& visitor) = 0;
 		};
 				
 		//------------------------------------------------------------------------------------------------------------
@@ -84,15 +82,20 @@ namespace bb
 				user_type::reflect(visitor);
 			}
 
-			template <typename VISITOR>
-			inline void __user_reflect(VISITOR& visitor)
-			{
-				user_type::reflect(visitor);
-			}
-
-			context* get_context() override                                                   { return m_context; }
-			node_id  get_node_id() override                                                   { return m_node_id; }
+			context* get_context() override                                           { return m_context; }
+			node_id  get_node_id() override                                           { return m_node_id; }
 		private:
+			void     pm_reflect(BinarySerializer& visitor) override                   { reflect(visitor); }
+			void     pm_reflect(BinaryDeserializer& visitor) override                 { reflect(visitor); }
+			void     pm_reflect(TextSerializer& visitor) override                     { reflect(visitor); }
+			void     pm_reflect(TextDeserializer& visitor) override                   { reflect(visitor); }
+			void     pm_reflect(UpdateVisitor<BinarySerializer>& visitor) override    { reflect(visitor); }
+			void     pm_reflect(UpdateVisitor<BinaryDeserializer>& visitor) override  { reflect(visitor); }
+			void     pm_reflect(UpdateVisitor<TextSerializer>& visitor) override      { reflect(visitor); }
+			void     pm_reflect(UpdateVisitor<TextDeserializer>& visitor) override    { reflect(visitor); }
+			void     pm_reflect_rpc(RPCVisitor<BinaryDeserializer>& visitor) override { __reflect_rpc<GEN_REFLECT_RPC>(visitor); }
+			void     pm_reflect_rpc(RPCVisitor<TextDeserializer>& visitor) override   { __reflect_rpc<GEN_REFLECT_RPC>(visitor); }
+
 			template <typename GEN, typename VISITOR>
 			typename std::enable_if<std::is_same<GEN, std::false_type>::value, void>::type __reflect_rpc(VISITOR& visitor)
 			{
@@ -103,32 +106,23 @@ namespace bb
 			typename std::enable_if<std::is_same<GEN, std::true_type>::value, void>::type __reflect_rpc(VISITOR& visitor)
 			{
 				/*
-				 * If your node is constructed using bb::net::server::make_node, it requires a reflect_rpc method to be present.
-				 * If not, a compiler error will be generated right here!
-				 * 
-				 * Example reflect_rpc:
-				 *
-				 * template <typename VISITOR>
-				 * void reflect_rpc(VISITOR& visitor)
-				 * {
-				 *     <TBD>
-				 * }
-				 */
+				* If your node is constructed using bb::net::server::make_node, it requires a reflect_rpc method to be present.
+				* If not, a compiler error will be generated right here!
+				*
+				* Example reflect_rpc:
+				*
+				* template <typename VISITOR>
+				* void reflect_rpc(VISITOR& visitor)
+				* {
+				*     visitor("rpcName", [&](VISITOR::Params& params)
+				*     {
+				*         int a, b, c;
+				*         params.get(a, b, c);
+				*     });
+				* }
+				*/
 				user_type::reflect_rpc(visitor);
-			}			
-
-			void     pm_reflect(BinarySerializer& visitor) override                           { reflect(visitor); }
-			void     pm_reflect(BinaryDeserializer& visitor) override                         { reflect(visitor); }
-			void     pm_reflect(TextSerializer& visitor) override                             { reflect(visitor); }
-			void     pm_reflect(TextDeserializer& visitor) override                           { reflect(visitor); }
-			void     pm_reflect(partial::UpdateVisitor<BinarySerializer>& visitor) override   { reflect(visitor); }
-			void     pm_reflect(partial::UpdateVisitor<BinaryDeserializer>& visitor) override { reflect(visitor); }
-			void     pm_reflect(partial::UpdateVisitor<TextSerializer>& visitor) override     { reflect(visitor); }
-			void     pm_reflect(partial::UpdateVisitor<TextDeserializer>& visitor) override   { reflect(visitor); }
-			void     pm_reflect_rpc(BinarySerializer& visitor) override                       { __reflect_rpc<GEN_REFLECT_RPC>(visitor); }
-			void     pm_reflect_rpc(BinaryDeserializer& visitor) override                     { __reflect_rpc<GEN_REFLECT_RPC>(visitor); }
-			void     pm_reflect_rpc(TextSerializer& visitor) override                         { __reflect_rpc<GEN_REFLECT_RPC>(visitor); }
-			void     pm_reflect_rpc(TextDeserializer& visitor) override                       { __reflect_rpc<GEN_REFLECT_RPC>(visitor); }
+			}
 		};
 	}
 }

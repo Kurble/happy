@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "serialize.hpp"
+#include "net_visitors.hpp"
 #include "net_node.hpp"
 #include "net_context.hpp"
 #include "net_server.hpp"

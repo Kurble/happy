@@ -168,7 +168,7 @@
     <ClInclude Include="ray.h" />
     <ClInclude Include="serialize.hpp" />
     <ClInclude Include="serialize_binary.hpp" />
-    <ClInclude Include="serialize_partial.hpp" />
+    <ClInclude Include="net_visitors.hpp" />
     <ClInclude Include="serialize_text.hpp" />
     <ClInclude Include="spatial_hash_map.h" />
     <ClInclude Include="store.h" />

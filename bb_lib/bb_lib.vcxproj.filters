@@ -20,9 +20,9 @@
     <ClInclude Include="net_client.hpp" />
     <ClInclude Include="serialize.hpp" />
     <ClInclude Include="serialize_binary.hpp" />
-    <ClInclude Include="serialize_partial.hpp" />
     <ClInclude Include="serialize_text.hpp" />
     <ClInclude Include="net_node.hpp" />
+    <ClInclude Include="net_visitors.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vec2.cpp" />
