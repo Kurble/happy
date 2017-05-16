@@ -76,6 +76,7 @@ namespace bb
 
 			virtual context* get_context() = 0;
 			virtual node_id  get_node_id() = 0;
+			virtual type_id  get_type_id() = 0;
 		private:
 			virtual void     pm_reflect(BinarySerializer& visitor) = 0;
 			virtual void     pm_reflect(BinaryDeserializer& visitor) = 0;
@@ -115,7 +116,7 @@ namespace bb
 				visitor("type_id", m_type_id);
 				visitor("node_id", m_node_id);
 
-				if (m_type_id.compare(user_type::get_type_id()))
+				if (m_type_id.compare(user_type::_type_id()))
 				{
 					throw std::exception("different type_id expected!");
 				}
@@ -125,6 +126,7 @@ namespace bb
 
 			context* get_context() override                                           { return m_context; }
 			node_id  get_node_id() override                                           { return m_node_id; }
+			type_id  get_type_id() override                                           { return user_type::_type_id(); }
 		private:
 			void     pm_reflect(BinarySerializer& visitor) override                   { reflect(visitor); }
 			void     pm_reflect(BinaryDeserializer& visitor) override                 { reflect(visitor); }

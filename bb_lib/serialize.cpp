@@ -24,7 +24,7 @@ namespace bb
 			visit("test_c", test_c);
 		}
 
-		static bb::net::type_id get_type_id() { return "TestNode"; }
+		static bb::net::type_id _type_id() { return "TestNode"; }
 	};
 
 	class DerivedTestNode : public TestNode
@@ -41,7 +41,7 @@ namespace bb
 			visit("test_recurse", test_recurse);
 		}
 
-		static bb::net::type_id get_type_id() { return "DerivedTestNode"; }
+		static bb::net::type_id _type_id() { return "DerivedTestNode"; }
 	};
 
 	class SvrDerivedTestNode : public DerivedTestNode

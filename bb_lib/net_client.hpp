@@ -61,7 +61,7 @@ namespace bb
 			template <class T>
 			void register_node_type()
 			{
-				m_factories.emplace(std::string(T::get_type_id()), std::make_shared<sub_factory<T>>());
+				m_factories.emplace(std::string(T::_type_id()), std::make_shared<sub_factory<T>>());
 			}
 
 			void update()

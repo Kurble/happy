@@ -177,7 +177,7 @@ namespace bb
 			template <class T>
 			node_type<T> make_root_node()
 			{
-				node_type<T> n = std::make_shared<node<T, server_node_base, std::true_type>>(this, T::get_type_id(), m_node_id_counter++);
+				node_type<T> n = std::make_shared<node<T, server_node_base, std::true_type>>(this, T::_type_id(), m_node_id_counter++);
 
 				m_objects.emplace(n->get_node_id(), n);
 
@@ -187,7 +187,7 @@ namespace bb
 			template <class T, class P>
 			node_type<T> make_node(std::shared_ptr<P> parent)
 			{
-				node_type<T> n = std::make_shared<node<T, server_node_base, std::true_type>>(this, T::get_type_id(), m_node_id_counter++);
+				node_type<T> n = std::make_shared<node<T, server_node_base, std::true_type>>(this, T::_type_id(), m_node_id_counter++);
 
 				m_objects.emplace(n->get_node_id(), n);
 
