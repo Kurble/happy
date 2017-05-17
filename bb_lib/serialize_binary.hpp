@@ -63,12 +63,14 @@ namespace bb
 		{
 			std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(x);
 
-			size_t node_id = n->get_node_id();
-			std::string type_id = n->get_type_id();
+			std::string type_id = n.get() ? n->get_type_id() : "nullptr_t";
+			size_t node_id      = n.get() ? n->get_node_id() : (-1);
 
 			operator()("type_id", type_id);
 			operator()("node_id", node_id);
-			n->reflect(*this);
+
+			if (n.get())
+				n->reflect(*this);
 		}
 
 		operator bool()
@@ -172,16 +174,23 @@ namespace bb
 
 			operator()("type_id", type_id);
 			operator()("node_id", node_id);
-			auto n = m_node_resolver->resolve(type_id.c_str(), node_id);
-			n->reflect(*this);
 
-			x = std::dynamic_pointer_cast<T, net::polymorphic_node>(n);
+			if (type_id.compare("nullptr_t"))
+			{
+				auto n = m_node_resolver->resolve(type_id.c_str(), node_id);
+				n->reflect(*this);
+
+				x = std::dynamic_pointer_cast<T, net::polymorphic_node>(n);
+			}
+			else
+			{
+				x = nullptr;
+			}
 		}
 
 		operator bool()
 		{
-			m_stream.peek();
-			return m_stream.rdbuf()->in_avail() > 0;
+			return (m_stream.rdbuf()->in_avail() > 0);
 		}
 
 	private:

@@ -192,6 +192,7 @@ namespace bb
 				visit_subscribers([&](client_type* subscriber)
 				{
 					subscriber->m_clt_out.write(m_message_buffer.str().c_str(), m_message_buffer.str().length());
+					subscriber->m_clt_out.flush();
 				});
 
 				// clear contents

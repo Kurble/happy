@@ -10,6 +10,7 @@ namespace bb
 		public:
 			using Deserializer = DESERIALIZER;
 			using Serializer = SERIALIZER;
+			using server_client_type = server_client<Deserializer, Serializer>;
 
 			server() 
 				: m_node_id_counter(0)
