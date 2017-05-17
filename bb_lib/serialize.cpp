@@ -24,7 +24,7 @@ namespace bb
 			visit("test_c", test_c);
 		}
 
-		static bb::net::type_id _type_id() { return "TestNode"; }
+		static bb::net::type_id node_type() { return "TestNode"; }
 	};
 
 	class DerivedTestNode : public TestNode
@@ -41,7 +41,7 @@ namespace bb
 			visit("test_recurse", test_recurse);
 		}
 
-		static bb::net::type_id _type_id() { return "DerivedTestNode"; }
+		static bb::net::type_id node_type() { return "DerivedTestNode"; }
 	};
 
 	class SvrDerivedTestNode : public DerivedTestNode
@@ -82,15 +82,14 @@ namespace bb
 
 			std::ifstream i("");
 			std::ofstream o("server-test.txt", std::ios::binary);
+						
+			auto client = server.add_client<SvrDerivedTestNode>(i, o);
 
-			auto connected = server.make_root_node<SvrDerivedTestNode>();
-			connected->test_a = "var a";
-			connected->test_b = "var b";
-			connected->test_c = "var c";
-			auto client = server.add_client(i, o, connected);
-
-			auto sub = server.make_node<SvrDerivedTestNode>(connected);
-			connected->vector_push_back("test_recurse", sub);
+			auto sub = server.make_node<SvrDerivedTestNode>();
+			sub->test_a = "a";
+			sub->test_b = "b";
+			sub->test_c = "c";
+			client->get_root<SvrDerivedTestNode>()->vector_push_back("test_recurse", sub);
 
 			sub->member_modify("test_a", std::string("test"));
 		}
@@ -117,11 +116,7 @@ namespace bb
 			std::ifstream i("client-test.txt", std::ios::binary);
 			std::ofstream o("server-test.txt", std::ios::binary);
 
-			auto connected = server.make_root_node<SvrDerivedTestNode>();
-			connected->test_a = "var a";
-			connected->test_b = "var b";
-			connected->test_c = "var c";
-			auto client = server.add_client(i, o, connected);
+			auto client = server.add_client<SvrDerivedTestNode>(i, o);
 
 			server.update_client(client.get());
 		}

@@ -4,7 +4,7 @@ namespace bb
 {
 	namespace net
 	{
-		enum class UpdateOp
+		enum class update_op
 		{
 			Replace,
 			Update,
@@ -17,26 +17,68 @@ namespace bb
 			ClearMap,
 		};
 		
+		/*
+		 * Server update visitor.
+		 * Makes a packet of specific members in a node.
+		 * If a member is a node itself, a reference to the parent node is added, and
+		 *  the reference that was already there on the old version of the member node is removed.
+		 */
 		template <typename Serializer>
-		struct UpdateVisitor
+		struct update_visitor
 		{
 		public:
-			UpdateVisitor(Serializer &ser, const char *tag, UpdateOp op, void* key = nullptr, void* value = nullptr)
+			class reference_manager
+			{
+			public:
+				virtual ~reference_manager() = default;
+				virtual void unref(std::shared_ptr<polymorphic_node> node) = 0;
+				virtual void ref(std::shared_ptr<polymorphic_node> node) = 0;
+			};
+
+			update_visitor(Serializer &ser, const char *tag, update_op op, void* key, void* value, reference_manager* refmgr)
 				: m_serializer(ser)
 				, m_tag(tag) 
 				, m_operation(op)
 				, m_key(key)
-				, m_val(value) { }
-
-			Serializer& m_serializer;
-			std::string m_tag;
-			UpdateOp    m_operation;
-			void*       m_key;
-			void*       m_val;
-			int         m_found = 0;
+				, m_val(value)
+				, m_refmgr(refmgr) { }
+			
+			Serializer&        m_serializer;
+			std::string        m_tag;
+			update_op          m_operation;
+			void*              m_key;
+			void*              m_val;
+			int                m_found = 0;
+			reference_manager* m_refmgr;
 			
 			template <typename T> void acquire_key(T& x) { if (m_key) x = *((T*)m_key); }
 			template <typename T> void acquire_val(T& x) { if (m_val) x = *((T*)m_val); }
+
+			template <typename T>
+			void ref(T& x) { }
+
+			template <typename T>
+			void ref(std::shared_ptr<T>& x) 
+			{ 
+				if (m_refmgr)
+				{
+					std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(x);
+					m_refmgr->ref(n);
+				}
+			}
+
+			template <typename T>
+			void unref(T& x) { }
+
+			template <typename T>
+			void unref(std::shared_ptr<T>& x)
+			{
+				if (m_refmgr)
+				{
+					std::shared_ptr<net::polymorphic_node> n = std::dynamic_pointer_cast<net::polymorphic_node, T>(x);
+					m_refmgr->unref(n);
+				}
+			}
 
 			template <typename T>
 			void operator()(const char* found_tag, T& x)
@@ -47,9 +89,11 @@ namespace bb
 					m_found++;
 					switch (m_operation)
 					{
-						case UpdateOp::Update:
+						case update_op::Update:
 						{
+							unref(x);
 							acquire_val(x);
+							ref(x);
 							m_serializer(found_tag, x);
 							break;
 						}
@@ -70,39 +114,45 @@ namespace bb
 					m_found++;
 					switch (m_operation)
 					{
-						case UpdateOp::Update:
+						case update_op::Update:
 						{
+							for (auto &y : x) unref(y);
 							acquire_val(x);
+							for (auto &y : x) ref(y);
 							m_serializer(found_tag, x);
 							break;
 						}
-						case UpdateOp::AppendVector:
+						case update_op::AppendVector:
 						{
 							T val; acquire_val(val);
+							ref(val);
 							m_serializer("val", val);
 							x.push_back(val);
 							break;
 						}
-						case UpdateOp::InsertVector:
+						case update_op::InsertVector:
 						{
 							size_t key; acquire_key(key);
 							T val;      acquire_val(val);
+							ref(val);
 							m_serializer("ind", key);
 							m_serializer("val", val);
 							x.insert(x.begin() + key, val);
 							break;
 						}
 
-						case UpdateOp::EraseVector:
+						case update_op::EraseVector:
 						{
 							size_t key; acquire_key(key);
+							unref(x[key]);
 							m_serializer("ind", key);
 							x.erase(x.begin() + key);
 							break;
 						}
 
-						case UpdateOp::ClearVector:
+						case update_op::ClearVector:
 						{
+							for (auto &y : x) unref(y);
 							x.clear();
 							break;
 						}
@@ -125,32 +175,37 @@ namespace bb
 					m_found++;
 					switch (m_operation)
 					{
-						case UpdateOp::Update:
+						case update_op::Update:
 						{
+							for (auto &y : x) unref(y.second);
 							acquire_val(x);
+							for (auto &y : x) ref(y.second);
 							m_serializer(found_tag, x);
 							break;
 						}
-						case UpdateOp::InsertMap:
+						case update_op::InsertMap:
 						{
 							std::pair<K, V> keyval;
 							acquire_key(keyval.first);
 							acquire_val(keyval.second);
+							ref(keyval.second);
 							m_serializer("keyval", keyval);
 							x.insert(keyval);
 							break;
 						}
 
-						case UpdateOp::EraseMap:
+						case update_op::EraseMap:
 						{
 							K key; acquire_key(key);
+							unref(x.at(key));
 							m_serializer("key", key);
 							x.erase(key);
 							break;
 						}
 
-						case UpdateOp::ClearMap:
+						case update_op::ClearMap:
 						{
+							for (auto &y : x) unref(y.second);
 							x.clear();
 							break;
 						}
@@ -166,9 +221,9 @@ namespace bb
 		};		
 
 		template <typename Serializer>
-		struct ParamListDeserializer
+		struct param_list_deserializer
 		{
-			ParamListDeserializer(Serializer &ser)
+			param_list_deserializer(Serializer &ser)
 				: m_serializer(ser) { }
 
 			Serializer& m_serializer;
@@ -187,9 +242,9 @@ namespace bb
 		};
 
 		template <typename Serializer>
-		struct RPCVisitor
+		struct rpc_visitor
 		{
-			RPCVisitor(Serializer &ser, const char *tag)
+			rpc_visitor(Serializer &ser, const char *tag)
 				: m_serializer(ser)
 				, m_tag(tag) { }
 
@@ -197,7 +252,7 @@ namespace bb
 			std::string m_tag;
 			int         m_found = 0;
 
-			using Params = ParamListDeserializer<Serializer>;
+			using Params = param_list_deserializer<Serializer>;
 
 			template <typename Fn>
 			void operator()(const char* found_tag, Fn deserialize_rpc)
@@ -217,7 +272,7 @@ namespace bb
 		void deserialize(Serializer& ser, std::shared_ptr<T>& object)
 		{
 			std::string tag;
-			UpdateOp op;
+			update_op op;
 
 			ser("op", op);
 
@@ -225,23 +280,23 @@ namespace bb
 
 			switch (op)
 			{
-				case UpdateOp::Replace:
+				case update_op::Replace:
 				{
 					ser("val", object);
 					break;
 				}
 
-				case UpdateOp::Update:
-				case UpdateOp::AppendVector:
-				case UpdateOp::InsertVector:
-				case UpdateOp::EraseVector:
-				case UpdateOp::ClearVector:
-				case UpdateOp::InsertMap:
-				case UpdateOp::EraseMap:
-				case UpdateOp::ClearMap:
+				case update_op::Update:
+				case update_op::AppendVector:
+				case update_op::InsertVector:
+				case update_op::EraseVector:
+				case update_op::ClearVector:
+				case update_op::InsertMap:
+				case update_op::EraseMap:
+				case update_op::ClearMap:
 				{
 					ser("tag", tag);
-					UpdateVisitor<Serializer> visitor(ser, tag.c_str(), op, nullptr, nullptr);
+					update_visitor<Serializer> visitor(ser, tag.c_str(), op, nullptr, nullptr, nullptr);
 					object->reflect(visitor);
 					break;
 				}
@@ -257,29 +312,29 @@ namespace bb
 		void deserialize(Serializer& ser, T& object)
 		{
 			std::string tag;
-			UpdateOp op;
+			update_op op;
 
 			ser("op", op);
 
 			switch (op)
 			{
-				case UpdateOp::Replace:
+				case update_op::Replace:
 				{
 					ser("val", object);
 					break;
 				}
 
-				case UpdateOp::Update:
-				case UpdateOp::AppendVector:
-				case UpdateOp::InsertVector:
-				case UpdateOp::EraseVector:
-				case UpdateOp::ClearVector:
-				case UpdateOp::InsertMap:
-				case UpdateOp::EraseMap:
-				case UpdateOp::ClearMap:
+				case update_op::Update:
+				case update_op::AppendVector:
+				case update_op::InsertVector:
+				case update_op::EraseVector:
+				case update_op::ClearVector:
+				case update_op::InsertMap:
+				case update_op::EraseMap:
+				case update_op::ClearMap:
 				{
 					ser("tag", tag);
-					UpdateVisitor<Serializer> visitor(ser, tag.c_str(), op, nullptr, nullptr);
+					update_visitor<Serializer> visitor(ser, tag.c_str(), op, nullptr, nullptr, nullptr);
 					reflect(visitor, object);
 					break;
 				}

@@ -23,6 +23,9 @@
     <ClInclude Include="serialize_text.hpp" />
     <ClInclude Include="net_node.hpp" />
     <ClInclude Include="net_visitors.hpp" />
+    <ClInclude Include="net_server_node.hpp" />
+    <ClInclude Include="net_client_node.hpp" />
+    <ClInclude Include="net_server_client.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vec2.cpp" />
