@@ -64,6 +64,7 @@ namespace bb
 			virtual ~node_utils() { }
 			server_node_base* svrsvc = nullptr;
 			client_node_base* cltsvc = nullptr;
+			polymorphic_node* node_base = nullptr;
 		};
 		template <typename SVR>
 		class node_utils<SVR, void> : public server_utils_tag
@@ -75,6 +76,7 @@ namespace bb
 			using server_node_base = typename SVR::node_base_type;
 			virtual ~node_utils() { }
 			server_node_base* svrsvc = nullptr;
+			polymorphic_node* node_base = nullptr;
 		};
 		template <typename CLT>
 		class node_utils<void, CLT> : public client_utils_tag
@@ -86,6 +88,7 @@ namespace bb
 			using client_node_base = typename CLT::node_base_type;
 			virtual ~node_utils() { }
 			client_node_base* cltsvc = nullptr;
+			polymorphic_node* node_base = nullptr;
 		};
 
 		//------------------------------------------------------------------------------------------------------------
@@ -168,12 +171,14 @@ namespace bb
 			typename std::enable_if<std::is_base_of<server_utils_tag, IMPL>::value>::type _link_svr()
 			{
 				usr_type::svrsvc = dynamic_cast<usr_type::server_node_base*>(this);
+				usr_type::node_base = usr_type::svrsvc;
 			}
 
 			template <typename IMPL>
 			typename std::enable_if<std::is_base_of<client_utils_tag, IMPL>::value>::type _link_clt()
 			{
 				usr_type::cltsvc = dynamic_cast<usr_type::client_node_base*>(this);
+				usr_type::node_base = usr_type::cltsvc;
 			}
 
 			template <typename GEN, typename VISITOR>

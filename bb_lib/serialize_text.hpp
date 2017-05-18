@@ -89,11 +89,11 @@ namespace bb
 			
 			stream() << "{" << std::endl;
 			m_indentation++;
-			std::string type_id = n.get() ? n->get_type_id() : "nullptr_t";
-			size_t      node_id = n.get() ? n->get_node_id() : (-1);
+			std::string type_id = n ? n->get_type_id() : "nullptr_t";
+			size_t      node_id = n ? n->get_node_id() : (-1);
 			operator()("type_id", type_id);
 			operator()("node_id", node_id);
-			if (n.get()) n->reflect(*this);
+			if (n) n->reflect(*this);
 			stream(--m_indentation) << "}" << std::endl;
 		}
 

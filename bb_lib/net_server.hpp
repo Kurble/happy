@@ -29,10 +29,10 @@ namespace bb
 				return n;
 			}
 
-			template <class T>
-			node_type<T> cast(std::shared_ptr<polymorphic_node> x)
+			template <class T, class T2=polymorphic_node>
+			node_type<T> cast(std::shared_ptr<T2> x)
 			{
-				return std::dynamic_pointer_cast<node<T, node_base_type, std::true_type>, polymorphic_node>(x);
+				return std::dynamic_pointer_cast<node<T, node_base_type, std::true_type>, T2>(x);
 			}
 
 			template <class T>
