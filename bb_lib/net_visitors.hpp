@@ -237,7 +237,7 @@ namespace bb
 				get(std::forward<ARGS>(args)...);
 			}
 
-			template <typename T> arg()
+			template <typename T> T arg()
 			{
 				T x;
 				std::string elemTag = "arg" + std::to_string(m_arg++);
