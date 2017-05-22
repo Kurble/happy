@@ -237,6 +237,14 @@ namespace bb
 				get(std::forward<ARGS>(args)...);
 			}
 
+			template <typename T> arg()
+			{
+				T x;
+				std::string elemTag = "arg" + std::to_string(m_arg++);
+				m_serializer(elemTag.c_str(), x);
+				return x;
+			}
+
 		private:
 			void get() { }
 		};
