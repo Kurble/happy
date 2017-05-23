@@ -136,7 +136,7 @@ namespace bb
 						auto j = i->lock();
 						if (j.get() == this)
 						{
-							m_referenced_by.erase(i);
+							x->m_referenced_by.erase(i);
 							return;
 						}
 					}

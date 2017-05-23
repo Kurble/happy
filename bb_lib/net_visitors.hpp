@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 namespace bb
 {
 	namespace net
@@ -226,8 +228,11 @@ namespace bb
 			param_list_deserializer(Serializer &ser)
 				: m_serializer(ser) { }
 
-			Serializer& m_serializer;
-			int         m_arg = 0;
+			template <typename R, typename T, typename... ARGS>
+			R call_mem_fn(T* obj, R(T::* pm)(ARGS...))
+			{
+				return invoker<R,T,ARGS...>(this, obj, pm).invoke();
+			}
 
 			template <typename T, typename... ARGS>
 			void get(T& arg, ARGS&... args)
@@ -237,15 +242,49 @@ namespace bb
 				get(std::forward<ARGS>(args)...);
 			}
 
-			template <typename T> T arg()
-			{
-				T x;
-				std::string elemTag = "arg" + std::to_string(m_arg++);
-				m_serializer(elemTag.c_str(), x);
-				return x;
-			}
-
 		private:
+			Serializer& m_serializer;
+			int         m_arg = 0;
+
+			template <typename R, typename T, typename ...ARGS>
+			struct invoker
+			{
+				typedef R(T::* mem_fn_ptr)(ARGS...);
+
+				invoker(param_list_deserializer<Serializer> *parent, T* obj, mem_fn_ptr ptr)
+					: m_parent(parent)
+					, m_obj(obj)
+					, m_fn(ptr) { }
+
+				param_list_deserializer<Serializer> *m_parent;
+				mem_fn_ptr          m_fn;
+				T*                  m_obj;
+
+				R invoke()
+				{
+					return _invoke(typename gens<sizeof...(ARGS)>::type());
+				}
+
+			private:
+				template<int ...>
+				struct seq { };
+
+				template<int N, int ...S>
+				struct gens : gens<N - 1, N - 1, S...> { };
+
+				template<int ...S>
+				struct gens<0, S...> { typedef seq<S...> type; };
+
+				std::tuple<ARGS...> m_params;
+
+				template<int ...S>
+				R _invoke(seq<S...>)
+				{
+					m_parent->get(std::get<S>(m_params) ...);
+					return (m_obj->*m_fn)(std::get<S>(m_params) ...);
+				}
+			};
+
 			void get() { }
 		};
 
