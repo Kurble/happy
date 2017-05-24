@@ -20,11 +20,15 @@ namespace bb
 
 			template <class T>
 			using node_type = std::shared_ptr<node<T, node_base_type, std::true_type>>;
-
+						
 			template <class T>
-			node_type<T> make_node()
+			node_type<T> make_node(std::shared_ptr<polymorphic_node> parent)
 			{
 				node_type<T> n = std::make_shared<node<T, node_base_type, std::true_type>>(this, T::node_type(), m_node_id_counter++);
+				if (parent)
+				{
+					n->m_referenced_by.push_back(std::dynamic_pointer_cast<node_base_type>(parent));
+				}
 				m_objects[n->get_node_id()] = n;
 				return n;
 			}
@@ -38,7 +42,7 @@ namespace bb
 			template <class T>
 			std::shared_ptr<server_client<Deserializer, Serializer>> add_client(std::istream &clt_in, std::ostream &clt_out)
 			{
-				node_type<T> clt_root = make_node<T>();
+				node_type<T> clt_root = make_node<T>(nullptr);
 
 				auto client = std::make_shared<server_client<Deserializer, Serializer>>(clt_in, clt_out, clt_root);
 

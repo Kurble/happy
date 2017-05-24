@@ -85,7 +85,7 @@ namespace bb
 						
 			auto client = server.add_client<SvrDerivedTestNode>(i, o);
 
-			auto sub = server.make_node<SvrDerivedTestNode>();
+			auto sub = server.make_node<SvrDerivedTestNode>(nullptr);
 			sub->test_a = "a";
 			sub->test_b = "b";
 			sub->test_c = "c";

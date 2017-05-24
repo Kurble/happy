@@ -53,8 +53,8 @@ namespace bb
 				
 		//------------------------------------------------------------------------------------------------------------
 		// Node functionality helpers
-		struct server_utils_tag { };
-		struct client_utils_tag { };
+		struct server_utils_tag { virtual ~server_utils_tag() { } };
+		struct client_utils_tag { virtual ~client_utils_tag() { } };
 		template <typename SVR, typename CLT>
 		class node_utils : public server_utils_tag, public client_utils_tag
 		{
