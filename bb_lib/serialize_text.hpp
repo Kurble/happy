@@ -63,6 +63,7 @@ namespace bb
 			m_indentation++;
 			for (auto &elem : x)
 			{
+				stream(m_indentation);
 				write(elem);
 			}
 			stream(--m_indentation) << "]" << std::endl;
@@ -76,6 +77,7 @@ namespace bb
 			m_indentation++;
 			for (auto &elem : x)
 			{
+				stream(m_indentation);
 				write(elem);
 			}
 			stream(--m_indentation) << "]" << std::endl;

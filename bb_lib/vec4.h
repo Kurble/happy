@@ -52,5 +52,14 @@ namespace bb
 		float y;
 		float z;
 		float w;
+
+		template <typename VISITOR>
+		void reflect(VISITOR& visit)
+		{
+			visit("x", x);
+			visit("y", y);
+			visit("z", z);
+			visit("w", w);
+		}
 	};
 }

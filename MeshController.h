@@ -41,7 +41,7 @@ namespace happy
 		void setRenderGroups(StencilMask &groups);
 		void setAlpha(float alpha);
 
-		int addAnimation(string name, Animation animation);
+		int addAnimation(string name, Animation animation, system_clock::time_point start);
 		int getAnimationIndex(string name);
 
 		void setAnimationTimer(int id, system_clock::time_point start, system_clock::duration offset);

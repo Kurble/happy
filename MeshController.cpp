@@ -55,14 +55,14 @@ namespace happy
 		m_RenderItem.m_Groups = groups;
 	}
 
-	int MeshController::addAnimation(string name, Animation animation)
+	int MeshController::addAnimation(string name, Animation animation, system_clock::time_point start)
 	{
 		anim_state state;
 
 		state.m_Name = name;
 		state.m_Anim = animation;
-		state.m_Blender = system_clock::now();
-		state.m_Timer = system_clock::now();
+		state.m_Blender = start;
+		state.m_Timer = start;
 		state.m_SpeedMultiplier = 1;
 		state.m_BlendDuration = 0;
 		state.m_BlendSource = 0;

@@ -239,7 +239,7 @@ namespace bb
 			{
 				std::string elemTag = "arg" + std::to_string(m_arg++);
 				m_serializer(elemTag.c_str(), arg);
-				get(std::forward<ARGS>(args)...);
+				get(std::forward<ARGS&>(args)...);
 			}
 
 		private:

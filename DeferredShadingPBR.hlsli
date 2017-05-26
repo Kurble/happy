@@ -65,6 +65,6 @@ float4 main(VSOut input) : SV_TARGET
 	}
 	else
 	{
-		return g_CubeEnvironment.Sample(g_TextureSampler, viewNormal.xzy);
+		return g_CubeEnvironment.Sample(g_TextureSampler, float3(viewNormal.x, viewNormal.z, -viewNormal.y));
 	}
 }
