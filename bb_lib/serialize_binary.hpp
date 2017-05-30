@@ -31,6 +31,12 @@ namespace bb
 			reflect(*this, x);
 		}
 
+		template <>
+		void operator()(const char*, bool x)
+		{
+			put(x);
+		}
+
 		// string serialization
 		template <>
 		void operator()(const char*, std::string &x)
@@ -122,6 +128,12 @@ namespace bb
 		typename std::enable_if<!std::is_arithmetic<T>::value && !std::is_enum<T>::value, void>::type operator()(const char*, T &x)
 		{
 			reflect(*this, x);
+		}
+
+		template <>
+		void operator()(const char*, bool &x)
+		{
+			get(x);
 		}
 
 		// string deserialization

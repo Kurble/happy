@@ -48,6 +48,12 @@ namespace bb
 			stream(--m_indentation) << "}" << std::endl;
 		}
 
+		template <>
+		void write(bool x)
+		{
+			stream() << x << std::endl;
+		}
+
 		// string serialization
 		template <>
 		void write(std::string &x)
@@ -180,6 +186,12 @@ namespace bb
 			assert_exc(get() == '{', "expected '{'");
 			reflect(*this ,x);
 			assert_exc(get() == '}', "expected '}'");
+		}
+
+		template <>
+		void read(bool &x)
+		{
+			m_stream >> x;
 		}
 
 		// string deserialization

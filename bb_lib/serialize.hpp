@@ -40,8 +40,8 @@ namespace bb
 	template<typename A, typename B, typename Visitor>
 	void reflect(Visitor &visit, std::pair<A, B> &x)
 	{
-		visit("first", x.first);
-		visit("second", x.second);
+		visit("key", x.first);
+		visit("val", x.second);
 	}
 
 	//----------------------------------------------------------------------------------------------------------------
