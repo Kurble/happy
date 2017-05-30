@@ -168,6 +168,7 @@
     <ClInclude Include="net_server.hpp" />
     <ClInclude Include="net_server_client.hpp" />
     <ClInclude Include="net_server_node.hpp" />
+    <ClInclude Include="osha1stream.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="serialize.hpp" />
     <ClInclude Include="serialize_binary.hpp" />
@@ -185,6 +186,7 @@
     <ClCompile Include="halton.cpp" />
     <ClCompile Include="mat3.cpp" />
     <ClCompile Include="mat4.cpp" />
+    <ClCompile Include="osha1stream.cpp" />
     <ClCompile Include="serialize.cpp" />
     <ClCompile Include="spatial_hash_map.cpp" />
     <ClCompile Include="store.cpp" />

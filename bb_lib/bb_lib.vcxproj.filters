@@ -26,6 +26,7 @@
     <ClInclude Include="net_server_node.hpp" />
     <ClInclude Include="net_client_node.hpp" />
     <ClInclude Include="net_server_client.hpp" />
+    <ClInclude Include="osha1stream.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vec2.cpp" />
@@ -39,5 +40,6 @@
     <ClCompile Include="halton.cpp" />
     <ClCompile Include="geometry_util.cpp" />
     <ClCompile Include="serialize.cpp" />
+    <ClCompile Include="osha1stream.cpp" />
   </ItemGroup>
 </Project>

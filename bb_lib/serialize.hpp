@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>
 #include <type_traits>
+#include <filesystem>
 
 namespace bb
 {
@@ -30,6 +31,8 @@ namespace bb
 
 namespace bb
 {
+	namespace fs = std::experimental::filesystem;
+
 	void serialize_sanity_check();
 
 	//----------------------------------------------------------------------------------------------------------------
@@ -39,6 +42,18 @@ namespace bb
 	{
 		visit("first", x.first);
 		visit("second", x.second);
+	}
+
+	//----------------------------------------------------------------------------------------------------------------
+	// fs::path serialize/deserialize
+	template <typename Visitor>
+	void reflect(Visitor& visit, fs::path& x)
+	{
+		std::string str = x.string();
+
+		visit("path", str);
+
+		x = str;
 	}
 
 	//----------------------------------------------------------------------------------------------------------------
