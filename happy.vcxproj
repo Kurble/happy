@@ -229,6 +229,7 @@
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="SurfaceShader.h" />
     <ClInclude Include="TextureHandle.h" />
     <ClInclude Include="TimedDeviceContext.h" />
     <ClInclude Include="VertexTypes.h" />
@@ -506,6 +507,7 @@
   <ItemGroup>
     <None Include="BRDFModels.hlsli" />
     <None Include="DeferredShadingPBR.hlsli" />
+    <None Include="SurfaceShader.hlsli" />
     <None Include="Utils.hlsli" />
   </ItemGroup>
   <ItemGroup>

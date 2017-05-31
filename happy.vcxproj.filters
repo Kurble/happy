@@ -89,6 +89,9 @@
     <ClInclude Include="MeshController.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="SurfaceShader.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ConvolutionPS.hlsl">
@@ -255,5 +258,6 @@
     <None Include="BRDFModels.hlsli">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="SurfaceShader.hlsli" />
   </ItemGroup>
 </Project>

@@ -14,7 +14,7 @@ namespace happy
 {
 	using StencilMask = uint8_t;
 
-	class RenderQueue;
+	class RenderQueue_Root;
 
 	struct SkinRenderItem
 	{
@@ -51,7 +51,7 @@ namespace happy
 		bb::mat4 &worldMatrix();
 
 		void update(system_clock::time_point time);
-		void render(RenderQueue &queue) const;
+		void render(RenderQueue_Root &queue) const;
 
 	private:
 		struct anim_state

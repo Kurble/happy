@@ -5,15 +5,15 @@
 #include "PBREnvironment.h"
 #include "MeshController.h"
 #include "PostProcessItem.h"
+#include "SurfaceShader.h"
 
 namespace happy
 {
-	class RenderQueue
+	class RenderQueue_Root
 	{
 	public:
-		void clear();
+		virtual void clear();
 
-		void setEnvironment(const PBREnvironment &environment);
 		void pushRenderMesh(const RenderMesh &mesh, const bb::mat4 &transform, const StencilMask group);
 		void pushRenderMesh(const RenderMesh &mesh, float alpha, const bb::mat4 &transform, const StencilMask group);
 		void pushSkinRenderItem(const SkinRenderItem &skin);
@@ -27,9 +27,9 @@ namespace happy
 		void pushLight(const bb::vec3 &position, const bb::vec3 &color, const float radius, const float falloff);
 		void pushPostProcessItem(const PostProcessItem &proc);
 
-	private:
+	protected:
 		friend class DeferredRenderer;
-
+		
 		struct MeshItem
 		{
 			MeshItem(const RenderMesh &mesh, const float alpha, const bb::mat4 &transform, const StencilMask group)
@@ -65,7 +65,7 @@ namespace happy
 			float         m_Radius;
 			float         m_FaloffExponent;
 		};
-		
+
 		struct LineWidgetItem
 		{
 			LineWidgetItem(const bb::vec3 &from, const bb::vec3 &to, const bb::vec4 &color)
@@ -80,7 +80,7 @@ namespace happy
 		struct QuadWidgetItem
 		{
 			QuadWidgetItem(const bb::vec3 *v, const bb::vec4 &color)
-				: m_V{v[0], v[1], v[2], v[3]}, m_Color(color)
+				: m_V{ v[0], v[1], v[2], v[3] }, m_Color(color)
 			{}
 
 			bb::vec4      m_V[4];
@@ -110,7 +110,6 @@ namespace happy
 			bb::vec4      m_Color;
 		};
 
-
 		//=========================================================
 		// Static geometry
 		//=========================================================
@@ -139,9 +138,27 @@ namespace happy
 		//=========================================================
 		// Misc.
 		//=========================================================
-		PBREnvironment           m_Environment;
 		vector<DecalItem>        m_Decals;
 		vector<PointLightItem>   m_PointLights;
 		vector<PostProcessItem>  m_PostProcessItems;
+	};
+
+	class RenderQueue : public RenderQueue_Root
+	{
+	public:
+		RenderQueue_Root& asQueueForShader(const SurfaceShader& shader);
+
+		void clear();
+
+		void registerShader(const SurfaceShader& shader);
+
+		void setEnvironment(const PBREnvironment &environment);
+
+	private:
+		friend class DeferredRenderer;
+
+		map<SurfaceShader, RenderQueue_Root> m_SubQueues;
+
+		PBREnvironment m_Environment;
 	};
 }

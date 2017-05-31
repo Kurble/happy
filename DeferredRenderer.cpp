@@ -62,7 +62,11 @@ namespace happy
 		updateConstantBuffer<CBufferScene>(context, m_pCBScene.Get(), sceneCB);
 
 		// Render the scene to the graphics buffer
-		renderGeometry(scene, target);
+		renderGeometry(scene, target, nullptr);
+		for (auto &i : scene->m_SubQueues)
+		{
+			renderGeometry(&i.second, target, &i.first);
+		}
 
 		// Prepare pipeline for screen space rendering
 		setScreenSpaceRendering();
@@ -100,7 +104,7 @@ namespace happy
 		context->IASetVertexBuffers(0, 1, m_pScreenQuadBuffer.GetAddressOf(), &stride, &offset);
 	}
 
-	void DeferredRenderer::renderGeometry(const RenderQueue *scene, RenderTarget *target) const
+	void DeferredRenderer::renderGeometry(const RenderQueue_Root *scene, RenderTarget *target, const SurfaceShader *shader) const
 	{
 		auto context = m_pRenderContext->getContext("DeferredRenderer::renderGeometry");
 
@@ -111,6 +115,7 @@ namespace happy
 			target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics2Idx].rtv.Get(),
 			target->m_GraphicsBuffer[RenderTarget::GBuf_VelocityIdx].rtv.Get()
 		};
+		if (shader == nullptr)
 		{
 			float col[] = { 1, 1, 1, 1 };
 			context->ClearDepthStencilView(target->m_pDepthBufferView.Get(), D3D11_CLEAR_DEPTH, 1, 0);
@@ -134,7 +139,7 @@ namespace happy
 		//=========================================================
 		// Render opaque meshes
 		//=========================================================
-		context->PSSetShader(m_pPSGeometry.Get(), nullptr, 0);
+		context->PSSetShader(shader ? shader->m_Handle.Get() : m_pPSGeometry.Get(), nullptr, 0);
 		context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
 		context->PSSetConstantBuffers(0, 3, constBuffers);
 		setStaticRendering();
@@ -149,7 +154,7 @@ namespace happy
 		//=========================================================
 		// Render transparent meshes
 		//=========================================================
-		context->PSSetShader(m_pPSGeometryAlphaStippled.Get(), nullptr, 0);
+		context->PSSetShader(shader ? shader->m_Handle.Get() : m_pPSGeometryAlphaStippled.Get(), nullptr, 0);
 		context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
 		context->PSSetConstantBuffers(0, 3, constBuffers);
 		setStaticRendering();

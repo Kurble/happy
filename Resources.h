@@ -6,6 +6,7 @@
 #include "TextureHandle.h"
 #include "MultiTexture.h"
 #include "PostProcessItem.h"
+#include "SurfaceShader.h"
 #include "Canvas.h"
 
 #include <experimental/filesystem>
@@ -51,6 +52,17 @@ namespace happy
 		PostProcessItem createPostProcess(const BYTE(&shaderByteCode)[Length])
 		{
 			PostProcessItem result;
+
+			// Create shader
+			CreatePixelShader(m_pRenderContext->getDevice(), result.m_Handle, shaderByteCode);
+
+			return result;
+		}
+
+		template <size_t Length>
+		SurfaceShader createSurfaceShader(const BYTE(&shaderByteCode)[Length])
+		{
+			SurfaceShader result;
 
 			// Create shader
 			CreatePixelShader(m_pRenderContext->getDevice(), result.m_Handle, shaderByteCode);

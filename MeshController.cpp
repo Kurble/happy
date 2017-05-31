@@ -157,7 +157,7 @@ namespace happy
 		m_RenderItem.m_CurrentBlendAnimation = m_RenderItem.m_CurrentBlendAnimation * (1.0f / total);
 	}
 
-	void MeshController::render(RenderQueue &queue) const
+	void MeshController::render(RenderQueue_Root &queue) const
 	{
 		if (m_Static)
 			queue.pushRenderMesh(*m_Mesh, m_RenderItem.m_Alpha, m_RenderItem.m_CurrentWorld, m_RenderItem.m_Groups);
