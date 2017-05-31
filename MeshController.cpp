@@ -160,7 +160,7 @@ namespace happy
 	void MeshController::render(RenderQueue &queue) const
 	{
 		if (m_Static)
-			queue.pushRenderMesh(*m_Mesh, m_RenderItem.m_CurrentWorld, m_RenderItem.m_Groups);
+			queue.pushRenderMesh(*m_Mesh, m_RenderItem.m_Alpha, m_RenderItem.m_CurrentWorld, m_RenderItem.m_Groups);
 		else
 			queue.pushSkinRenderItem(m_RenderItem);
 	}
