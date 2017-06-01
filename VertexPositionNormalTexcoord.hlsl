@@ -12,6 +12,7 @@ VSOut main(VSIn input)
 	VSOut output;
 
 	output.position         = mul(currentWorld,       input.position);
+	output.worldPosition    = output.position.xyz;
 	output.position         = mul(jitteredView,       output.position);
 	output.position         = mul(jitteredProjection, output.position);
 	output.previousPosition = mul(previousWorld,      input.position);

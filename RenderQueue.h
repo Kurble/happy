@@ -13,6 +13,7 @@ namespace happy
 	{
 	public:
 		virtual void clear();
+		bool empty() const;
 
 		void pushRenderMesh(const RenderMesh &mesh, const bb::mat4 &transform, const StencilMask group);
 		void pushRenderMesh(const RenderMesh &mesh, float alpha, const bb::mat4 &transform, const StencilMask group);
@@ -110,6 +111,8 @@ namespace happy
 			bb::vec4      m_Color;
 		};
 
+		bool                     m_Empty = true;
+
 		//=========================================================
 		// Static geometry
 		//=========================================================
@@ -149,8 +152,6 @@ namespace happy
 		RenderQueue_Root& asQueueForShader(const SurfaceShader& shader);
 
 		void clear();
-
-		void registerShader(const SurfaceShader& shader);
 
 		void setEnvironment(const PBREnvironment &environment);
 

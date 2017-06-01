@@ -5,6 +5,7 @@ namespace happy
 {
 	void RenderQueue_Root::clear()
 	{
+		m_Empty = true;
 		m_GeometryPositionTexcoord.clear();
 		m_GeometryPositionNormalTexcoord.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoord.clear();
@@ -25,6 +26,8 @@ namespace happy
 
 	void RenderQueue_Root::pushSkinRenderItem(const SkinRenderItem &skin)
 	{
+		m_Empty = false;
+
 		if (skin.m_Alpha < 1.0f)
 			m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent.push_back(skin);
 		else
@@ -33,6 +36,8 @@ namespace happy
 
 	void RenderQueue_Root::pushRenderMesh(const RenderMesh &mesh, const bb::mat4 &transform, const StencilMask group)
 	{
+		m_Empty = false;
+
 		switch (mesh.getVertexType())
 		{
 		case VertexType::VertexPositionTexcoord:
@@ -49,6 +54,8 @@ namespace happy
 
 	void RenderQueue_Root::pushRenderMesh(const RenderMesh &mesh, float alpha, const bb::mat4 &transform, const StencilMask group)
 	{
+		m_Empty = false;
+
 		if (alpha >= 1.0f) pushRenderMesh(mesh, transform, group);
 		else switch (mesh.getVertexType())
 		{
@@ -66,48 +73,71 @@ namespace happy
 
 	void RenderQueue_Root::pushLight(const bb::vec3 &position, const bb::vec3 &color, float radius, float falloff)
 	{
+		m_Empty = false;
+
 		m_PointLights.emplace_back(position, color, radius, falloff);
 	}
 
 	void RenderQueue_Root::pushDecal(const TextureHandle &texture, const bb::mat4 &transform, const StencilMask filter)
 	{
+		m_Empty = false;
+
 		TextureHandle emptyHandle;
 		m_Decals.emplace_back(texture, emptyHandle, transform, filter);
 	}
 
 	void RenderQueue_Root::pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const bb::mat4 &transform, const StencilMask filter)
 	{
+		m_Empty = false;
+
 		m_Decals.emplace_back(texture, normalMap, transform, filter);
 	}
 
 	void RenderQueue_Root::pushLineWidget(const bb::vec3 &from, const bb::vec3 &to, const bb::vec4 &color)
 	{
+		m_Empty = false;
+
 		m_Lines.emplace_back(from, to, color);
 	}
 
 	void RenderQueue_Root::pushQuadWidget(const bb::vec3 *v, const bb::vec4 &color)
 	{
+		m_Empty = false;
+
 		m_Quads.emplace_back(v, color);
 	}
 
 	void RenderQueue_Root::pushConeWidget(const bb::vec3 &from, const bb::vec3 &to, const float radius, const bb::vec4 &color)
 	{
+		m_Empty = false;
+
 		m_Cones.emplace_back(from, to, radius, color);
 	}
 
 	void RenderQueue_Root::pushCubeWidget(const bb::vec3 &pos, const float size, const bb::vec4 &color)
 	{
+		m_Empty = false;
+
 		m_Cubes.emplace_back(pos, size, color);
 	}
 
 	void RenderQueue_Root::pushSphereWidget(const bb::vec3 &pos, const float size, const bb::vec4 &color)
 	{
+		m_Empty = false;
+
 		m_Spheres.emplace_back(pos, size, color);
 	}
 
 	void RenderQueue_Root::pushPostProcessItem(const PostProcessItem &proc)
 	{
+		m_Empty = false;
+
 		m_PostProcessItems.push_back(proc);
+	}
+
+	bool RenderQueue_Root::empty() const
+	{
+		return m_Empty;
 	}
 
 	void RenderQueue::clear()
@@ -121,17 +151,13 @@ namespace happy
 
 	RenderQueue_Root& RenderQueue::asQueueForShader(const SurfaceShader& shader)
 	{
+		if (m_SubQueues.find(shader) == m_SubQueues.end())
+			m_SubQueues.emplace(shader, RenderQueue_Root());
 		return m_SubQueues.at(shader);
 	}
 
 	void RenderQueue::setEnvironment(const PBREnvironment &environment)
 	{
 		m_Environment = environment;
-	}
-
-	void RenderQueue::registerShader(const SurfaceShader& shader)
-	{
-		if (m_SubQueues.find(shader) == m_SubQueues.end())
-			m_SubQueues.emplace(shader, RenderQueue_Root());
 	}
 }

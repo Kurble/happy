@@ -71,6 +71,7 @@ VSOut main(VSIn input)
 
 	float4 currentVSPosition  = mul(currentSkinTransform, input.position);
 	currentVSPosition         = mul(currentWorld, currentVSPosition);
+	output.worldPosition      = currentVSPosition.xyz;
 	currentVSPosition         = mul(currentView, currentVSPosition);
 
 	float3x3 normalTransform = mul((float3x3)currentWorld, (float3x3)currentSkinTransform);

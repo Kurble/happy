@@ -10,4 +10,5 @@ struct VSOut
 	float2 texcoord1  : TEXCOORD4;
 	float4 currentPosition : TEXCOORD5;
 	float4 previousPosition : TEXCOORD6; 
+	float3 worldPosition : TEXCOORD7;
 };

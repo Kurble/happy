@@ -65,7 +65,8 @@ namespace happy
 		renderGeometry(scene, target, nullptr);
 		for (auto &i : scene->m_SubQueues)
 		{
-			renderGeometry(&i.second, target, &i.first);
+			if (!i.second.empty())
+				renderGeometry(&i.second, target, &i.first);
 		}
 
 		// Prepare pipeline for screen space rendering
