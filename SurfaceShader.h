@@ -1,23 +1,31 @@
 #pragma once
 
+#include "TextureHandle.h"
+#include "RenderingContext.h"
+
 namespace happy
 {
 	struct SurfaceShader
 	{
-		SurfaceShader() {}
+		SurfaceShader();
 
-		virtual ~SurfaceShader() {}
+		virtual ~SurfaceShader();
 
-		bool operator<(const SurfaceShader& o) const
-		{
-			return m_Handle.Get() < o.m_Handle.Get();
-		}
+		bool operator<(const SurfaceShader& o) const;
+
+		void addInputSlot(const TextureHandle &texture, unsigned slot);
 
 	protected:
 		friend class Resources;
 		friend class DeferredRenderer;
 		friend class Canvas;
 
-		ComPtr<ID3D11PixelShader> m_Handle;
+		void set(ID3D11DeviceContext* context) const;
+
+		void unset(ID3D11DeviceContext* context) const;
+
+		ComPtr<ID3D11PixelShader>     m_Handle;
+
+		vector<pair<unsigned, void*>> m_InputSlots;
 	};
 }

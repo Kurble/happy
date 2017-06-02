@@ -48,7 +48,7 @@ namespace happy
 		void createGeometries(const RenderingContext *pRenderContext);
 		void createBuffers(const RenderingContext *pRenderContext);
 		void createShaders(const RenderingContext *pRenderContext);
-		void renderGeometry(const RenderQueue_Root *scene, RenderTarget *target, const SurfaceShader *shader) const;
+		void renderGeometry(const RenderQueue *scene, RenderTarget *target) const;
 		void renderStaticMeshList(const vector<RenderQueue::MeshItem> &renderList, ID3D11InputLayout *layout, ID3D11VertexShader *shader, ID3D11Buffer **constBuffers) const;
 		void renderSkinList(const vector<SkinRenderItem> &renderList) const;
 		void renderLighting(const RenderQueue *scene, RenderTarget *target) const;

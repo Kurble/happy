@@ -247,6 +247,9 @@
     <ClCompile Include="MeshController.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="SurfaceShader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="DeferredShadingPBR.hlsli">

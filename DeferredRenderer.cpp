@@ -62,12 +62,7 @@ namespace happy
 		updateConstantBuffer<CBufferScene>(context, m_pCBScene.Get(), sceneCB);
 
 		// Render the scene to the graphics buffer
-		renderGeometry(scene, target, nullptr);
-		for (auto &i : scene->m_SubQueues)
-		{
-			if (!i.second.empty())
-				renderGeometry(&i.second, target, &i.first);
-		}
+		renderGeometry(scene, target);
 
 		// Prepare pipeline for screen space rendering
 		setScreenSpaceRendering();
@@ -105,7 +100,7 @@ namespace happy
 		context->IASetVertexBuffers(0, 1, m_pScreenQuadBuffer.GetAddressOf(), &stride, &offset);
 	}
 
-	void DeferredRenderer::renderGeometry(const RenderQueue_Root *scene, RenderTarget *target, const SurfaceShader *shader) const
+	void DeferredRenderer::renderGeometry(const RenderQueue *scene, RenderTarget *target) const
 	{
 		auto context = m_pRenderContext->getContext("DeferredRenderer::renderGeometry");
 
@@ -116,12 +111,10 @@ namespace happy
 			target->m_GraphicsBuffer[RenderTarget::GBuf_Graphics2Idx].rtv.Get(),
 			target->m_GraphicsBuffer[RenderTarget::GBuf_VelocityIdx].rtv.Get()
 		};
-		if (shader == nullptr)
-		{
-			float col[] = { 1, 1, 1, 1 };
-			context->ClearDepthStencilView(target->m_pDepthBufferView.Get(), D3D11_CLEAR_DEPTH, 1, 0);
-			context->ClearRenderTargetView(target->m_GraphicsBuffer[RenderTarget::GBuf_VelocityIdx].rtv.Get(), col);
-		}
+		
+		float col[] = { 1, 1, 1, 1 };
+		context->ClearDepthStencilView(target->m_pDepthBufferView.Get(), D3D11_CLEAR_DEPTH, 1, 0);
+		context->ClearRenderTargetView(target->m_GraphicsBuffer[RenderTarget::GBuf_VelocityIdx].rtv.Get(), col);
 		context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
 		context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
@@ -138,34 +131,81 @@ namespace happy
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		//=========================================================
-		// Render opaque meshes
+		// Render dynamic meshes
 		//=========================================================
-		context->PSSetShader(shader ? shader->m_Handle.Get() : m_pPSGeometry.Get(), nullptr, 0);
+
+		setDynamicRendering();
+
 		context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
 		context->PSSetConstantBuffers(0, 3, constBuffers);
-		setStaticRendering();
-		#define RENDER_STATIC_MESH_LIST(X) renderStaticMeshList(scene->m_Geometry##X, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
-		RENDER_STATIC_MESH_LIST(PositionTexcoord);
-		RENDER_STATIC_MESH_LIST(PositionNormalTexcoord);
-		RENDER_STATIC_MESH_LIST(PositionNormalTangentBinormalTexcoord);
-		#undef RENDER_STATIC_MESH_LIST
-		setDynamicRendering();
+		context->PSSetShader(m_pPSGeometry.Get(), nullptr, 0);
+
 		renderSkinList(scene->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights);
+		for (auto &s : scene->m_SubQueues)
+		{
+			const RenderQueue_Root* sub = &s.second;
+			if (sub->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.empty() && 
+				sub->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent.empty()) continue;
+			s.first.set(context);
+
+			renderSkinList(sub->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights);
+			renderSkinList(sub->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent);
+
+			s.first.unset(context);
+		}
+
+		context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
+		context->PSSetConstantBuffers(0, 3, constBuffers);
+		context->PSSetShader(m_pPSGeometryAlphaStippled.Get(), nullptr, 0);
+
+		renderSkinList(scene->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent);
 
 		//=========================================================
-		// Render transparent meshes
+		// Render static meshes
 		//=========================================================
-		context->PSSetShader(shader ? shader->m_Handle.Get() : m_pPSGeometryAlphaStippled.Get(), nullptr, 0);
+
+		setStaticRendering();
+
 		context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
 		context->PSSetConstantBuffers(0, 3, constBuffers);
-		setStaticRendering();
-		#define RENDER_STATIC_MESH_LIST(X) renderStaticMeshList(scene->m_Geometry##X##Transparent, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
-		RENDER_STATIC_MESH_LIST(PositionTexcoord);
-		RENDER_STATIC_MESH_LIST(PositionNormalTexcoord);
-		RENDER_STATIC_MESH_LIST(PositionNormalTangentBinormalTexcoord);
+		context->PSSetShader(m_pPSGeometry.Get(), nullptr, 0);
+
+		#define RENDER_STATIC_MESH_LIST(s, X) renderStaticMeshList(s->m_Geometry##X, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
+		#define RENDER_STATIC_MESH_LIST_TRANS(s, X) renderStaticMeshList(s->m_Geometry##X##Transparent, m_pIL##X.Get(), m_pVS##X.Get(), constBuffers)
+		RENDER_STATIC_MESH_LIST(scene, PositionTexcoord);
+		RENDER_STATIC_MESH_LIST(scene, PositionNormalTexcoord);
+		RENDER_STATIC_MESH_LIST(scene, PositionNormalTangentBinormalTexcoord);
+		for (auto &s : scene->m_SubQueues)
+		{
+			const RenderQueue_Root* sub = &s.second;
+			if (sub->m_GeometryPositionTexcoord.empty() &&
+				sub->m_GeometryPositionNormalTexcoord.empty() &&
+				sub->m_GeometryPositionNormalTangentBinormalTexcoord.empty() &&
+				sub->m_GeometryPositionTexcoordTransparent.empty() &&
+				sub->m_GeometryPositionNormalTexcoordTransparent.empty() &&
+				sub->m_GeometryPositionNormalTangentBinormalTexcoordTransparent.empty()) continue;
+			s.first.set(context);
+
+			RENDER_STATIC_MESH_LIST(sub, PositionTexcoord);
+			RENDER_STATIC_MESH_LIST(sub, PositionNormalTexcoord);
+			RENDER_STATIC_MESH_LIST(sub, PositionNormalTangentBinormalTexcoord);
+			RENDER_STATIC_MESH_LIST_TRANS(sub, PositionTexcoord);
+			RENDER_STATIC_MESH_LIST_TRANS(sub, PositionNormalTexcoord);
+			RENDER_STATIC_MESH_LIST_TRANS(sub, PositionNormalTangentBinormalTexcoord);
+
+			s.first.unset(context);
+		}
+		
+		context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
+		context->PSSetConstantBuffers(0, 3, constBuffers);
+		context->PSSetShader(m_pPSGeometryAlphaStippled.Get(), nullptr, 0);
+
+		RENDER_STATIC_MESH_LIST_TRANS(scene, PositionTexcoord);
+		RENDER_STATIC_MESH_LIST_TRANS(scene, PositionNormalTexcoord);
+		RENDER_STATIC_MESH_LIST_TRANS(scene, PositionNormalTangentBinormalTexcoord);
+		
 		#undef RENDER_STATIC_MESH_LIST
-		setDynamicRendering();
-		renderSkinList(scene->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent);
+		#undef RENDER_STATIC_MESH_LIST_TRANS
 
 		//=========================================================
 		// Render Decals
