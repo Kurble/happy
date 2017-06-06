@@ -24,8 +24,9 @@ namespace happy
 
 		void unset(ID3D11DeviceContext* context) const;
 
-		ComPtr<ID3D11PixelShader>     m_Handle;
-
+		ComPtr<ID3D11VertexShader>    m_HandleVS;
+		ComPtr<ID3D11InputLayout>     m_HandleIL;
+		ComPtr<ID3D11PixelShader>     m_HandlePS;
 		vector<pair<unsigned, void*>> m_InputSlots;
 	};
 }

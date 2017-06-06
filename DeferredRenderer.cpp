@@ -143,6 +143,8 @@ namespace happy
 		renderSkinList(scene->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights);
 		for (auto &s : scene->m_SubQueues)
 		{
+			if (s.first.m_HandleVS.Get()) continue;
+
 			const RenderQueue_Root* sub = &s.second;
 			if (sub->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.empty() && 
 				sub->m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent.empty()) continue;
@@ -186,12 +188,20 @@ namespace happy
 				sub->m_GeometryPositionNormalTangentBinormalTexcoordTransparent.empty()) continue;
 			s.first.set(context);
 
-			RENDER_STATIC_MESH_LIST(sub, PositionTexcoord);
-			RENDER_STATIC_MESH_LIST(sub, PositionNormalTexcoord);
-			RENDER_STATIC_MESH_LIST(sub, PositionNormalTangentBinormalTexcoord);
-			RENDER_STATIC_MESH_LIST_TRANS(sub, PositionTexcoord);
-			RENDER_STATIC_MESH_LIST_TRANS(sub, PositionNormalTexcoord);
-			RENDER_STATIC_MESH_LIST_TRANS(sub, PositionNormalTangentBinormalTexcoord);
+			if (s.first.m_HandleVS.Get())
+			{
+				renderStaticMeshList(sub->m_GeometryPositionNormalTangentBinormalTexcoord, s.first.m_HandleIL.Get(), s.first.m_HandleVS.Get(), constBuffers);
+				renderStaticMeshList(sub->m_GeometryPositionNormalTangentBinormalTexcoordTransparent, s.first.m_HandleIL.Get(), s.first.m_HandleVS.Get(), constBuffers);
+			}
+			else
+			{
+				RENDER_STATIC_MESH_LIST(sub, PositionTexcoord);
+				RENDER_STATIC_MESH_LIST(sub, PositionNormalTexcoord);
+				RENDER_STATIC_MESH_LIST(sub, PositionNormalTangentBinormalTexcoord);
+				RENDER_STATIC_MESH_LIST_TRANS(sub, PositionTexcoord);
+				RENDER_STATIC_MESH_LIST_TRANS(sub, PositionNormalTexcoord);
+				RENDER_STATIC_MESH_LIST_TRANS(sub, PositionNormalTangentBinormalTexcoord);
+			}
 
 			s.first.unset(context);
 		}

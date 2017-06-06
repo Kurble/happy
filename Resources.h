@@ -64,8 +64,18 @@ namespace happy
 		{
 			SurfaceShader result;
 
-			// Create shader
-			CreatePixelShader(m_pRenderContext->getDevice(), result.m_Handle, shaderByteCode);
+			CreatePixelShader(m_pRenderContext->getDevice(), result.m_HandlePS, shaderByteCode);
+
+			return result;
+		}
+
+		template <size_t LengthVS, size_t LengthPS>
+		SurfaceShader createSurfaceShader(const BYTE(&vsByteCode)[LengthVS], const BYTE(&psByteCode)[LengthPS])
+		{
+			SurfaceShader result;
+
+			CreateVertexShader<VertexPositionNormalTangentBinormalTexcoord>(m_pRenderContext->getDevice(), result.m_HandleVS, result.m_HandleIL, vsByteCode);
+			CreatePixelShader(m_pRenderContext->getDevice(), result.m_HandlePS, psByteCode);
 
 			return result;
 		}

@@ -13,7 +13,9 @@ namespace happy
 
 	bool SurfaceShader::operator<(const SurfaceShader& o) const
 	{
-		return m_Handle.Get() < o.m_Handle.Get();
+		if (m_HandleVS.Get() == o.m_HandleVS.Get())
+			return m_HandlePS.Get() < o.m_HandlePS.Get();
+		return m_HandleVS.Get() < o.m_HandleVS.Get();
 	}
 
 	void SurfaceShader::addInputSlot(const TextureHandle &texture, unsigned slot)
@@ -23,7 +25,7 @@ namespace happy
 
 	void SurfaceShader::set(ID3D11DeviceContext* context) const
 	{
-		context->PSSetShader(m_Handle.Get(), nullptr, 0);
+		context->PSSetShader(m_HandlePS.Get(), nullptr, 0);
 
 		for (auto &i : m_InputSlots)
 			context->PSSetShaderResources(i.first, 1, (ID3D11ShaderResourceView**)&i.second);
