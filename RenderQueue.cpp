@@ -83,14 +83,22 @@ namespace happy
 		m_Empty = false;
 
 		TextureHandle emptyHandle;
-		m_Decals.emplace_back(texture, emptyHandle, transform, filter);
+		m_Decals.emplace_back(texture, emptyHandle, 1.0f, transform, filter);
 	}
 
-	void RenderQueue_Root::pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const bb::mat4 &transform, const StencilMask filter)
+	void RenderQueue_Root::pushDecal(const TextureHandle &texture, float alpha, const bb::mat4 &transform, const StencilMask filter)
 	{
 		m_Empty = false;
 
-		m_Decals.emplace_back(texture, normalMap, transform, filter);
+		TextureHandle emptyHandle;
+		m_Decals.emplace_back(texture, emptyHandle, alpha, transform, filter);
+	}
+
+	void RenderQueue_Root::pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, float alpha, const bb::mat4 &transform, const StencilMask filter)
+	{
+		m_Empty = false;
+
+		m_Decals.emplace_back(texture, normalMap, alpha, transform, filter);
 	}
 
 	void RenderQueue_Root::pushLineWidget(const bb::vec3 &from, const bb::vec3 &to, const bb::vec4 &color)

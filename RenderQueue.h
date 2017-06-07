@@ -19,7 +19,8 @@ namespace happy
 		void pushRenderMesh(const RenderMesh &mesh, float alpha, const bb::mat4 &transform, const StencilMask group);
 		void pushSkinRenderItem(const SkinRenderItem &skin);
 		void pushDecal(const TextureHandle &texture, const bb::mat4 &transform, const StencilMask filter);
-		void pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const bb::mat4 &transform, const StencilMask filter);
+		void pushDecal(const TextureHandle &texture, float alpha, const bb::mat4 &transform, const StencilMask filter);
+		void pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, float alpha, const bb::mat4 &transform, const StencilMask filter);
 		void pushLineWidget(const bb::vec3 &from, const bb::vec3 &to, const bb::vec4 &color);
 		void pushQuadWidget(const bb::vec3 *v, const bb::vec4 &color);
 		void pushConeWidget(const bb::vec3 &from, const bb::vec3 &to, const float radius, const bb::vec4 &color);
@@ -45,12 +46,13 @@ namespace happy
 
 		struct DecalItem
 		{
-			DecalItem(const TextureHandle &texture, const TextureHandle &normal, const bb::mat4 &transform, const StencilMask filter)
-				: m_Texture(texture), m_NormalMap(normal), m_Transform(transform), m_Filter(filter)
+			DecalItem(const TextureHandle &texture, const TextureHandle &normal, float alpha, const bb::mat4 &transform, const StencilMask filter)
+				: m_Texture(texture), m_NormalMap(normal), m_Alpha(alpha), m_Transform(transform), m_Filter(filter)
 			{}
 
 			TextureHandle m_Texture;
 			TextureHandle m_NormalMap;
+			float         m_Alpha;
 			bb::mat4      m_Transform;
 			StencilMask   m_Filter;
 		};

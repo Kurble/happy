@@ -232,7 +232,7 @@ namespace happy
 			objectCB.currentWorld = elem.m_Transform;
 			objectCB.inverseWorld = elem.m_Transform;
 			objectCB.inverseWorld.inverse();
-			objectCB.alpha = 1.0f;
+			objectCB.alpha = elem.m_Alpha;
 			updateConstantBuffer(context, m_pCBObject.Get(), objectCB);
 
 			UINT stride = sizeof(VertexPositionTexcoord);
