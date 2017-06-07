@@ -16,10 +16,14 @@
 #include "CompiledShaders\VertexPositionNormalTangentBinormalTexcoord.h"
 #include "CompiledShaders\VertexPositionNormalTangentBinormalTexcoordIndicesWeights.h"
 #include "CompiledShaders\WidgetsPositionColor.h"
+#include "CompiledShaders\ParticlesVS.h"
+#include "CompiledShaders\ParticlesProcGS.h"
+#include "CompiledShaders\ParticlesDrawGS.h"
 #include "CompiledShaders\GeometryPS.h"
 #include "CompiledShaders\GeometryAlphaStippledPS.h"
 #include "CompiledShaders\DecalsPS.h"
 #include "CompiledShaders\WidgetsPS.h"
+#include "CompiledShaders\ParticlesPS.h"
 #include "CompiledShaders\OccludedWidgetsPS.h"
 //----------------------------------------------------------------------
 
@@ -415,11 +419,13 @@ namespace happy
 		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoord>(pRenderContext->getDevice(), m_pVSPositionNormalTangentBinormalTexcoord, m_pILPositionNormalTangentBinormalTexcoord, g_shVertexPositionNormalTangentBinormalTexcoord);
 		CreateVertexShader<VertexPositionNormalTangentBinormalTexcoordIndicesWeights>(pRenderContext->getDevice(), m_pVSPositionNormalTangentBinormalTexcoordIndicesWeights, m_pILPositionNormalTangentBinormalTexcoordIndicesWeights, g_shVertexPositionNormalTangentBinormalTexcoordIndicesWeights);
 		CreateVertexShader<VertexPositionColor>(pRenderContext->getDevice(), m_pVSWidgetsPositionColor, m_pILPositionColor, g_shWidgetsPositionColor);
+		CreateVertexShader<VertexParticle>(pRenderContext->getDevice(), m_pVSParticles, m_pILParticles, g_shParticlesVS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSGeometry, g_shGeometryPS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSGeometryAlphaStippled, g_shGeometryAlphaStippledPS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSDecals, g_shDecalsPS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSWidgets, g_shWidgetsPS);
 		CreatePixelShader(pRenderContext->getDevice(), m_pPSOccludedWidgets, g_shOccludedWidgetsPS);
+		CreatePixelShader(pRenderContext->getDevice(), m_pPSParticles, g_shParticlesPS);
 
 		// Rendering shaders
 		CreateVertexShader<VertexPositionTexcoord>(pRenderContext->getDevice(), m_pVSScreenQuad, m_pILScreenQuad, g_shScreenQuadVS);
@@ -443,5 +449,17 @@ namespace happy
 		}
 
 		CreatePixelShader(pRenderContext->getDevice(), m_ColorGrading.m_Handle, g_shColorGrading);
+		
+		// Particle system
+		D3D11_SO_DECLARATION_ENTRY soDesc[] =
+		{
+			{ 0, "SV_POSITION", 0, 0, 4, 0 },
+			{ 0, "TEXCOORD",    0, 0, 4, 0 },
+			{ 0, "TEXCOORD",    1, 0, 4, 0 },
+			{ 0, "TEXCOORD",    2, 0, 4, 0 },
+		};
+		
+		pRenderContext->getDevice()->CreateGeometryShaderWithStreamOutput(g_shParticlesProcGS, sizeof(g_shParticlesProcGS), soDesc, sizeof(soDesc), NULL, 0, 0, NULL, &m_pGSProcParticles);
+		pRenderContext->getDevice()->CreateGeometryShaderWithStreamOutput(g_shParticlesDrawGS, sizeof(g_shParticlesDrawGS), soDesc, sizeof(soDesc), NULL, 0, 0, NULL, &m_pGSDrawParticles);
 	}
 }

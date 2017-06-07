@@ -7,6 +7,15 @@
     <Filter Include="Source">
       <UniqueIdentifier>{08157517-ead0-4934-9118-87c1588ebe7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Particles">
+      <UniqueIdentifier>{a4ab1a5c-c0c4-407e-91c3-7b364d5b6fcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Lighting">
+      <UniqueIdentifier>{5fb10ee0-251e-4eb0-9c0d-87914fbb304c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Vertex Formats">
+      <UniqueIdentifier>{291dc83b-40a8-449b-9dee-fb144b86a891}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetLoaders.h">
@@ -103,28 +112,10 @@
     <FxCompile Include="EnvironmentalLighting.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="GeometryPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="ScreenQuadVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="VertexPositionNormalTangentBinormalTexcoord.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="VertexPositionNormalTexcoord.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="VertexPositionTexcoord.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="PointLighting.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="SphereVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="VertexPositionNormalTangentBinormalTexcoordIndicesWeights.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="CanvasVS.hlsl">
@@ -139,33 +130,6 @@
     <FxCompile Include="DecalsPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="GeometryAlphaStippledPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredShadingPBR_ao_low.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredShadingPBR_ao_high.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredShadingPBR_ao_extreme.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredShadingPBR_low.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredShadingPBR_high.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredShadingPBR_extreme.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredShadingPBR_ao_normal.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DeferredShadingPBR_normal.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="SSAO.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
@@ -178,11 +142,68 @@
     <FxCompile Include="WidgetsPositionColor.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="WidgetsPS.hlsl">
-      <Filter>Shaders</Filter>
+    <FxCompile Include="DeferredShadingPBR_ao_extreme.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredShadingPBR_ao_high.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredShadingPBR_ao_low.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredShadingPBR_ao_normal.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredShadingPBR_extreme.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredShadingPBR_high.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredShadingPBR_low.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredShadingPBR_normal.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="GeometryPS.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="GeometryAlphaStippledPS.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="PointLighting.hlsl">
+      <Filter>Shaders\Lighting</Filter>
     </FxCompile>
     <FxCompile Include="OccludedWidgetsPS.hlsl">
-      <Filter>Shaders</Filter>
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="WidgetsPS.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexPositionNormalTangentBinormalTexcoord.hlsl">
+      <Filter>Shaders\Vertex Formats</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexPositionNormalTangentBinormalTexcoordIndicesWeights.hlsl">
+      <Filter>Shaders\Vertex Formats</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexPositionNormalTexcoord.hlsl">
+      <Filter>Shaders\Vertex Formats</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexPositionTexcoord.hlsl">
+      <Filter>Shaders\Vertex Formats</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticlesVS.hlsl">
+      <Filter>Shaders\Particles</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticlesPS.hlsl">
+      <Filter>Shaders\Particles</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticlesProcGS.hlsl">
+      <Filter>Shaders\Particles</Filter>
+    </FxCompile>
+    <FxCompile Include="ParticlesDrawGS.hlsl">
+      <Filter>Shaders\Particles</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -252,9 +273,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="DeferredShadingPBR.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Utils.hlsli">
       <Filter>Shaders</Filter>
     </None>
@@ -262,5 +280,11 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="SurfaceShader.hlsli" />
+    <None Include="DeferredShadingPBR.hlsli">
+      <Filter>Shaders\Lighting</Filter>
+    </None>
+    <None Include="Particles.hlsli">
+      <Filter>Shaders\Particles</Filter>
+    </None>
   </ItemGroup>
 </Project>

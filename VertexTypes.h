@@ -18,6 +18,7 @@ namespace happy
 		VertexPositionNormalTexcoord,
 		VertexPositionNormalTangentBinormalTexcoord,
 		VertexPositionNormalTangentBinormalTexcoordIndicesWeights,
+		Particle,
 	};
 
 	typedef uint16_t Index16;
@@ -80,5 +81,17 @@ namespace happy
 		static const D3D11_INPUT_ELEMENT_DESC Elements[7];
 		static const UINT ElementCount = 7;
 		static const VertexType Type = VertexType::VertexPositionNormalTangentBinormalTexcoordIndicesWeights;
+	};
+
+	struct VertexParticle
+	{
+		bb::vec4 position;
+		bb::vec4 lifeSizeGrowWiggle;
+		bb::vec4 velocityFriction;
+		bb::vec4 color;
+
+		static const D3D11_INPUT_ELEMENT_DESC Elements[4];
+		static const UINT ElementCount = 4;
+		static const VertexType Type = VertexType::Particle;
 	};
 }

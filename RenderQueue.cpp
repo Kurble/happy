@@ -15,6 +15,7 @@ namespace happy
 		m_GeometryPositionNormalTangentBinormalTexcoordTransparent.clear();
 		m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent.clear();
 		m_Decals.clear();
+		m_Particles.clear();
 		m_PointLights.clear();
 		m_PostProcessItems.clear();
 		m_Lines.clear();
@@ -101,6 +102,13 @@ namespace happy
 		m_Decals.emplace_back(texture, normalMap, alpha, transform, filter);
 	}
 
+	void RenderQueue_Root::pushNewParticle(const VertexParticle& particle)
+	{
+		m_Empty = false;
+
+		m_Particles.push_back(particle);
+	}
+
 	void RenderQueue_Root::pushLineWidget(const bb::vec3 &from, const bb::vec3 &to, const bb::vec4 &color)
 	{
 		m_Empty = false;
@@ -167,5 +175,10 @@ namespace happy
 	void RenderQueue::setEnvironment(const PBREnvironment &environment)
 	{
 		m_Environment = environment;
+	}
+
+	void RenderQueue::setParticleAtlas(const TextureHandle& particleAtlas)
+	{
+		m_ParticleAtlas = particleAtlas;
 	}
 }

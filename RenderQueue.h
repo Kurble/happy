@@ -28,6 +28,7 @@ namespace happy
 		void pushSphereWidget(const bb::vec3 &pos, const float size, const bb::vec4 &color);
 		void pushLight(const bb::vec3 &position, const bb::vec3 &color, const float radius, const float falloff);
 		void pushPostProcessItem(const PostProcessItem &proc);
+		void pushNewParticle(const VertexParticle &particle);
 
 	protected:
 		friend class DeferredRenderer;
@@ -144,6 +145,7 @@ namespace happy
 		// Misc.
 		//=========================================================
 		vector<DecalItem>        m_Decals;
+		vector<VertexParticle>   m_Particles;
 		vector<PointLightItem>   m_PointLights;
 		vector<PostProcessItem>  m_PostProcessItems;
 	};
@@ -157,11 +159,15 @@ namespace happy
 
 		void setEnvironment(const PBREnvironment &environment);
 
+		void setParticleAtlas(const TextureHandle &particleAtlas);
+
 	private:
 		friend class DeferredRenderer;
 
 		map<SurfaceShader, RenderQueue_Root> m_SubQueues;
 
 		PBREnvironment m_Environment;
+
+		TextureHandle m_ParticleAtlas;
 	};
 }

@@ -14,6 +14,7 @@ namespace happy
 		, m_Config(config)
 		, m_BufLineWidgets(pRenderContext->getDevice(), 1024)
 		, m_BufTriWidgets(pRenderContext->getDevice(), 1536)
+		, m_BufParticles(pRenderContext->getDevice(), 16384)
 	{
 		createStates(pRenderContext);
 		createGeometries(pRenderContext);
@@ -73,6 +74,7 @@ namespace happy
 		renderAA(scene, target);
 		renderPostProcessing(scene, target, &finalOutput);
 		renderWidgets(scene, target, finalOutput);
+		renderParticles(scene, target, finalOutput);
 
 		// Reset SRVs since we need them as output next frame
 		vector<ID3D11ShaderResourceView*> srvs(8, nullptr);
@@ -605,6 +607,49 @@ namespace happy
 				}
 			}
 		}
+	}
+
+	void DeferredRenderer::renderParticles(const RenderQueue *scene, RenderTarget *target, ID3D11RenderTargetView *rtv) const
+	{
+		auto context = m_pRenderContext->getContext("DeferredRenderer::renderWidgets");
+
+		context->OMSetRenderTargets(1, &rtv, target->m_pDepthBufferView.Get());
+		context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
+		context->OMSetBlendState(m_pDecalBlendState.Get(), nullptr, 0xffffffff);
+
+		ID3D11ShaderResourceView* srvs[8] = { 0 };
+		ID3D11Buffer* procSOTarget[1] = { nullptr };
+		ID3D11Buffer* procSOSource[1] = { nullptr };
+		ID3D11Buffer* drawSOTarget[1] = { nullptr };
+		UINT strides = (UINT)sizeof(VertexParticle);
+		UINT offsets = 0;
+
+		context->IASetInputLayout(m_pILParticles.Get());
+		context->VSSetShader(m_pVSParticles.Get(), nullptr, 0);
+		context->VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+		context->GSSetShader(m_pGSProcParticles.Get(), nullptr, 0);
+		context->SOSetTargets(1, procSOSource, &offsets);
+		context->PSSetShader(nullptr, nullptr, 0);
+		
+		// process new particles
+		if (scene->m_Particles.size() > 0)
+		{
+			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+			m_BufParticles.begin(context);
+			m_BufParticles.draw(context, scene->m_Particles.data(), scene->m_Particles.size(), 1,
+				[](VertexParticle* vertices, const VertexParticle* objects, size_t count)
+				{
+					memcpy(vertices, objects, count * sizeof(VertexParticle));
+				}
+			);
+			m_BufParticles.end(context);
+		}
+
+		// process exisiting particles
+		context->IASetVertexBuffers(0, 1, procSOSource, &strides, &offsets);
+
+		// draw particles
+		context->PSSetShaderResources(0, 8, srvs);
 	}
 
 	void DeferredRenderer::renderAA(const RenderQueue *scene, RenderTarget *target) const
