@@ -620,21 +620,20 @@ namespace happy
 		ID3D11ShaderResourceView* srvs[8] = { 0 };
 		ID3D11Buffer* procSOTarget[1] = { nullptr };
 		ID3D11Buffer* procSOSource[1] = { nullptr };
-		ID3D11Buffer* drawSOTarget[1] = { nullptr };
 		UINT strides = (UINT)sizeof(VertexParticle);
 		UINT offsets = 0;
 
+		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 		context->IASetInputLayout(m_pILParticles.Get());
 		context->VSSetShader(m_pVSParticles.Get(), nullptr, 0);
 		context->VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
 		context->GSSetShader(m_pGSProcParticles.Get(), nullptr, 0);
-		context->SOSetTargets(1, procSOSource, &offsets);
+		context->SOSetTargets(1, procSOTarget, &offsets);
 		context->PSSetShader(nullptr, nullptr, 0);
 		
 		// process new particles
 		if (scene->m_Particles.size() > 0)
 		{
-			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 			m_BufParticles.begin(context);
 			m_BufParticles.draw(context, scene->m_Particles.data(), scene->m_Particles.size(), 1,
 				[](VertexParticle* vertices, const VertexParticle* objects, size_t count)
@@ -647,6 +646,7 @@ namespace happy
 
 		// process exisiting particles
 		context->IASetVertexBuffers(0, 1, procSOSource, &strides, &offsets);
+		context->DrawAuto();
 
 		// draw particles
 		context->PSSetShaderResources(0, 8, srvs);
