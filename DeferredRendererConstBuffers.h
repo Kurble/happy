@@ -25,6 +25,8 @@ namespace happy
 		float height;
 		unsigned int convolutionStages;
 		unsigned int aoEnabled;
+		float timestep;
+		float padding[3];
 	};
 
 	struct CBufferTAA

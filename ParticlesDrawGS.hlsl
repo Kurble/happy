@@ -2,27 +2,30 @@
 #include "Particles.hlsli"
 
 [maxvertexcount(4)]
-void main(point ParticleVertex input[1], inout TriangleStream<ParticleVertex> stream)
+void main(point ParticleVertex input[1], inout TriangleStream<ParticleRenderVertex> stream)
 {
-	ParticleVertex output;
+	ParticleRenderVertex output;
 
 	// fill in output
-	output.position           = input[0].position;
-	output.lifeSizeGrowWiggle = input[0].lifeSizeGrowWiggle;
-	output.velocityFriction   = input[0].velocityFriction;
 	output.color              = input[0].color;
+	output.texCoord           = input[0].texCoord;
 
-	// draw particle
-	output.position = mul(jitteredView, output.position + float4(-1, -1, 0, 0));
-	output.position = mul(jitteredProjection, output.position);
+	float4 position = input[0].position;
+	position = mul(jitteredView, input[0].position);
+	position = mul(jitteredProjection, position);
+
+	float w = (0.5f * input[0].lifeSizeGrowWiggle.y * jitteredProjection[0][0]);
+	float h = (0.5f * input[0].lifeSizeGrowWiggle.y * jitteredProjection[1][1]);
+	
+	output.position = position + float4(-w, -h, 0, 0);
 	stream.Append(output);
-	output.position = mul(jitteredView, output.position + float4(1, -1, 0, 0));
-	output.position = mul(jitteredProjection, output.position);
+	
+	output.position = position + float4(-w, +h, 0, 0);
 	stream.Append(output);
-	output.position = mul(jitteredView, output.position + float4(-1, 1, 0, 0));
-	output.position = mul(jitteredProjection, output.position);
+	
+	output.position = position + float4(+w, -h, 0, 0);
 	stream.Append(output);
-	output.position = mul(jitteredView, output.position + float4(1, 1, 0, 0));
-	output.position = mul(jitteredProjection, output.position);
+
+	output.position = position + float4(+w, +h, 0, 0);
 	stream.Append(output);
 }

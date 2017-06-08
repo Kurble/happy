@@ -60,6 +60,7 @@ namespace happy
 		sceneCB.height = (float)target->getHeight();
 		sceneCB.convolutionStages = scene->m_Environment.getCubemapArrayLength();
 		sceneCB.aoEnabled = m_Config.m_PostEffectQuality >= Quality::Normal ? 1 : 0;
+		sceneCB.timestep = 1 / 60.0f;
 		updateConstantBuffer<CBufferScene>(context, m_pCBScene.Get(), sceneCB);
 
 		// Render the scene to the graphics buffer
@@ -611,27 +612,33 @@ namespace happy
 
 	void DeferredRenderer::renderParticles(const RenderQueue *scene, RenderTarget *target, ID3D11RenderTargetView *rtv) const
 	{
-		auto context = m_pRenderContext->getContext("DeferredRenderer::renderWidgets");
+		auto context = m_pRenderContext->getContext("DeferredRenderer::renderParticles");
 
-		context->OMSetRenderTargets(1, &rtv, target->m_pDepthBufferView.Get());
+		context->OMSetRenderTargets(1, &rtv, target->m_pDepthBufferViewReadOnly.Get());
 		context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
 		context->OMSetBlendState(m_pDecalBlendState.Get(), nullptr, 0xffffffff);
 
 		ID3D11ShaderResourceView* srvs[8] = { 0 };
-		ID3D11Buffer* procSOTarget[1] = { nullptr };
-		ID3D11Buffer* procSOSource[1] = { nullptr };
+		ID3D11Buffer* procSOTarget[1] = { m_pParticleVBuffer[(target->m_LastUsedHistoryBuffer + 0) % 2].Get() };
+		ID3D11Buffer* procSOSource[1] = { m_pParticleVBuffer[(target->m_LastUsedHistoryBuffer + 1) % 2].Get() };
+		ID3D11Buffer* noBuffer[1] = { nullptr };
 		UINT strides = (UINT)sizeof(VertexParticle);
-		UINT offsets = 0;
+		UINT begOffset = 0;
+		UINT endOffset = (UINT)-1;
 
+		//=========================================================
+		// Process Particles
+		//=========================================================
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 		context->IASetInputLayout(m_pILParticles.Get());
 		context->VSSetShader(m_pVSParticles.Get(), nullptr, 0);
 		context->VSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
 		context->GSSetShader(m_pGSProcParticles.Get(), nullptr, 0);
-		context->SOSetTargets(1, procSOTarget, &offsets);
+		context->GSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+		context->SOSetTargets(1, procSOTarget, &begOffset);
 		context->PSSetShader(nullptr, nullptr, 0);
 		
-		// process new particles
+		// new particles
 		if (scene->m_Particles.size() > 0)
 		{
 			m_BufParticles.begin(context);
@@ -644,12 +651,24 @@ namespace happy
 			m_BufParticles.end(context);
 		}
 
-		// process exisiting particles
-		context->IASetVertexBuffers(0, 1, procSOSource, &strides, &offsets);
+		// exisiting particles
+		context->IASetVertexBuffers(0, 1, procSOSource, &strides, &begOffset);
 		context->DrawAuto();
 
-		// draw particles
+		//=========================================================
+		// Draw Particles
+		//=========================================================
+		context->SOSetTargets(1, noBuffer, &begOffset);
+		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+		context->IASetVertexBuffers(0, 1, procSOTarget, &strides, &begOffset);
+		context->GSSetShader(m_pGSDrawParticles.Get(), nullptr, 0);
+		context->GSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+		context->PSSetShader(m_pPSParticles.Get(), nullptr, 0);
 		context->PSSetShaderResources(0, 8, srvs);
+		context->PSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
+		context->DrawAuto();
+
+		context->GSSetShader(nullptr, nullptr, 0);
 	}
 
 	void DeferredRenderer::renderAA(const RenderQueue *scene, RenderTarget *target) const

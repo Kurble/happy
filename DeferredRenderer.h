@@ -113,6 +113,7 @@ namespace happy
 		ComPtr<ID3D11Buffer>              m_pSphereIBuffer;
 		ComPtr<ID3D11Buffer>              m_pCubeVBuffer;
 		ComPtr<ID3D11Buffer>              m_pCubeIBuffer;
+		ComPtr<ID3D11Buffer>              m_pParticleVBuffer[2];
 		ComPtr<ID3D11VertexShader>        m_pVSPointLighting;
 		ComPtr<ID3D11InputLayout>         m_pILPointLighting;
 		ComPtr<ID3D11PixelShader>         m_pPSPointLighting;

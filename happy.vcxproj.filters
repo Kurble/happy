@@ -16,6 +16,12 @@
     <Filter Include="Shaders\Vertex Formats">
       <UniqueIdentifier>{291dc83b-40a8-449b-9dee-fb144b86a891}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\Canvas">
+      <UniqueIdentifier>{cc01d622-4fb8-40ee-9985-fd4e120f7788}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Decals">
+      <UniqueIdentifier>{4bed5f26-23a5-4c54-8d05-4dedf90fcbfc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetLoaders.h">
@@ -103,43 +109,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="ConvolutionPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="ConvolutionVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="EnvironmentalLighting.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="ScreenQuadVS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="SphereVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="CanvasVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="CanvasPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="CanvasTexPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="DecalsPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="SSAO.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="TAA.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="ColorGrading.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="WidgetsPositionColor.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="DeferredShadingPBR_ao_extreme.hlsl">
@@ -204,6 +177,39 @@
     </FxCompile>
     <FxCompile Include="ParticlesDrawGS.hlsl">
       <Filter>Shaders\Particles</Filter>
+    </FxCompile>
+    <FxCompile Include="CanvasPS.hlsl">
+      <Filter>Shaders\Canvas</Filter>
+    </FxCompile>
+    <FxCompile Include="CanvasTexPS.hlsl">
+      <Filter>Shaders\Canvas</Filter>
+    </FxCompile>
+    <FxCompile Include="CanvasVS.hlsl">
+      <Filter>Shaders\Canvas</Filter>
+    </FxCompile>
+    <FxCompile Include="WidgetsPositionColor.hlsl">
+      <Filter>Shaders\Vertex Formats</Filter>
+    </FxCompile>
+    <FxCompile Include="TAA.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="SSAO.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="ConvolutionVS.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="ConvolutionPS.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="ColorGrading.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="EnvironmentalLighting.hlsl">
+      <Filter>Shaders\Lighting</Filter>
+    </FxCompile>
+    <FxCompile Include="DecalsPS.hlsl">
+      <Filter>Shaders\Decals</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -276,15 +282,15 @@
     <None Include="Utils.hlsli">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="BRDFModels.hlsli">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="SurfaceShader.hlsli" />
     <None Include="DeferredShadingPBR.hlsli">
       <Filter>Shaders\Lighting</Filter>
     </None>
     <None Include="Particles.hlsli">
       <Filter>Shaders\Particles</Filter>
+    </None>
+    <None Include="BRDFModels.hlsli">
+      <Filter>Shaders\Lighting</Filter>
     </None>
   </ItemGroup>
 </Project>

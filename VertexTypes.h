@@ -89,9 +89,10 @@ namespace happy
 		bb::vec4 lifeSizeGrowWiggle;
 		bb::vec4 velocityFriction;
 		bb::vec4 color;
+		bb::vec4 texcoord;
 
-		static const D3D11_INPUT_ELEMENT_DESC Elements[4];
-		static const UINT ElementCount = 4;
+		static const D3D11_INPUT_ELEMENT_DESC Elements[5];
+		static const UINT ElementCount = 5;
 		static const VertexType Type = VertexType::Particle;
 	};
 }

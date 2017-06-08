@@ -270,6 +270,18 @@ namespace happy
 
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&desc, &data, &m_pCubeIBuffer));
 		}
+
+		// Particle vtx buffer
+		for (int i=0; i<2; ++i)
+		{
+			D3D11_BUFFER_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.ByteWidth = 16384 * sizeof(VertexParticle);
+			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_STREAM_OUTPUT;
+			desc.Usage = D3D11_USAGE_DEFAULT;
+			
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBuffer(&desc, nullptr, &m_pParticleVBuffer[i]));
+		}
 	}
 
 	void DeferredRenderer::createBuffers(const RenderingContext *pRenderContext)
@@ -451,15 +463,16 @@ namespace happy
 		CreatePixelShader(pRenderContext->getDevice(), m_ColorGrading.m_Handle, g_shColorGrading);
 		
 		// Particle system
-		D3D11_SO_DECLARATION_ENTRY soDesc[] =
+		D3D11_SO_DECLARATION_ENTRY soDesc[5] =
 		{
-			{ 0, "SV_POSITION", 0, 0, 4, 0 },
+			{ 0, "POSITION", 0, 0, 4, 0 },
 			{ 0, "TEXCOORD",    0, 0, 4, 0 },
 			{ 0, "TEXCOORD",    1, 0, 4, 0 },
 			{ 0, "TEXCOORD",    2, 0, 4, 0 },
+			{ 0, "TEXCOORD",    3, 0, 4, 0 },
 		};
 		
-		pRenderContext->getDevice()->CreateGeometryShaderWithStreamOutput(g_shParticlesProcGS, sizeof(g_shParticlesProcGS), soDesc, sizeof(soDesc), NULL, 0, 0, NULL, &m_pGSProcParticles);
-		pRenderContext->getDevice()->CreateGeometryShaderWithStreamOutput(g_shParticlesDrawGS, sizeof(g_shParticlesDrawGS), soDesc, sizeof(soDesc), NULL, 0, 0, NULL, &m_pGSDrawParticles);
+		pRenderContext->getDevice()->CreateGeometryShaderWithStreamOutput(g_shParticlesProcGS, sizeof(g_shParticlesProcGS), soDesc, 5, NULL, 0, D3D11_SO_NO_RASTERIZED_STREAM, NULL, &m_pGSProcParticles);
+		pRenderContext->getDevice()->CreateGeometryShader(g_shParticlesDrawGS, sizeof(g_shParticlesDrawGS), nullptr, &m_pGSDrawParticles);
 	}
 }
