@@ -216,6 +216,7 @@
     <ClInclude Include="GraphicsTimer.h" />
     <ClInclude Include="happy.h" />
     <ClInclude Include="MultiTexture.h" />
+    <ClInclude Include="ParticleBuilder.h" />
     <ClInclude Include="PBREnvironment.h" />
     <ClInclude Include="PostProcessItem.h" />
     <ClInclude Include="RendererCommon.hlsli" />

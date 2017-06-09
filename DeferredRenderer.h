@@ -99,6 +99,7 @@ namespace happy
 		ComPtr<ID3D11DepthStencilState>   m_pOccludedWidgetsState;
 		ComPtr<ID3D11BlendState>          m_pDecalBlendState;
 		ComPtr<ID3D11BlendState>          m_pWidgetsBlendState;
+		ComPtr<ID3D11BlendState>          m_pParticlesBlendState;
 		ComPtr<ID3D11SamplerState>        m_pScreenSampler;
 		ComPtr<ID3D11Buffer>              m_pScreenQuadBuffer;
 		ComPtr<ID3D11ShaderResourceView>  m_pNoiseTexture[RenderTarget::MultiSamples];

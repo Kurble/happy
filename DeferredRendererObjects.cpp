@@ -182,6 +182,25 @@ namespace happy
 			desc.IndependentBlendEnable = false;
 			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBlendState(&desc, &m_pDecalBlendState));
 		}
+
+		// Particles blending state
+		{
+			D3D11_BLEND_DESC desc;
+			ZeroMemory(&desc, sizeof(desc));
+			desc.RenderTarget[0].BlendEnable = true;
+			desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+			desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+			desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
+			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+			desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+			desc.RenderTarget[0].RenderTargetWriteMask =
+				D3D11_COLOR_WRITE_ENABLE_RED |
+				D3D11_COLOR_WRITE_ENABLE_GREEN |
+				D3D11_COLOR_WRITE_ENABLE_BLUE;
+			desc.IndependentBlendEnable = false;
+			THROW_ON_FAIL(pRenderContext->getDevice()->CreateBlendState(&desc, &m_pParticlesBlendState));
+		}
 	}
 
 	void DeferredRenderer::createGeometries(const RenderingContext *pRenderContext)
@@ -463,16 +482,21 @@ namespace happy
 		CreatePixelShader(pRenderContext->getDevice(), m_ColorGrading.m_Handle, g_shColorGrading);
 		
 		// Particle system
-		D3D11_SO_DECLARATION_ENTRY soDesc[5] =
+		D3D11_SO_DECLARATION_ENTRY soDesc[10] =
 		{
 			{ 0, "POSITION", 0, 0, 4, 0 },
-			{ 0, "TEXCOORD",    0, 0, 4, 0 },
-			{ 0, "TEXCOORD",    1, 0, 4, 0 },
-			{ 0, "TEXCOORD",    2, 0, 4, 0 },
-			{ 0, "TEXCOORD",    3, 0, 4, 0 },
+			{ 0, "TEXCOORD", 0, 0, 4, 0 },
+			{ 0, "TEXCOORD", 1, 0, 4, 0 },
+			{ 0, "TEXCOORD", 2, 0, 4, 0 },
+			{ 0, "TEXCOORD", 3, 0, 4, 0 },
+			{ 0, "TEXCOORD", 4, 0, 4, 0 },
+			{ 0, "TEXCOORD", 5, 0, 4, 0 },
+			{ 0, "TEXCOORD", 6, 0, 4, 0 },
+			{ 0, "TEXCOORD", 7, 0, 4, 0 },
+			{ 0, "TEXCOORD", 8, 0, 4, 0 },
 		};
 		
-		pRenderContext->getDevice()->CreateGeometryShaderWithStreamOutput(g_shParticlesProcGS, sizeof(g_shParticlesProcGS), soDesc, 5, NULL, 0, D3D11_SO_NO_RASTERIZED_STREAM, NULL, &m_pGSProcParticles);
+		pRenderContext->getDevice()->CreateGeometryShaderWithStreamOutput(g_shParticlesProcGS, sizeof(g_shParticlesProcGS), soDesc, 10, NULL, 0, D3D11_SO_NO_RASTERIZED_STREAM, NULL, &m_pGSProcParticles);
 		pRenderContext->getDevice()->CreateGeometryShader(g_shParticlesDrawGS, sizeof(g_shParticlesDrawGS), nullptr, &m_pGSDrawParticles);
 	}
 }

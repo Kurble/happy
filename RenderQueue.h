@@ -6,6 +6,7 @@
 #include "MeshController.h"
 #include "PostProcessItem.h"
 #include "SurfaceShader.h"
+#include "ParticleBuilder.h"
 
 namespace happy
 {

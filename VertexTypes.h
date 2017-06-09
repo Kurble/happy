@@ -85,14 +85,19 @@ namespace happy
 
 	struct VertexParticle
 	{
-		bb::vec4 position;
+		bb::vec4 positionRotation;
 		bb::vec4 lifeSizeGrowWiggle;
 		bb::vec4 velocityFriction;
-		bb::vec4 color;
-		bb::vec4 texcoord;
+		bb::vec4 gravitySpin;
+		bb::vec4 color1;
+		bb::vec4 color2;
+		bb::vec4 color3;
+		bb::vec4 color4;
+		bb::vec4 stops;
+		bb::vec4 texCoord;
 
-		static const D3D11_INPUT_ELEMENT_DESC Elements[5];
-		static const UINT ElementCount = 5;
+		static const D3D11_INPUT_ELEMENT_DESC Elements[10];
+		static const UINT ElementCount = 10;
 		static const VertexType Type = VertexType::Particle;
 	};
 }

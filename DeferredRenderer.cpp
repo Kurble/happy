@@ -616,9 +616,9 @@ namespace happy
 
 		context->OMSetRenderTargets(1, &rtv, target->m_pDepthBufferViewReadOnly.Get());
 		context->OMSetDepthStencilState(m_pGBufferDepthStencilState.Get(), 0);
-		context->OMSetBlendState(m_pDecalBlendState.Get(), nullptr, 0xffffffff);
+		context->OMSetBlendState(m_pParticlesBlendState.Get(), nullptr, 0xffffffff);
 
-		ID3D11ShaderResourceView* srvs[8] = { 0 };
+		ID3D11ShaderResourceView* srvs[1] = { scene->m_ParticleAtlas.m_Handle.Get() };
 		ID3D11Buffer* procSOTarget[1] = { m_pParticleVBuffer[(target->m_LastUsedHistoryBuffer + 0) % 2].Get() };
 		ID3D11Buffer* procSOSource[1] = { m_pParticleVBuffer[(target->m_LastUsedHistoryBuffer + 1) % 2].Get() };
 		ID3D11Buffer* noBuffer[1] = { nullptr };
@@ -664,7 +664,8 @@ namespace happy
 		context->GSSetShader(m_pGSDrawParticles.Get(), nullptr, 0);
 		context->GSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
 		context->PSSetShader(m_pPSParticles.Get(), nullptr, 0);
-		context->PSSetShaderResources(0, 8, srvs);
+		context->PSSetShaderResources(0, 1, srvs);
+		context->PSSetSamplers(0, 1, m_pGSampler.GetAddressOf());
 		context->PSSetConstantBuffers(0, 1, m_pCBScene.GetAddressOf());
 		context->DrawAuto();
 
