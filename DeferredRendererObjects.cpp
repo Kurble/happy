@@ -482,7 +482,7 @@ namespace happy
 		CreatePixelShader(pRenderContext->getDevice(), m_ColorGrading.m_Handle, g_shColorGrading);
 		
 		// Particle system
-		D3D11_SO_DECLARATION_ENTRY soDesc[10] =
+		D3D11_SO_DECLARATION_ENTRY soDesc[11] =
 		{
 			{ 0, "POSITION", 0, 0, 4, 0 },
 			{ 0, "TEXCOORD", 0, 0, 4, 0 },
@@ -494,9 +494,10 @@ namespace happy
 			{ 0, "TEXCOORD", 6, 0, 4, 0 },
 			{ 0, "TEXCOORD", 7, 0, 4, 0 },
 			{ 0, "TEXCOORD", 8, 0, 4, 0 },
+			{ 0, "TEXCOORD", 9, 0, 4, 0 },
 		};
 		
-		pRenderContext->getDevice()->CreateGeometryShaderWithStreamOutput(g_shParticlesProcGS, sizeof(g_shParticlesProcGS), soDesc, 10, NULL, 0, D3D11_SO_NO_RASTERIZED_STREAM, NULL, &m_pGSProcParticles);
+		pRenderContext->getDevice()->CreateGeometryShaderWithStreamOutput(g_shParticlesProcGS, sizeof(g_shParticlesProcGS), soDesc, 11, NULL, 0, D3D11_SO_NO_RASTERIZED_STREAM, NULL, &m_pGSProcParticles);
 		pRenderContext->getDevice()->CreateGeometryShader(g_shParticlesDrawGS, sizeof(g_shParticlesDrawGS), nullptr, &m_pGSDrawParticles);
 	}
 }
