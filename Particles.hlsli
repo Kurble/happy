@@ -32,13 +32,13 @@ struct ParticleVertex
 #define PART_SIZE3             attr0.z
 #define PART_SIZE4             attr0.w
 #define PART_VELOCITY          attr1.xyz
-#define PART_FRICTION          attr1.w
+#define PART_SPIN              attr1.w
 #define PART_BROWNIAN          attr2.x
 #define PART_BROWNIAN_FRICTION attr2.y
 #define PART_BROWNIAN_SCALE    attr2.z
 #define PART_LIFE              attr2.w
 #define PART_GRAVITY           attr3.xyz
-#define PART_SPIN              attr3.w
+#define PART_FRICTION          attr3.w
 #define PART_COLOR1            attr4
 #define PART_COLOR2            attr5
 #define PART_COLOR3            attr6

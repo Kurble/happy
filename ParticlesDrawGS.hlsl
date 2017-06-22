@@ -12,12 +12,13 @@ void main(point ParticleVertex input[1], inout TriangleStream<ParticleRenderVert
 	ParticleRenderVertex output;
 
 	float L = input[0].PART_LIFE + timestep;
-	float3 blend = float3(saturate((input[0].PART_STOPS.x - L) / (input[0].PART_STOPS.x - input[0].PART_STOPS.y)),
+	float4 blend = float4(1.0f,
+		                  saturate((input[0].PART_STOPS.x - L) / (input[0].PART_STOPS.x - input[0].PART_STOPS.y)),
 		                  saturate((input[0].PART_STOPS.y - L) / (input[0].PART_STOPS.y - input[0].PART_STOPS.z)),
 		                  saturate((input[0].PART_STOPS.z - L) / (input[0].PART_STOPS.z - input[0].PART_STOPS.w)));
 
-	output.color = input[0].PART_COLOR1 + input[0].PART_COLOR2 * blend.x + input[0].PART_COLOR3 * blend.y + input[0].PART_COLOR4 * blend.z;
-	float size = input[0].PART_SIZE1 + input[0].PART_SIZE2 * blend.x + input[0].PART_SIZE3 * blend.y + input[0].PART_SIZE4 * blend.z;
+	output.color = input[0].PART_COLOR1 + input[0].PART_COLOR2 * blend.y + input[0].PART_COLOR3 * blend.z + input[0].PART_COLOR4 * blend.w;
+	float size =   dot(input[0].attr0, blend);//input[0].PART_SIZE1  + input[0].PART_SIZE2 * blend.x  + input[0].PART_SIZE3 * blend.y  + input[0].PART_SIZE4 * blend.z;
 	
 	float4 wPos = float4(input[0].PART_POSITION, 1.0f);
 	float4 vPos = mul(jitteredView, wPos);

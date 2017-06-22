@@ -9,7 +9,7 @@ void main(point ParticleVertex input[1], inout PointStream<ParticleVertex> strea
 		ParticleVertex output = input[0];
 
 		float velocity = length(input[0].PART_VELOCITY);
-		float damping = max(0, velocity - input[0].PART_FRICTION * timestep) / velocity;
+		float damping = velocity > 0 ? max(0, velocity - input[0].PART_FRICTION * timestep) / velocity : 1;
 
 		// process particle
 		output.PART_POSITION = input[0].PART_POSITION + input[0].PART_VELOCITY * timestep;
