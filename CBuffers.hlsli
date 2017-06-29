@@ -20,7 +20,7 @@ cbuffer CBufferObject : register(b1)
 	float4x4 currentWorld;
 	float4x4 inverseWorld;
 	float4x4 previousWorld;
-	float alpha;
+	float4 colorize;
 };
 
 cbuffer CBufferSkin : register(b2)

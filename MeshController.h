@@ -19,7 +19,7 @@ namespace happy
 	struct SkinRenderItem
 	{
 		RenderSkin m_Skin;
-		float m_Alpha;
+		bb::vec4 m_Color;
 		StencilMask m_Groups;
 		unsigned m_AnimationCount;
 
@@ -40,6 +40,7 @@ namespace happy
 		void setMesh(shared_ptr<RenderMesh> mesh);
 		void setRenderGroups(StencilMask &groups);
 		void setAlpha(float alpha);
+		void setColor(bb::vec4 color);
 
 		int addAnimation(string name, Animation animation, system_clock::time_point start);
 		int getAnimationIndex(string name);

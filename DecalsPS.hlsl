@@ -46,7 +46,7 @@ GBufferOut main(VSOut input)
 		output.graphicsBuffer0 = g_MultiTexture0.Sample(g_TextureSampler, 0.5f+cubePos.xy*0.5f);
 		output.graphicsBuffer1 = g_MultiTexture1.Sample(g_TextureSampler, 0.5f+cubePos.xy*0.5f);
 		output.graphicsBuffer2 = g_MultiTexture2.Sample(g_TextureSampler, 0.5f+cubePos.xy*0.5f);
-		output.graphicsBuffer0.a *= alpha;
+		output.graphicsBuffer0 *= colorize;
 	}
 	else
 	{

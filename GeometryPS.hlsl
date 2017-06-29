@@ -26,7 +26,7 @@ GBufferOut main(VSOut input)
 
 	float3x3 normalTransform = float3x3(input.tangent, input.binormal, input.normal);
 
-	output.graphicsBuffer0 = g_MultiTexture0.Sample(g_TextureSampler, input.texcoord0);
+	output.graphicsBuffer0 = g_MultiTexture0.Sample(g_TextureSampler, input.texcoord0) * float4(colorize.rgb, 1.0f);
 	float3 multi1 = g_MultiTexture1.Sample(g_TextureSampler, input.texcoord0);
 	float3 normal = normalize(mul(multi1.xyz*2.0f-1.0f, normalTransform));
 	output.graphicsBuffer1 = normal.xyz*0.5f+0.5f;

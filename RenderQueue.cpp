@@ -29,7 +29,7 @@ namespace happy
 	{
 		m_Empty = false;
 
-		if (skin.m_Alpha < 1.0f)
+		if (skin.m_Color.w < 1.0f)
 			m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeightsTransparent.push_back(skin);
 		else
 			m_GeometryPositionNormalTangentBinormalTexcoordIndicesWeights.push_back(skin);
@@ -42,32 +42,43 @@ namespace happy
 		switch (mesh.getVertexType())
 		{
 		case VertexType::VertexPositionTexcoord:
-			m_GeometryPositionTexcoord.emplace_back(mesh, 1.0f, transform, group);
+			m_GeometryPositionTexcoord.emplace_back(mesh, bb::vec4(1, 1, 1, 1), transform, group);
 			break;
 		case VertexType::VertexPositionNormalTexcoord:
-			m_GeometryPositionNormalTexcoord.emplace_back(mesh, 1.0f, transform, group);
+			m_GeometryPositionNormalTexcoord.emplace_back(mesh, bb::vec4(1, 1, 1, 1), transform, group);
 			break;
 		case VertexType::VertexPositionNormalTangentBinormalTexcoord:
-			m_GeometryPositionNormalTangentBinormalTexcoord.emplace_back(mesh, 1.0f, transform, group);
+			m_GeometryPositionNormalTangentBinormalTexcoord.emplace_back(mesh, bb::vec4(1, 1, 1, 1), transform, group);
 			break;
 		}
 	}
 
-	void RenderQueue_Root::pushRenderMesh(const RenderMesh &mesh, float alpha, const bb::mat4 &transform, const StencilMask group)
+	void RenderQueue_Root::pushRenderMesh(const RenderMesh &mesh, const bb::vec4& color, const bb::mat4 &transform, const StencilMask group)
 	{
 		m_Empty = false;
 
-		if (alpha >= 1.0f) pushRenderMesh(mesh, transform, group);
+		if (color.w >= 1.0f) switch (mesh.getVertexType())
+		{
+		case VertexType::VertexPositionTexcoord:
+			m_GeometryPositionTexcoord.emplace_back(mesh, color, transform, group);
+			break;
+		case VertexType::VertexPositionNormalTexcoord:
+			m_GeometryPositionNormalTexcoord.emplace_back(mesh, color, transform, group);
+			break;
+		case VertexType::VertexPositionNormalTangentBinormalTexcoord:
+			m_GeometryPositionNormalTangentBinormalTexcoord.emplace_back(mesh, color, transform, group);
+			break;
+		}
 		else switch (mesh.getVertexType())
 		{
 		case VertexType::VertexPositionTexcoord:
-			m_GeometryPositionTexcoordTransparent.emplace_back(mesh, alpha, transform, group);
+			m_GeometryPositionTexcoordTransparent.emplace_back(mesh, color, transform, group);
 			break;
 		case VertexType::VertexPositionNormalTexcoord:
-			m_GeometryPositionNormalTexcoordTransparent.emplace_back(mesh, alpha, transform, group);
+			m_GeometryPositionNormalTexcoordTransparent.emplace_back(mesh, color, transform, group);
 			break;
 		case VertexType::VertexPositionNormalTangentBinormalTexcoord:
-			m_GeometryPositionNormalTangentBinormalTexcoordTransparent.emplace_back(mesh, alpha, transform, group);
+			m_GeometryPositionNormalTangentBinormalTexcoordTransparent.emplace_back(mesh, color, transform, group);
 			break;
 		}
 	}
@@ -84,22 +95,22 @@ namespace happy
 		m_Empty = false;
 
 		TextureHandle emptyHandle;
-		m_Decals.emplace_back(texture, emptyHandle, 1.0f, transform, filter);
+		m_Decals.emplace_back(texture, emptyHandle, bb::vec4(1, 1, 1, 1), transform, filter);
 	}
 
-	void RenderQueue_Root::pushDecal(const TextureHandle &texture, float alpha, const bb::mat4 &transform, const StencilMask filter)
+	void RenderQueue_Root::pushDecal(const TextureHandle &texture, const bb::vec4& color, const bb::mat4 &transform, const StencilMask filter)
 	{
 		m_Empty = false;
 
 		TextureHandle emptyHandle;
-		m_Decals.emplace_back(texture, emptyHandle, alpha, transform, filter);
+		m_Decals.emplace_back(texture, emptyHandle, color, transform, filter);
 	}
 
-	void RenderQueue_Root::pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, float alpha, const bb::mat4 &transform, const StencilMask filter)
+	void RenderQueue_Root::pushDecal(const TextureHandle &texture, const TextureHandle &normalMap, const bb::vec4& color, const bb::mat4 &transform, const StencilMask filter)
 	{
 		m_Empty = false;
 
-		m_Decals.emplace_back(texture, normalMap, alpha, transform, filter);
+		m_Decals.emplace_back(texture, normalMap, color, transform, filter);
 	}
 
 	void RenderQueue_Root::pushNewParticle(const VertexParticle& particle)

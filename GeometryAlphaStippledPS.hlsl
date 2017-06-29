@@ -35,12 +35,12 @@ GBufferOut main(VSOut input)
 	);
 
 	uint coord = (((uint)input.position.x) % 8) * 8 + ((uint)input.position.y) % 8;
-	if (alpha < stipple[coord])
+	if (colorize.a < stipple[coord])
 	{
 		discard;
 	}
 
-	output.albedoRoughness = g_AlbedoRoughnessMap.Sample(g_TextureSampler, input.texcoord0);
+	output.albedoRoughness = g_AlbedoRoughnessMap.Sample(g_TextureSampler, input.texcoord0) * float4(colorize.rgb, 1.0f);
 	float4 normalMetallic = g_NormalMetallicMap.Sample(g_TextureSampler, input.texcoord0);
 	float3 normal = normalize(mul(2.0f*normalMetallic.xyz-1.0f, normalMatrix));
 	float  metallic = normalMetallic.w;

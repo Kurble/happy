@@ -45,7 +45,7 @@ namespace happy
 		bb::mat4 currentWorld;
 		bb::mat4 inverseWorld;
 		bb::mat4 previousWorld;
-		float alpha;
+		bb::vec4 colorize;
 	};
 
 	struct CBufferSkin

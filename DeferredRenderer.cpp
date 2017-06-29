@@ -235,7 +235,7 @@ namespace happy
 			objectCB.currentWorld = elem.m_Transform;
 			objectCB.inverseWorld = elem.m_Transform;
 			objectCB.inverseWorld.inverse();
-			objectCB.alpha = elem.m_Alpha;
+			objectCB.colorize = elem.m_Color;
 			updateConstantBuffer(context, m_pCBObject.Get(), objectCB);
 
 			UINT stride = sizeof(VertexPositionTexcoord);
@@ -277,7 +277,7 @@ namespace happy
 			CBufferObject objectCB;
 			objectCB.currentWorld = elem.m_Transform;
 			objectCB.previousWorld = elem.m_Transform;
-			objectCB.alpha = elem.m_Alpha;
+			objectCB.colorize = elem.m_Color;
 			updateConstantBuffer(context, m_pCBObject.Get(), objectCB);
 
 			UINT stride = (UINT) elem.m_Mesh.getVertexStride();
@@ -317,7 +317,7 @@ namespace happy
 			CBufferObject objectCB;
 			objectCB.currentWorld = elem.m_CurrentWorld;
 			objectCB.previousWorld = elem.m_PreviousWorld;
-			objectCB.alpha = elem.m_Alpha;
+			objectCB.colorize = elem.m_Color;
 			updateConstantBuffer(context, m_pCBObject.Get(), objectCB);
 
 			CBufferSkin skinCB;

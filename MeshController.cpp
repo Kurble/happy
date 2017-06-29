@@ -31,7 +31,7 @@ namespace happy
 			m_Static = true;
 		}
 
-		m_RenderItem.m_Alpha = 1.0f;
+		m_RenderItem.m_Color = bb::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		m_RenderItem.m_AnimationCount = 1;
 		m_RenderItem.m_Groups = 0x00;
 		m_RenderItem.m_CurrentBlendAnimation = bb::vec2(1, 0);
@@ -47,7 +47,12 @@ namespace happy
 
 	void MeshController::setAlpha(float alpha)
 	{
-		m_RenderItem.m_Alpha = alpha;
+		m_RenderItem.m_Color.w = alpha;
+	}
+
+	void MeshController::setColor(bb::vec4 color)
+	{
+		m_RenderItem.m_Color = color;
 	}
 
 	void MeshController::setRenderGroups(StencilMask &groups)
@@ -160,7 +165,7 @@ namespace happy
 	void MeshController::render(RenderQueue_Root &queue) const
 	{
 		if (m_Static)
-			queue.pushRenderMesh(*m_Mesh, m_RenderItem.m_Alpha, m_RenderItem.m_CurrentWorld, m_RenderItem.m_Groups);
+			queue.pushRenderMesh(*m_Mesh, m_RenderItem.m_Color, m_RenderItem.m_CurrentWorld, m_RenderItem.m_Groups);
 		else
 			queue.pushSkinRenderItem(m_RenderItem);
 	}
