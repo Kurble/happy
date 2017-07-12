@@ -84,6 +84,11 @@ namespace bb
 			return true;
 		}
 
+		void raw(const char*, char* data, size_t size)
+		{
+			m_stream.write(data, size);
+		}
+
 	private:
 		template <typename T> void put(const T& val)
 		{
@@ -203,6 +208,11 @@ namespace bb
 		operator bool()
 		{
 			return (m_stream.rdbuf()->in_avail() > 0);
+		}
+
+		void raw(const char*, char* data, size_t size)
+		{
+			m_stream.read(data, size);
 		}
 
 	private:

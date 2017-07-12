@@ -180,6 +180,7 @@
     <ClInclude Include="vec2.h" />
     <ClInclude Include="vec3.h" />
     <ClInclude Include="vec4.h" />
+    <ClInclude Include="xmfile.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="geometry_util.cpp" />
@@ -194,6 +195,7 @@
     <ClCompile Include="vec2.cpp" />
     <ClCompile Include="vec3.cpp" />
     <ClCompile Include="vec4.cpp" />
+    <ClCompile Include="xmfile.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

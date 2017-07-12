@@ -27,6 +27,7 @@
     <ClInclude Include="net_client_node.hpp" />
     <ClInclude Include="net_server_client.hpp" />
     <ClInclude Include="osha1stream.h" />
+    <ClInclude Include="xmfile.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vec2.cpp" />
@@ -41,5 +42,6 @@
     <ClCompile Include="geometry_util.cpp" />
     <ClCompile Include="serialize.cpp" />
     <ClCompile Include="osha1stream.cpp" />
+    <ClCompile Include="xmfile.cpp" />
   </ItemGroup>
 </Project>
