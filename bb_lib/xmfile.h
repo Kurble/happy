@@ -276,12 +276,14 @@ namespace bb
 		public:
 			channel(document* doc, short index);
 
-			void tick(const pattern* pat, const short row, const short tick, const short* buffer, size_t length);
+			void tick(const pattern* pat, const short row, const short tick, short* buffer, size_t length);
 
 		private:
 			document* doc;
 			short index;
 
+			note current;
+			short sampleIndex;
 			// state stuff
 			// todo
 		};

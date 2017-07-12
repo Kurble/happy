@@ -8,9 +8,29 @@ namespace bb
 			: doc(doc)
 			, index(index) { }
 
-		void channel::tick(const pattern* pat, const short row, const short tick, const short* buffer, size_t length)
+		void channel::tick(const pattern* pat, const short row, const short tick, short* buffer, size_t length)
 		{
-			//
+			if (tick == 0)
+			{
+				// read new note on tick 0
+				if (pat->rows[row].notes[index].pitch > 0)
+				{
+					current = pat->rows[row].notes[index];
+					sampleIndex = 0;
+				}
+			}
+
+			// calculate note buffer
+			if (current.pitch)
+			{
+				for (short i = 0; i < (short)length; ++i)
+				{
+					buffer[i] += (sampleIndex % 200) < 100 ? 64 : -64;
+					sampleIndex++;
+				}
+			}
+
+			// do effects
 		}
 
 		player::player(document* doc)
@@ -27,7 +47,8 @@ namespace bb
 			if (currentPattern >= doc->length)
 				return false;
 			
-			buffer.resize(110250 / currentBPM);
+			buffer.clear();
+			buffer.resize(110250 / currentBPM, 0);
 			*_buffer = buffer.data();
 			*_length = buffer.size();
 
