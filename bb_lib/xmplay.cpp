@@ -1,4 +1,6 @@
-#include "xmfile.h"
+#include "xmplay.h"
+
+#define HAS_TONE_PORTAMENTO(s) ((s)->effect == 3 || (s)->effect == 5 || ((s)->volume >> 4) == 0xF)
 
 namespace bb
 {
@@ -8,29 +10,67 @@ namespace bb
 			: doc(doc)
 			, index(index) { }
 
+		void channel::handleNote(const note* note)
+		{
+			currentNote = note;
+			currentInstrument = nullptr;
+			currentSample = nullptr;
+
+			// handle instrument
+			if (currentNote->instrument)
+			{
+				if (currentNote->instrument <= doc->instrumentCount)
+				{
+					currentInstrument = &doc->instruments[currentNote->instrument - 1];
+
+					if (currentNote->pitch == 0)
+					{
+						// ghost instrument
+					}
+				}
+				else
+				{
+					cut();
+				}
+			}
+
+			// handle note
+			if (note->pitch > 0 && note->pitch < 97)
+			{
+				//
+			}
+			else if (note->pitch == 97)
+			{
+				release();
+			}
+
+			// handle volume
+			switch (currentNote->volume)
+			{
+			default:
+				break;
+			}
+
+			// handle effects
+			switch (currentNote->effect)
+			{
+			default:
+				break;
+			}
+		}
+
 		void channel::tick(const pattern* pat, const short row, const short tick, short* buffer, size_t length)
 		{
+			// handle new notes
 			if (tick == 0)
 			{
-				// read new note on tick 0
-				if (pat->rows[row].notes[index].pitch > 0)
-				{
-					current = pat->rows[row].notes[index];
-					sampleIndex = 0;
-				}
+				handleNote(&pat->rows[row].notes[index]);
 			}
 
-			// calculate note buffer
-			if (current.pitch)
-			{
-				for (short i = 0; i < (short)length; ++i)
-				{
-					buffer[i] += (sampleIndex % 200) < 100 ? 64 : -64;
-					sampleIndex++;
-				}
-			}
+			// handle effects
 
-			// do effects
+			
+			// mix into buffer
 		}
 
 		player::player(document* doc)

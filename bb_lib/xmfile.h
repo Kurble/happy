@@ -115,6 +115,7 @@ namespace bb
 			template <typename VISITOR>
 			void reflect(VISITOR& visit)
 			{
+				length = data.size();
 				visit("length", length);
 				visit("loopStart", loopStart);
 				visit("loopEnd", loopEnd);
@@ -130,6 +131,16 @@ namespace bb
 			}
 		};
 
+		struct envelope
+		{
+			char points[48];
+			char pointCount;
+			char sustainPoint;
+			char loopStart;
+			char loopEnd;
+			char type;
+		};
+
 		struct instrument
 		{
 			int   length;
@@ -138,18 +149,10 @@ namespace bb
 			short instrumentSampleCount;
 			int   instrumentSampleHeaderLength;
 			char  sampleIds[96];
-			char  volumeEnvelope[48];
-			char  panningEnvelope[48];
-			char  volumePointCount;
-			char  panningPointCount;
-			char  volumeSustainPoint;
-			char  volumeLoopStart;
-			char  volumeLoopEnd;
-			char  panningSustainPoint;
-			char  panningLoopStart;
-			char  panningLoopEnd;
-			char  volumeType;
-			char  panningType;
+			
+			envelope volume;
+			envelope panning;
+
 			char  vibratoType;
 			char  vibratoSweep;
 			char  vibratoDepth;
@@ -171,18 +174,20 @@ namespace bb
 				{
 					visit("instrumentSampleHeaderLength", instrumentSampleHeaderLength);
 					visit.raw("sampleIds", sampleIds, 96);
-					visit.raw("volumeEnvelope", volumeEnvelope, 48);
-					visit.raw("panningEnvelope", panningEnvelope, 48);
-					visit("volumePointCount", volumePointCount);
-					visit("panningPointCount", panningPointCount);
-					visit("volumeSustainPoint", volumeSustainPoint);
-					visit("volumeLoopStart", volumeLoopStart);
-					visit("volumeLoopEnd", volumeLoopEnd);
-					visit("panningSustainPoint", panningSustainPoint);
-					visit("panningLoopStart", panningLoopStart);
-					visit("panningLoopEnd", panningLoopEnd);
-					visit("volumeType", volumeType);
-					visit("panningType", panningType);
+					
+					visit.raw("volumeEnvelope", volume.points, 48);
+					visit.raw("panningEnvelope", panning.points, 48);
+					visit("volumePointCount", volume.pointCount);
+					visit("panningPointCount", panning.pointCount);
+					visit("volumeSustainPoint", volume.sustainPoint);
+					visit("volumeLoopStart", volume.loopStart);
+					visit("volumeLoopEnd", volume.loopEnd);
+					visit("panningSustainPoint", panning.sustainPoint);
+					visit("panningLoopStart", panning.loopStart);
+					visit("panningLoopEnd", panning.loopEnd);
+					visit("volumeType", volume.type);
+					visit("panningType", panning.type);
+
 					visit("vibratoType", vibratoType);
 					visit("vibratoSweep", vibratoSweep);
 					visit("vibratoDepth", vibratoDepth);
@@ -269,44 +274,6 @@ namespace bb
 					i.reflect(visit);
 				}
 			}
-		};
-
-		class channel
-		{
-		public:
-			channel(document* doc, short index);
-
-			void tick(const pattern* pat, const short row, const short tick, short* buffer, size_t length);
-
-		private:
-			document* doc;
-			short index;
-
-			note current;
-			short sampleIndex;
-			// state stuff
-			// todo
-		};
-
-		class player
-		{
-		public:
-			player(document* doc);
-
-			bool tick(short** buffer, size_t* length);
-		private:
-			document* doc;
-
-			int currentPattern = 0;
-			int currentRow = 0;
-			int currentTick = 0;
-
-			int currentBPM;
-			int currentTempo;
-
-			std::vector<channel> channels;
-
-			std::vector<short> buffer;
 		};
 	}
 }
