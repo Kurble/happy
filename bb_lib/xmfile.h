@@ -16,12 +16,12 @@ namespace bb
 				, effect(0)
 				, effectParameter(0) {}
 
-			char compress;
-			char pitch;
-			char instrument;
-			char volume;
-			char effect;
-			char effectParameter;
+			unsigned char compress;
+			unsigned char pitch;
+			unsigned char instrument;
+			unsigned char volume;
+			unsigned char effect;
+			unsigned char effectParameter;
 
 			template <typename VISITOR>
 			void reflect(VISITOR& visit)
@@ -32,7 +32,7 @@ namespace bb
 				if (volume)           compress |= 4;
 				if (effect)           compress |= 8;
 				if (effectParameter)  compress |= 16;
-				if (compress == 159) compress = 0;
+				if (compress == 0x9f) compress = 0;
 				visit("compress", compress);
 				if (compress & 128)
 				{
@@ -55,8 +55,8 @@ namespace bb
 		
 		struct row
 		{
-			short channels;
-			row(short channels) : channels(channels) {}
+			unsigned short channels;
+			row(unsigned short channels) : channels(channels) {}
 
 			std::vector<note> notes;
 
@@ -71,13 +71,13 @@ namespace bb
 
 		struct pattern
 		{
-			short channels;
-			pattern(short channels) : channels(channels) {}
+			unsigned short channels;
+			pattern(unsigned short channels) : channels(channels) {}
 
-			int length;
-			char packType;
-			short rowCount;
-			short dataSize;
+			unsigned int length;
+			unsigned char packType;
+			unsigned short rowCount;
+			unsigned short dataSize;
 
 			std::vector<row> rows;
 
@@ -99,23 +99,31 @@ namespace bb
 
 		struct sample
 		{
-			int   length;
-			int   loopStart;
-			int   loopEnd;
-			char  volume;
-			char  finetune;
-			char  type;
-			char  pan;
-			char  pitch;
-			char  reserved;
-			char  name[22];
+			unsigned int   length;
+			unsigned int   loopStart;
+			unsigned int   loopEnd;
+			unsigned char  volume;
+			signed   char  finetune;
+			unsigned char  type;
+			unsigned char  pan;
+			signed   char  pitch;
+			unsigned char  reserved;
+			char           name[22];
 
-			std::vector<char> data;
+			std::vector<char>  data;
+			std::vector<float> samples;
 
 			template <typename VISITOR>
 			void reflect(VISITOR& visit)
 			{
-				length = data.size();
+				if (type & 0x10)
+				{
+					length *= 2;
+					loopStart *= 2;
+					loopEnd *= 2;
+				}
+
+				length = (int) data.size();
 				visit("length", length);
 				visit("loopStart", loopStart);
 				visit("loopEnd", loopEnd);
@@ -128,37 +136,70 @@ namespace bb
 				visit.raw("name", name, 22);
 				data.resize(length);
 				visit.raw("data", data.data(), data.size());
+
+				if (type & 0x10)
+				{
+					auto ptr = reinterpret_cast<short*>(data.data());
+					length /= 2;
+					loopStart /= 2;
+					loopEnd /= 2;
+
+					samples.reserve(length);
+					short sam = 0;
+					for (size_t i = 0; i < length; ++i)
+					{
+						sam += ptr[i];
+						samples.push_back(sam / (float)0x7fff);
+					}
+				}
+				else
+				{
+					auto ptr = reinterpret_cast<char*>(data.data());
+
+					samples.reserve(length);
+					char sam = 0;
+					for (size_t i = 0; i < length; ++i)
+					{
+						sam += ptr[i];
+						samples.push_back(sam / (float)0x7f);
+					}
+				}
 			}
+		};
+
+		struct envelope_point
+		{
+			unsigned short frame;
+			unsigned short value;
 		};
 
 		struct envelope
 		{
-			char points[48];
-			char pointCount;
-			char sustainPoint;
-			char loopStart;
-			char loopEnd;
-			char type;
+			envelope_point points[12];
+			unsigned char  pointCount;
+			unsigned char  sustainPoint;
+			unsigned char  loopStart;
+			unsigned char  loopEnd;
+			unsigned char  type;
 		};
 
 		struct instrument
 		{
-			int   length;
-			char  name[22];
-			char  type;
-			short instrumentSampleCount;
-			int   instrumentSampleHeaderLength;
-			char  sampleIds[96];
+			unsigned int   length;
+			char           name[22];
+			unsigned char  type;
+			unsigned short instrumentSampleCount;
+			unsigned int   instrumentSampleHeaderLength;
+			unsigned char  sampleIds[96];
 			
 			envelope volume;
 			envelope panning;
 
-			char  vibratoType;
-			char  vibratoSweep;
-			char  vibratoDepth;
-			char  vibratoRate;
-			short volumeFadeout;
-			short reserved;
+			unsigned char  vibratoType;
+			unsigned char  vibratoSweep;
+			unsigned char  vibratoDepth;
+			unsigned char  vibratoRate;
+			unsigned short volumeFadeout;
 
 			std::vector<sample> instrumentSamples;
 
@@ -193,9 +234,8 @@ namespace bb
 					visit("vibratoDepth", vibratoDepth);
 					visit("vibratoRate", vibratoRate);
 					visit("volumeFadeout", volumeFadeout);
-					visit("reserved", reserved);
 
-					int leftOver = length - 243;
+					int leftOver = length - 241;
 					if (leftOver > 0)
 					{
 						vector<char> stub(leftOver);
@@ -222,22 +262,22 @@ namespace bb
 
 		struct document
 		{
-			char  head[17];
-			char  track_name[20];
-			char  magic_id;
-			char  tracker_name[20];
-			char  tracker_major;
-			char  tracker_minor;
-			int   header_size;
-			short length;
-			short restart_position;
-			short channels;
-			short patternCount;
-			short instrumentCount;
-			short flags;
-			short tempo;
-			short bpm;
-			char  pattern_order[256];
+			char           head[17];
+			char           track_name[20];
+			char           magic_id;
+			char           tracker_name[20];
+			unsigned char  tracker_major;
+			unsigned char  tracker_minor;
+			unsigned int   header_size;
+			unsigned short length;
+			unsigned short restart_position;
+			unsigned short channels;
+			unsigned short patternCount;
+			unsigned short instrumentCount;
+			unsigned short flags;
+			unsigned short tempo;
+			unsigned short bpm;
+			unsigned char  pattern_order[256];
 
 			std::vector<pattern> patterns;
 			std::vector<instrument> instruments;

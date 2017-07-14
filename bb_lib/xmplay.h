@@ -10,13 +10,19 @@ namespace bb
 		public:
 			channel(document* doc, short index);
 
+			void handleInstrument(const note* note);
+
 			void handleNote(const note* note);
+
+			void triggerNote(bool keepPosition=false, bool keepVolume=false);
 
 			void release();
 
 			void cut();
 
-			void tick(const pattern* pat, const short row, const short tick, short* buffer, size_t length);
+			void tick(const pattern* pat, const short row, const short tick, float* left, float* right, size_t samples);
+
+			void handleEnvelope(const envelope* env, float& val, size_t& tick);
 
 		private:
 			document* doc;
@@ -24,12 +30,11 @@ namespace bb
 			
 			const instrument* currentInstrument = nullptr;
 			const sample*     currentSample     = nullptr;
-			const note*       currentNote       = nullptr;
 
 			float  pitch;
 			float  pitchUnmodified;
-			float  samplePosition;
-			float  sampleAdvance;
+			float  samplePosition = 0;
+			float  sampleAdvance = 0.5f;
 			float  sampleFrequency;
 			bool   samplePingPong;
 
@@ -47,8 +52,11 @@ namespace bb
 		public:
 			player(document* doc);
 
-			bool tick(short** buffer, size_t* length);
+			void mix(short* buffer, size_t length);
+
 		private:
+			void tick();
+
 			document* doc;
 
 			int currentPattern = 0;
@@ -59,8 +67,12 @@ namespace bb
 			int currentTempo;
 
 			std::vector<channel> channels;
+			std::vector<float>   left;
+			std::vector<float>   right;
+			float*               gleft;
+			float*               gright;
 
-			std::vector<short> buffer;
+			size_t samplesLeft = 0;
 		};
 	}
 }

@@ -23,7 +23,7 @@ namespace bb
 			return true;
 		}
 
-		void raw(const char* tag, char* data, size_t size)
+		void raw(const char* tag, void* data, size_t size)
 		{
 			tag, data, size;
 			// not support in text
@@ -168,7 +168,7 @@ namespace bb
 			return false;
 		}
 
-		void raw(const char* tag, char* data, size_t size)
+		void raw(const char* tag, void* data, size_t size)
 		{
 			tag, data, size;
 			// not support in text
