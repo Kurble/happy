@@ -44,5 +44,7 @@
     <ClCompile Include="serialize.cpp" />
     <ClCompile Include="osha1stream.cpp" />
     <ClCompile Include="xmplay.cpp" />
+    <ClCompile Include="xmvolume.cpp" />
+    <ClCompile Include="xmeffect.cpp" />
   </ItemGroup>
 </Project>

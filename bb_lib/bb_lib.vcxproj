@@ -196,7 +196,9 @@
     <ClCompile Include="vec2.cpp" />
     <ClCompile Include="vec3.cpp" />
     <ClCompile Include="vec4.cpp" />
+    <ClCompile Include="xmeffect.cpp" />
     <ClCompile Include="xmplay.cpp" />
+    <ClCompile Include="xmvolume.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

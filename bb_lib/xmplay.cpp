@@ -1,14 +1,32 @@
 #include <cassert>
 #include "xmplay.h"
 
-
 #define HAS_TONE_PORTAMENTO(s) ()
 
 namespace bb
 {
 	namespace xm
 	{
-		inline bool hasTonePortamento(const note* note) { return note->effect == 3 || note->effect == 5 || (note->volume & 0xf0) == 0xF0; }
+		inline bool hasTonePortamento(const note* note) 
+		{ 
+			return note->effect == 3 || note->effect == 5 || (note->volume & 0xf0) == 0xF0; 
+		}
+
+		inline float waveform(unsigned char waveform, unsigned char step)
+		{
+			step %= 0x40;
+			switch (waveform & 0x03)
+			{
+			case 0: // sine
+				return -sinf((step/(float)0x40)*6.283185f);
+			case 1: // ramp down
+				return (float)(0x20 - step) / (float)0x20;
+			case 2: // square
+				return (step >= 0x20) ? 1.f : -1.f;
+
+			}
+			return 0;
+		}
 
 		channel::channel(document* doc, short index)
 			: doc(doc)
@@ -18,7 +36,11 @@ namespace bb
 		{
 			if (note->instrument)
 			{
-				if (note->instrument <= doc->instrumentCount)
+				if (currentInstrument && currentSample && hasTonePortamento(note))
+				{
+					triggerNote(false, false, true);
+				}
+				else if (note->instrument <= doc->instrumentCount)
 				{
 					currentInstrument = &doc->instruments[note->instrument - 1];
 					if (note->pitch == 0 && currentSample)
@@ -43,12 +65,7 @@ namespace bb
 				{
 					pitchUnmodified = note->pitch + currentSample->pitch + currentSample->finetune / 128.0f - 1;
 					pitch = pitchUnmodified;
-
-					if (note->instrument > 0)
-						triggerNote(false, false, true);
-					else
-						triggerNote(false, true, true);
-
+					
 					portamentoPeriod = 10 * 12 * 16 * 4 - (float)(pitch) * 16 * 4;
 				}
 				else if (currentInstrument == nullptr || currentInstrument->instrumentSampleCount == 0)
@@ -76,96 +93,8 @@ namespace bb
 			{
 				release();
 			}
-
-			// handle volume
-			//switch (currentNote->volume)
-			//{
-			//default:
-			//	break;
-			//}
-
-			// handle effects
-			//switch (currentNote->effect)
-			//{
-			//default:
-			//	break;
-			//}
 		}
-
-		void channel::handleVolumeColumn(const note* note)
-		{
-			switch (note->volume & 0xf0)
-			{
-			case 0x00: // do nothing
-				break;
-			case 0x50: // set volume
-				if (note->volume > 0x50) break;
-			case 0x10:
-			case 0x20:
-			case 0x30:
-			case 0x40:
-				volume = (note->volume - 0x10) / (float)0x40;
-				break;
-			case 0x80: // fine volume slide down
-				volume -= (note->volume & 0x0f) / (float)0x40;
-				break;
-			case 0x90: // fine volume slide up
-				volume += (note->volume & 0x0f) / (float)0x40;
-				break;
-			case 0xf0: // tone portamento
-				if (note->volume & 0x0f)
-				{
-					portamentoParam = (note->volume & 0x0f) | ((note->volume & 0x0f) << 4);
-				}
-				break;
-			default: // don't know
-				break;
-			}
-		}
-
-		void channel::handleVolumeTick(const note* note)
-		{
-			switch (note->volume & 0xf0)
-			{
-			case 0x60: // volume slide down
-				volume -= (note->volume & 0x0f) / (float)0x40;
-				break;
-			case 0x70: // volume slide up
-				volume += (note->volume & 0x0f) / (float)0x40;
-				break;
-			case 0xf0: // tone portamento
-				handleTonePortamento();
-				break;
-			}
-		}
-
-		void channel::handleEffectColumn(const note* note)
-		{
-			switch (note->effect)
-			{
-			case 3:
-				if (note->effectParameter)
-					portamentoParam = note->effectParameter;
-				break;
-			}
-		}
-
-		void channel::handleEffectTick(const note* note)
-		{
-			switch (note->effect)
-			{
-			case 5:
-				// volume slide + tone portamento
-			case 3:
-				// tone portamento
-				handleTonePortamento();
-				break;
-
-			default:
-				break;
-			}
-		}
-		
+				
 		void channel::handleTonePortamento()
 		{
 			if (portamentoPeriod && samplePeriod != portamentoPeriod)
@@ -179,6 +108,14 @@ namespace bb
 					samplePeriod = fminf(portamentoPeriod, samplePeriod - 4 * portamentoParam);
 				}
 			}
+		}
+
+		void channel::handleVibrato()
+		{
+			size_t step = vibratoTick * vibratoSpeed;
+			vibratoTick++;
+
+			vibratoOffset = 2.0f * waveform(vibratoWave, (unsigned char)(step % 0x40)) * (vibratoDepth/(float)0x0f);
 		}
 
 		void channel::triggerNote(bool keepPosition, bool keepVolume, bool keepPeriod)
@@ -199,6 +136,8 @@ namespace bb
 
 			envelopeVolumeTick = 0;
 			envelopePanningTick = 0;
+			fadeoutVolume = 1;
+			sustained = true;
 
 			if (!keepPeriod)
 			{
@@ -213,7 +152,12 @@ namespace bb
 
 		void channel::release() 
 		{
-			pitch = 97;
+			sustained = false;
+
+			if (currentInstrument == nullptr || (currentInstrument->volume.type & 0x01) == 0)
+			{
+				cut();
+			}
 		}
 
 		void channel::handleEnvelope(const envelope* env, float& val, size_t& tick)
@@ -222,8 +166,8 @@ namespace bb
 			{
 				if (env->type & 0x02) // 2 flag: looping
 				{
-					if (tick >= env->loopEnd)
-						tick -= (env->loopEnd - env->loopStart);
+					if (tick >= env->points[env->loopEnd].frame)
+						tick -= (env->points[env->loopEnd].frame - env->points[env->loopStart].frame);
 				}
 
 				size_t i = 0;
@@ -250,7 +194,10 @@ namespace bb
 					val = (env->points[i].value * (1 - p) + env->points[i+1].value * p) / 64.0f;
 				}
 
-				tick++;
+				if (!sustained || (env->type & 0x04) == 0 || tick != env->sustainPoint)
+				{
+					tick++;
+				}
 			}
 			else
 			{
@@ -263,33 +210,45 @@ namespace bb
 			if (currentSample && samplePosition >= 0 && pitch < 97)
 			{
 				//float FinalVol = (FadeOutVol / 65536)*(EnvelopeVol / 64)*(GlobalVol / 64)*(Vol / 64)*Scale;
-				float finalVolume = envelopeVolumeValue * volume;
+				float finalVolume = fadeoutVolume * envelopeVolumeValue * volume;
 				float volLeft = (1 - panning)*finalVolume;
 				float volRight = (panning)*finalVolume;
 
 				for (size_t i = 0; i < samples; ++i)
 				{
-					left[i] += currentSample->samples[(size_t)samplePosition] * volLeft;
-					right[i] += currentSample->samples[(size_t)samplePosition] * volRight;
+					if (samplePosition < 0)
+					{
+						continue;
+					}
 
+					size_t a = (size_t)samplePosition;
+					size_t b = a + 1;
+					float t = samplePosition - a;
+					float u = currentSample->samples[a];
+					float v = 0;
 
 					switch (currentSample->type & 0x3)
 					{
 					case 0: // no loop
+						v = (b >= currentSample->length) ? 0.0f : currentSample->samples[b];
+
 						samplePosition += sampleAdvance;
 						if (samplePosition >= currentSample->length)
 							samplePosition = -1;
 						break;
 
 					case 1: // forward loop
+						v = (b >= currentSample->loopEnd) ? currentSample->samples[currentSample->loopStart] : currentSample->samples[b];
+
 						samplePosition += sampleAdvance;
-						while (samplePosition > currentSample->loopEnd)
+						while (samplePosition >= currentSample->loopEnd)
 							samplePosition -= (currentSample->loopEnd - currentSample->loopStart);
 						break;
 
 					case 2: // pingpong loop
 						if (samplePingPong)
 						{
+							v = (b >= currentSample->loopEnd) ? currentSample->samples[a] : currentSample->samples[b];
 							samplePosition += sampleAdvance;
 
 							if (samplePosition >= currentSample->loopEnd)
@@ -305,6 +264,9 @@ namespace bb
 						}
 						else
 						{
+							v = u;
+							u = (b == 1 || b - 2 <= currentSample->loopStart) ? currentSample->samples[a] : currentSample->samples[b - 2];
+
 							samplePosition -= sampleAdvance;
 
 							if (samplePosition <= currentSample->loopStart)
@@ -320,27 +282,37 @@ namespace bb
 						}
 						break;
 					}
+				
+					left[i]  += volLeft  * (u+(v-u)*t);
+					right[i] += volRight * (u+(v-u)*t);
 				}
 			}
 		}
 
-		void channel::tick(const pattern* pat, const short row, const short tick, float* left, float* right, size_t samples)
+		void channel::tick(const pattern* pat, player* play, const short row, const short tick, float* left, float* right, size_t samples)
 		{
 			const note* n = &pat->rows[row].notes[index];
 
 			// handle new notes
 			if (tick == 0)
 			{
+				vibratoOffset = 0;
+
 				handleInstrument(n);
 				handleNote(n);
 				handleVolumeColumn(n);
-				handleEffectColumn(n);
+				handleEffectColumn(n, play);
 			}
 
 			if (currentInstrument)
 			{
 				handleEnvelope(&currentInstrument->volume, envelopeVolumeValue, envelopeVolumeTick);
 				handleEnvelope(&currentInstrument->panning, envelopePanningValue, envelopePanningTick);
+
+				if (!sustained)
+				{
+					fadeoutVolume = fmaxf(0, fadeoutVolume - (currentInstrument->volumeFadeout / (float)0x8000));
+				}
 			}
 
 			// autovibrato
@@ -349,13 +321,15 @@ namespace bb
 
 			// vibrato
 
-			if (tick)
+			if (tick > 0)
 			{
 				handleVolumeTick(n);
 				handleEffectTick(n);
 			}
 
-			sampleFrequency = 8363 * powf(2, (6 * 12 * 16 * 4 - samplePeriod) / (12 * 16 * 4));
+			// LINEAR frequencies
+			float period = samplePeriod - 64.0f * (vibratoOffset + autovibratoOffset);
+			sampleFrequency = 8363 * powf(2, (6 * 12 * 16 * 4 - period) / (12 * 16 * 4));
 			sampleAdvance = sampleFrequency / 44100.0f;
 			assert(sampleAdvance < 100);
 
@@ -389,8 +363,8 @@ namespace bb
 
 				for (size_t i = 0; i < n; ++i)
 				{
-					buffer[offset + i * 2 + 0] = (short)(gleft[i] * 0x1fff);
-					buffer[offset + i * 2 + 1] = (short)(gright[i] * 0x1fff);
+					buffer[offset + i * 2 + 0] = (short)(gleft[i] * 0x1fff * currentVolume);
+					buffer[offset + i * 2 + 1] = (short)(gright[i] * 0x1fff * currentVolume);
 				}
 				gleft = &gleft[n];
 				gright = &gright[n];
@@ -400,21 +374,20 @@ namespace bb
 			}
 		}
 		
+		void player::jump(unsigned short pattern)
+		{
+			jumpTo = pattern;
+		}
+
 		void player::tick()
 		{
 			samplesLeft = 110250 / currentBPM;
-
-			left.assign(samplesLeft, 0);
-			right.assign(samplesLeft, 0);
-			gleft = &left[0];
-			gright = &right[0];
 
 			if (currentPattern >= doc->length)
 				return;
 
 			pattern* pat = &doc->patterns[doc->pattern_order[currentPattern]];
 
-			currentTick++;
 			if (currentTick >= currentTempo)
 			{
 				currentRow++;
@@ -430,22 +403,46 @@ namespace bb
 						currentPattern = doc->restart_position;
 				}
 			}
-			
-			// make sure we sampling data from the right pattern
-			pat = &doc->patterns[doc->pattern_order[currentPattern]];
 
-			// mix in channels
-			if (currentChannel == -1)
+			if (currentTick)
 			{
-				for (auto &c : channels)
+				currentVolume = fmaxf(0.0f, fminf(1.0f, currentVolume + currentVolumeSlide));
+			}
+			
+			do
+			{
+				left.assign(samplesLeft, 0);
+				right.assign(samplesLeft, 0);
+				gleft = &left[0];
+				gright = &right[0];
+
+				// make sure we sampling data from the right pattern
+				pat = &doc->patterns[doc->pattern_order[currentPattern]];
+
+				jumpTo = 0xffff;
+
+				// mix in channels
+				if (currentChannel == -1)
 				{
-					c.tick(pat, currentRow, currentTick, left.data(), right.data(), samplesLeft);
+					for (auto &c : channels)
+					{
+						c.tick(pat, this, currentRow, currentTick, left.data(), right.data(), samplesLeft);
+					}
 				}
-			}
-			else
-			{
-				channels[currentChannel].tick(pat, currentRow, currentTick, left.data(), right.data(), samplesLeft);
-			}
+				else
+				{
+					channels[currentChannel].tick(pat, this, currentRow, currentTick, left.data(), right.data(), samplesLeft);
+				}
+
+				if (jumpTo < 0xffff)
+				{
+					currentPattern = jumpTo;
+					currentRow = 0;
+					currentTick = 0;
+				}
+			} while (jumpTo < 0xffff);
+
+			currentTick++;
 		}
 	}
 }

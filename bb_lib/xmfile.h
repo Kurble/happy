@@ -90,13 +90,13 @@ namespace bb
 				visit("dataSize", dataSize);
 
 				rows.resize((size_t)rowCount, row(channels));
-				for (short i = 0; i < rowCount; ++i)
+				for (unsigned short i = 0; i < rowCount; ++i)
 				{
 					rows[i].reflect(visit);
 				}
 			}
 		};
-
+		
 		struct sample
 		{
 			unsigned int   length;
@@ -135,6 +135,11 @@ namespace bb
 				visit("reserved", reserved);
 				visit.raw("name", name, 22);
 				data.resize(length);
+			}
+
+			template <typename VISITOR>
+			void reflect_data(VISITOR& visit)
+			{
 				visit.raw("data", data.data(), data.size());
 
 				if (type & 0x10)
@@ -233,6 +238,7 @@ namespace bb
 					visit("vibratoSweep", vibratoSweep);
 					visit("vibratoDepth", vibratoDepth);
 					visit("vibratoRate", vibratoRate);
+
 					visit("volumeFadeout", volumeFadeout);
 
 					int leftOver = length - 241;
@@ -246,6 +252,10 @@ namespace bb
 					for (sample& s : instrumentSamples)
 					{
 						s.reflect(visit);
+					}
+					for (sample& s : instrumentSamples)
+					{
+						s.reflect_data(visit);
 					}
 				}
 				else
