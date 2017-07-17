@@ -90,6 +90,8 @@ namespace bb
 				visit("dataSize", dataSize);
 
 				rows.resize((size_t)rowCount, row(channels));
+
+				if (dataSize > 0)
 				for (unsigned short i = 0; i < rowCount; ++i)
 				{
 					rows[i].reflect(visit);
@@ -101,6 +103,7 @@ namespace bb
 		{
 			unsigned int   length;
 			unsigned int   loopStart;
+			unsigned int   loopLength;
 			unsigned int   loopEnd;
 			unsigned char  volume;
 			signed   char  finetune;
@@ -126,7 +129,8 @@ namespace bb
 				length = (int) data.size();
 				visit("length", length);
 				visit("loopStart", loopStart);
-				visit("loopEnd", loopEnd);
+				visit("loopLength", loopLength);
+				loopEnd = loopStart + loopLength;
 				visit("volume", volume);
 				visit("finetune", finetune);
 				visit("type", type);

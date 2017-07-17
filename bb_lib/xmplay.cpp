@@ -38,14 +38,14 @@ namespace bb
 			{
 				if (currentInstrument && currentSample && hasTonePortamento(note))
 				{
-					triggerNote(false, false, true);
+					triggerNote(true, false, true);
 				}
 				else if (note->instrument <= doc->instrumentCount)
 				{
 					currentInstrument = &doc->instruments[note->instrument - 1];
 					if (note->pitch == 0 && currentSample)
 					{
-						triggerNote(true, false);
+						triggerNote(true, false, false);
 					}
 				}
 				else
@@ -164,10 +164,13 @@ namespace bb
 		{
 			if (env->type & 0x01) // 1 flag: env is enable
 			{
-				if (env->type & 0x02) // 2 flag: looping
+				if (env->type & 0x04) // 4 flag: looping
 				{
+					if (env->loopStart == env->loopEnd)
+						tick = env->loopStart;
+
 					if (tick >= env->points[env->loopEnd].frame)
-						tick -= (env->points[env->loopEnd].frame - env->points[env->loopStart].frame);
+						tick -= env->points[env->loopEnd].frame - env->points[env->loopStart].frame;
 				}
 
 				size_t i = 0;
@@ -194,7 +197,7 @@ namespace bb
 					val = (env->points[i].value * (1 - p) + env->points[i+1].value * p) / 64.0f;
 				}
 
-				if (!sustained || (env->type & 0x04) == 0 || tick != env->sustainPoint)
+				if (!sustained || (env->type & 0x02) == 0 || tick != env->sustainPoint)
 				{
 					tick++;
 				}
@@ -324,11 +327,13 @@ namespace bb
 			if (tick > 0)
 			{
 				handleVolumeTick(n);
-				handleEffectTick(n);
+				handleEffectTick(n, play);
 			}
 
 			// LINEAR frequencies
 			float period = samplePeriod - 64.0f * (vibratoOffset + autovibratoOffset);
+			if (tick % 3 == 1) period -= 64.0f * arp0;
+			if (tick % 3 == 2) period -= 64.0f * arp1;
 			sampleFrequency = 8363 * powf(2, (6 * 12 * 16 * 4 - period) / (12 * 16 * 4));
 			sampleAdvance = sampleFrequency / 44100.0f;
 			assert(sampleAdvance < 100);
@@ -374,9 +379,14 @@ namespace bb
 			}
 		}
 		
-		void player::jump(unsigned short pattern)
+		void player::jump(unsigned char pattern)
 		{
-			jumpTo = pattern;
+			jumpToPattern = pattern;
+		}
+
+		void player::patternBreak(unsigned char row)
+		{
+			jumpToRow = row;
 		}
 
 		void player::tick()
@@ -393,20 +403,17 @@ namespace bb
 				currentRow++;
 				currentTick = 0;
 
-				if (currentRow >= pat->rowCount)
+				if (currentRow >= pat->rowCount || jumpToRow < 0xffff)
 				{
 					currentPattern++;
-					currentRow = 0;
+					currentRow = jumpToRow < 0xffff ? jumpToRow : 0;
 					currentTick = 0;
 					
 					if (currentPattern >= doc->length)
 						currentPattern = doc->restart_position;
 				}
-			}
 
-			if (currentTick)
-			{
-				currentVolume = fmaxf(0.0f, fminf(1.0f, currentVolume + currentVolumeSlide));
+				jumpToRow = 0xffff;
 			}
 			
 			do
@@ -419,7 +426,7 @@ namespace bb
 				// make sure we sampling data from the right pattern
 				pat = &doc->patterns[doc->pattern_order[currentPattern]];
 
-				jumpTo = 0xffff;
+				jumpToPattern = 0xffff;
 
 				// mix in channels
 				if (currentChannel == -1)
@@ -434,13 +441,13 @@ namespace bb
 					channels[currentChannel].tick(pat, this, currentRow, currentTick, left.data(), right.data(), samplesLeft);
 				}
 
-				if (jumpTo < 0xffff)
+				if (jumpToPattern < 0xffff)
 				{
-					currentPattern = jumpTo;
+					currentPattern = jumpToPattern;
 					currentRow = 0;
 					currentTick = 0;
 				}
-			} while (jumpTo < 0xffff);
+			} while (jumpToPattern < 0xffff);
 
 			currentTick++;
 		}

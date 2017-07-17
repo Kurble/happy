@@ -22,7 +22,7 @@ namespace bb
 
 			void handleEffectColumn(const note* note, player* play);
 
-			void handleEffectTick(const note* note);
+			void handleEffectTick(const note* note, player* play);
 
 			void handleEnvelope(const envelope* env, float& val, size_t& tick);
 
@@ -46,6 +46,9 @@ namespace bb
 			
 			const instrument* currentInstrument = nullptr;
 			const sample*     currentSample     = nullptr;
+
+			unsigned char arp0 = 0;
+			unsigned char arp1 = 0;
 
 			float  pitch = 0;
 			float  pitchUnmodified = 0;
@@ -71,6 +74,8 @@ namespace bb
 			float  volume = 1.0f;
 			float  panning = 0.5f;
 
+			float  globalVolumeSlide = 0.0f;
+
 			float  envelopeVolumeValue = 1.0f;
 			size_t envelopeVolumeTick = 0;
 			float  envelopePanningValue = 0.5f;
@@ -85,7 +90,9 @@ namespace bb
 
 			void mix(short* buffer, size_t length);
 
-			void jump(unsigned short pattern);
+			void jump(unsigned char pattern);
+
+			void patternBreak(unsigned char row);
 
 			void chan(int chan);
 
@@ -95,14 +102,14 @@ namespace bb
 			int currentBPM;
 			int currentTempo;
 			float currentVolume = 1;
-			float currentVolumeSlide = 0;
 
 		private:
 			void tick();
 
 			document* doc;
 
-			unsigned short jumpTo = 0xffff;
+			unsigned short jumpToPattern = 0xffff;
+			unsigned short jumpToRow     = 0xffff;
 
 			int currentChannel = -1;
 
