@@ -20,8 +20,12 @@ namespace bb
 				}
 				break;
 			case 0x01: // porta up
+				if (note->effectParameter)
+					portamentoUp = note->effectParameter;
 				break;
 			case 0x02: // porta down
+				if (note->effectParameter)
+					portamentoDown = note->effectParameter;
 				break;
 			case 0x03:
 				if (note->effectParameter)
@@ -95,6 +99,12 @@ namespace bb
 				break;
 			case 0x19: // panning slide
 				break;
+			case 0x1b: // retrigger note with volume slide
+				if (x)
+					retriggerVolume = note->effectParameter;
+				else
+					retriggerVolume = (retriggerVolume & 0xf0) | (note->effectParameter & 0x0f);
+				break;
 			case 0x21: // extra commands
 				switch (x)
 				{
@@ -125,10 +135,10 @@ namespace bb
 			case 0x00: // arpeggio
 				break;
 			case 0x01: // porta up
-				samplePeriod -= 4 * note->effectParameter;
+				samplePeriod -= 4 * portamentoUp;
 				break;
 			case 0x02: // porta down
-				samplePeriod += 4 * note->effectParameter;
+				samplePeriod += 4 * portamentoDown;
 				break;
 			case 0x03: // tone porta
 				handleTonePortamento();
@@ -186,6 +196,26 @@ namespace bb
 			case 0x19: // panning slide
 				panning = fminf(1.0f, panning + ((x) / (float)0x40));
 				panning = fmaxf(0.0f, panning - ((y) / (float)0x40));
+				break;
+			case 0x1b: // retrigger with volume slide
+				switch (retriggerVolume & 0xf0)
+				{
+				case 0x10: volume = fmaxf(0.0f, volume - ( 1 / (float)0x40)); break;
+				case 0x20: volume = fmaxf(0.0f, volume - ( 2 / (float)0x40)); break;
+				case 0x30: volume = fmaxf(0.0f, volume - ( 4 / (float)0x40)); break;
+				case 0x40: volume = fmaxf(0.0f, volume - ( 8 / (float)0x40)); break;
+				case 0x50: volume = fmaxf(0.0f, volume - (16 / (float)0x40)); break;
+				case 0x60: volume = fmaxf(0.0f, volume *   0.6666666666667f); break;
+				case 0x70: volume = fmaxf(0.0f, volume *   0.5000000000000f); break;
+				case 0x90: volume = fminf(1.0f, volume + ( 1 / (float)0x40)); break;
+				case 0xa0: volume = fminf(1.0f, volume + ( 2 / (float)0x40)); break;
+				case 0xb0: volume = fminf(1.0f, volume + ( 4 / (float)0x40)); break;
+				case 0xc0: volume = fminf(1.0f, volume + ( 8 / (float)0x40)); break;
+				case 0xd0: volume = fminf(1.0f, volume + (16 / (float)0x40)); break;
+				case 0xe0: volume = fminf(1.0f, volume *   1.5000000000000f); break;
+				case 0xf0: volume = fminf(1.0f, volume *   2.0000000000000f); break;
+				default:                                                      break;
+				}
 				break;
 			case 0x21: // extra fine portamento
 				break;

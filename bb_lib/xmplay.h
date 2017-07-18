@@ -66,8 +66,13 @@ namespace bb
 			unsigned char vibratoWave = 0;
 			size_t        vibratoTick = 0;
 
+			unsigned char retriggerVolume = 0;
+			unsigned char retrigger = 0;
+
 			float  portamentoPeriod = 8363;
 			unsigned char portamentoParam = 0;
+			unsigned char portamentoUp = 0;
+			unsigned char portamentoDown = 0;
 
 			float  fadeoutVolume = (float)0xffff;
 
