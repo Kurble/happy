@@ -35,6 +35,9 @@ namespace bb
 				break;
 			case 0x06: // volume slide + vibrato
 				break;
+			case 0x08: // set panning position
+				panning = note->effectParameter / (float)0xff;
+				break;
 			case 0x09:
 				cut();
 				break;
@@ -48,6 +51,23 @@ namespace bb
 				break;
 			case 0x0d: // pattern break
 				play->patternBreak((note->effectParameter >> 4) * 10 + (note->effectParameter & 0x0F));
+				break;
+			case 0x0e: // extra control
+				switch (x)
+				{
+				case 0x01: // fine portamento up
+					samplePeriod -= 4 * y;
+					break;
+				case 0x02: // fine portamento down
+					samplePeriod += 4 * y;
+					break;
+				case 0x05: // set note finetune
+					samplePeriod -= (-0x8 + y) * (float)0x10;
+					break;
+				default:
+					//assert(false && "effect not implemented");
+					break;
+				}
 				break;
 			case 0x0f: // set speed/bpm
 				if (note->effectParameter < 0x20)
@@ -66,6 +86,28 @@ namespace bb
 				if (x) globalVolumeSlide = +x / (float)0x40;
 				if (y) globalVolumeSlide = -y / (float)0x40;
 				if (x && y) globalVolumeSlide = 0;
+				break;
+			case 0x14: // key off
+				release();
+				break;
+			case 0x15: // set volume envelope position
+				envelopeVolumeTick = note->effectParameter;
+				break;
+			case 0x19: // panning slide
+				break;
+			case 0x21: // extra commands
+				switch (x)
+				{
+				case 0x01: // porta up
+					samplePeriod -= y;
+					break;
+				case 0x02: // porta down
+					samplePeriod += y;
+					break;
+				default:
+					//assert(false && "effect not implemented");
+					break;
+				}
 				break;
 			default:
 				//assert(false && "effect not implemented");
@@ -104,6 +146,8 @@ namespace bb
 				volume = fmaxf(0.0f, volume - ((y) / (float)0x40));
 				handleVibrato();
 				break;
+			case 0x08: // set panning
+				break;
 			case 0x0a: // volume slide
 				volume = fminf(1.0f, volume + ((x) / (float)0x40));
 				volume = fmaxf(0.0f, volume - ((y) / (float)0x40));
@@ -114,12 +158,36 @@ namespace bb
 				break;
 			case 0x0d: // pattern break
 				break;
+			case 0x0e:
+				switch (x)
+				{
+				case 0x01: // fine portamento up
+					break;
+				case 0x02: // fine portamento down
+					break;
+				case 0x05: // set note finetune
+					break;
+				default:
+					//assert(false && "effect not implemented");
+					break;
+				}
+				break;
 			case 0x0f: // set speed/bpm
 				break;
 			case 0x10: // set global volume
 				break;
 			case 0x11: // global volume slide
 				play->currentVolume = fmaxf(0.0f, fminf(1.0f, play->currentVolume + globalVolumeSlide));
+				break;
+			case 0x14: // key off
+				break;
+			case 0x15: // set volume envelope position
+				break;
+			case 0x19: // panning slide
+				panning = fminf(1.0f, panning + ((x) / (float)0x40));
+				panning = fmaxf(0.0f, panning - ((y) / (float)0x40));
+				break;
+			case 0x21: // extra fine portamento
 				break;
 			default:
 				//assert(false && "effect not implemented");

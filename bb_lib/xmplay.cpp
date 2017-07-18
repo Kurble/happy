@@ -197,7 +197,7 @@ namespace bb
 					val = (env->points[i].value * (1 - p) + env->points[i+1].value * p) / 64.0f;
 				}
 
-				if (!sustained || (env->type & 0x02) == 0 || tick != env->sustainPoint)
+				if (!sustained || (env->type & 0x02) == 0 || tick != env->points[env->sustainPoint].frame)
 				{
 					tick++;
 				}
