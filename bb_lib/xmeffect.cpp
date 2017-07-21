@@ -13,11 +13,6 @@ namespace bb
 			switch (note->effect)
 			{
 			case 0x00: // arpeggio
-				if (x | y)
-				{
-					arp0 = x;
-					arp1 = y;
-				}
 				break;
 			case 0x01: // porta up
 				if (note->effectParameter)
@@ -39,11 +34,16 @@ namespace bb
 				break;
 			case 0x06: // volume slide + vibrato
 				break;
+			case 0x07: // tremolo
+				if (x) tremoloSpeed = x;
+				if (y) tremoloDepth = y;
+				break;
 			case 0x08: // set panning position
 				panning = note->effectParameter / (float)0xff;
 				break;
-			case 0x09:
-				cut();
+			case 0x09: // sample offset
+				if (samplePosition == 0)
+					samplePosition = (float)(note->effectParameter * 256);
 				break;
 			case 0x0a: // volume slide
 				break;
@@ -68,8 +68,29 @@ namespace bb
 				case 0x05: // set note finetune
 					samplePeriod -= (-0x8 + y) * (float)0x10;
 					break;
+				case 0x09: // retrigger note
+					if (y) retriggerInterval = y;
+					break;
+				case 0x0c: // precision cut
+					if (y == 0)
+						cut();
+					break;
+				case 0x0d: // note delay
+					if (note->pitch == 0 && note->instrument == 0) 
+					{
+						if (y)
+						{
+							pitch = pitchUnmodified;
+							triggerNote(false, true, false);
+						}
+						else
+						{
+							triggerNote(true, true, true);
+						}
+					}
+					break;
 				default:
-					//assert(false && "effect not implemented");
+					assert(false && "effect not implemented");
 					break;
 				}
 				break;
@@ -100,12 +121,13 @@ namespace bb
 			case 0x19: // panning slide
 				break;
 			case 0x1b: // retrigger note with volume slide
-				if (x)
-					retriggerVolume = note->effectParameter;
-				else
-					retriggerVolume = (retriggerVolume & 0xf0) | (note->effectParameter & 0x0f);
+				if (x) retriggerVolume = x;
+				if (y) retriggerInterval = y;
 				break;
-			case 0x21: // extra commands
+			case 0x1d: // tremor
+				assert(false);
+				break;
+			case 0x21: // extra fine porta
 				switch (x)
 				{
 				case 0x01: // porta up
@@ -115,17 +137,17 @@ namespace bb
 					samplePeriod += y;
 					break;
 				default:
-					//assert(false && "effect not implemented");
+					assert(false && "effect not implemented");
 					break;
 				}
 				break;
 			default:
-				//assert(false && "effect not implemented");
+				assert(false && "effect not implemented");
 				break;
 			}
 		}
 
-		void channel::handleEffectTick(const note* note, player* play)
+		void channel::handleEffectTick(const note* note, player* play, const size_t tick)
 		{
 			unsigned char x = (note->effectParameter & 0xf0) >> 4;
 			unsigned char y = (note->effectParameter & 0x0f);
@@ -133,6 +155,8 @@ namespace bb
 			switch (note->effect)
 			{
 			case 0x00: // arpeggio
+				arp0 = x;
+				arp1 = y;
 				break;
 			case 0x01: // porta up
 				samplePeriod -= 4 * portamentoUp;
@@ -156,7 +180,12 @@ namespace bb
 				volume = fmaxf(0.0f, volume - ((y) / (float)0x40));
 				handleVibrato();
 				break;
+			case 0x07: // tremolo
+				handleTremolo();
+				break;
 			case 0x08: // set panning
+				break;
+			case 0x09: // sample offset
 				break;
 			case 0x0a: // volume slide
 				volume = fminf(1.0f, volume + ((x) / (float)0x40));
@@ -177,8 +206,25 @@ namespace bb
 					break;
 				case 0x05: // set note finetune
 					break;
+				case 0x09: // retrigger note
+					if ((tick % retriggerInterval) == 0)
+						triggerNote(false, false, false);
+					break;
+				case 0x0c: // precision cut
+					if (y == tick)
+						cut();
+					break;
+				case 0x0d: // note delay
+					if (noteDelay == tick)
+					{
+						handleInstrument(note);
+						handleNote(note);
+						handleVolumeColumn(note);
+						handleEffectColumn(note, play);
+					}
+					break;
 				default:
-					//assert(false && "effect not implemented");
+					assert(false && "effect not implemented");
 					break;
 				}
 				break;
@@ -198,29 +244,43 @@ namespace bb
 				panning = fmaxf(0.0f, panning - ((y) / (float)0x40));
 				break;
 			case 0x1b: // retrigger with volume slide
-				switch (retriggerVolume & 0xf0)
+				switch (retriggerVolume)
 				{
-				case 0x10: volume = fmaxf(0.0f, volume - ( 1 / (float)0x40)); break;
-				case 0x20: volume = fmaxf(0.0f, volume - ( 2 / (float)0x40)); break;
-				case 0x30: volume = fmaxf(0.0f, volume - ( 4 / (float)0x40)); break;
-				case 0x40: volume = fmaxf(0.0f, volume - ( 8 / (float)0x40)); break;
-				case 0x50: volume = fmaxf(0.0f, volume - (16 / (float)0x40)); break;
-				case 0x60: volume = fmaxf(0.0f, volume *   0.6666666666667f); break;
-				case 0x70: volume = fmaxf(0.0f, volume *   0.5000000000000f); break;
-				case 0x90: volume = fminf(1.0f, volume + ( 1 / (float)0x40)); break;
-				case 0xa0: volume = fminf(1.0f, volume + ( 2 / (float)0x40)); break;
-				case 0xb0: volume = fminf(1.0f, volume + ( 4 / (float)0x40)); break;
-				case 0xc0: volume = fminf(1.0f, volume + ( 8 / (float)0x40)); break;
-				case 0xd0: volume = fminf(1.0f, volume + (16 / (float)0x40)); break;
-				case 0xe0: volume = fminf(1.0f, volume *   1.5000000000000f); break;
-				case 0xf0: volume = fminf(1.0f, volume *   2.0000000000000f); break;
+				case 0x01: volume = fmaxf(0.0f, volume - ( 1 / (float)0x40)); break;
+				case 0x02: volume = fmaxf(0.0f, volume - ( 2 / (float)0x40)); break;
+				case 0x03: volume = fmaxf(0.0f, volume - ( 4 / (float)0x40)); break;
+				case 0x04: volume = fmaxf(0.0f, volume - ( 8 / (float)0x40)); break;
+				case 0x05: volume = fmaxf(0.0f, volume - (16 / (float)0x40)); break;
+				case 0x06: volume = fmaxf(0.0f, volume *   0.6666666666667f); break;
+				case 0x07: volume = fmaxf(0.0f, volume *   0.5000000000000f); break;
+				case 0x09: volume = fminf(1.0f, volume + ( 1 / (float)0x40)); break;
+				case 0x0a: volume = fminf(1.0f, volume + ( 2 / (float)0x40)); break;
+				case 0x0b: volume = fminf(1.0f, volume + ( 4 / (float)0x40)); break;
+				case 0x0c: volume = fminf(1.0f, volume + ( 8 / (float)0x40)); break;
+				case 0x0d: volume = fminf(1.0f, volume + (16 / (float)0x40)); break;
+				case 0x0e: volume = fminf(1.0f, volume *   1.5000000000000f); break;
+				case 0x0f: volume = fminf(1.0f, volume *   2.0000000000000f); break;
 				default:                                                      break;
 				}
+				if ((tick % retriggerInterval) == 0)
+				{
+					float v = volume;
+					triggerNote(false, false, false);
+					if (currentInstrument)
+					{
+						handleEnvelope(&currentInstrument->volume, envelopeVolumeValue, envelopeVolumeTick);
+						handleEnvelope(&currentInstrument->panning, envelopePanningValue, envelopePanningTick);
+					}
+					volume = v;
+				}
+				break;
+			case 0x1d: // tremor
+				assert(false);
 				break;
 			case 0x21: // extra fine portamento
 				break;
 			default:
-				//assert(false && "effect not implemented");
+				assert(false && "effect not implemented");
 				break;
 			}
 		}

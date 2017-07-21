@@ -22,13 +22,15 @@ namespace bb
 
 			void handleEffectColumn(const note* note, player* play);
 
-			void handleEffectTick(const note* note, player* play);
+			void handleEffectTick(const note* note, player* play, const size_t tick);
 
 			void handleEnvelope(const envelope* env, float& val, size_t& tick);
 
 			void handleTonePortamento();
 
 			void handleVibrato();
+
+			void handleTremolo();
 
 			void triggerNote(bool keepPosition=false, bool keepVolume=false, bool keepPeriod=false);
 
@@ -61,13 +63,20 @@ namespace bb
 
 			float         autovibratoOffset = 0;
 			float         vibratoOffset = 0;
+			
 			unsigned char vibratoSpeed = 0;
 			unsigned char vibratoDepth = 0;
 			unsigned char vibratoWave = 0;
 			size_t        vibratoTick = 0;
 
+			unsigned char tremoloSpeed = 0;
+			unsigned char tremoloDepth = 0;
+			unsigned char tremoloWave = 0;
+			size_t        tremoloTick = 0;
+
 			unsigned char retriggerVolume = 0;
-			unsigned char retrigger = 0;
+			unsigned char retriggerInterval = 0;
+			unsigned char noteDelay = 0;
 
 			float  portamentoPeriod = 8363;
 			unsigned char portamentoParam = 0;

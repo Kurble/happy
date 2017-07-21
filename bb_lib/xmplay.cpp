@@ -118,6 +118,14 @@ namespace bb
 			vibratoOffset = 2.0f * waveform(vibratoWave, (unsigned char)(step % 0x40)) * (vibratoDepth/(float)0x0f);
 		}
 
+		void channel::handleTremolo()
+		{
+			size_t step = tremoloTick * tremoloSpeed;
+			tremoloTick++;
+
+			volume = fmaxf(0.0f, waveform(tremoloWave, (unsigned char)(step % 0x40))) * (vibratoDepth/(float)0x0f);
+		}
+
 		void channel::triggerNote(bool keepPosition, bool keepVolume, bool keepPeriod)
 		{
 			if (!keepPosition)
@@ -202,10 +210,6 @@ namespace bb
 					tick++;
 				}
 			}
-			else
-			{
-				val = 1.0f;
-			}
 		}
 
 		void channel::mix(float* left, float* right, size_t samples)
@@ -214,8 +218,9 @@ namespace bb
 			{
 				//float FinalVol = (FadeOutVol / 65536)*(EnvelopeVol / 64)*(GlobalVol / 64)*(Vol / 64)*Scale;
 				float finalVolume = fadeoutVolume * envelopeVolumeValue * volume;
-				float volLeft = (1 - panning)*finalVolume;
-				float volRight = (panning)*finalVolume;
+				float finalPanning = (panning - 0.5f) + (envelopePanningValue - 0.5f) * (0.5f - fabsf(panning - 0.5f));
+				float volLeft  = (0.5f - finalPanning)*finalVolume;
+				float volRight = (0.5f + finalPanning)*finalVolume;
 
 				for (size_t i = 0; i < samples; ++i)
 				{
@@ -296,8 +301,12 @@ namespace bb
 		{
 			const note* n = &pat->rows[row].notes[index];
 
-			// handle new notes
-			if (tick == 0)
+			if (tick > 0)
+			{
+				handleVolumeTick(n);
+				handleEffectTick(n, play, tick);
+			}
+			else if (n->effect != 0x0e || (n->effectParameter & 0xf0) != 0xd0)
 			{
 				vibratoOffset = 0;
 
@@ -305,11 +314,18 @@ namespace bb
 				handleNote(n);
 				handleVolumeColumn(n);
 				handleEffectColumn(n, play);
+			}		
+			else
+			{
+				noteDelay = n->effectParameter & 0x0f;
 			}
 
 			if (currentInstrument)
 			{
+				envelopeVolumeValue = 1.0f;
 				handleEnvelope(&currentInstrument->volume, envelopeVolumeValue, envelopeVolumeTick);
+
+				envelopePanningValue = 0.5f;
 				handleEnvelope(&currentInstrument->panning, envelopePanningValue, envelopePanningTick);
 
 				if (!sustained)
@@ -324,11 +340,7 @@ namespace bb
 
 			// vibrato
 
-			if (tick > 0)
-			{
-				handleVolumeTick(n);
-				handleEffectTick(n, play);
-			}
+			
 
 			// LINEAR frequencies
 			float period = samplePeriod - 64.0f * (vibratoOffset + autovibratoOffset);
